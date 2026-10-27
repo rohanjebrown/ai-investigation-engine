@@ -1,0 +1,57 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Local environments and credentials
+.venv/
+.env
+.env.*
+!.env.example
+/secrets/
+/credentials/
+/certs/
+*-credentials.json
+*service-account*.json
+application_default_credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Editor settings and tool caches
+.idea/
+.vscode/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+.coverage.*
+htmlcov/
+
+# Downloaded data and model artifacts; keep data/samples/ in Git
+/data/raw/
+/artifacts/tokenizers/
+/artifacts/models/
+*.safetensors
+*.gguf
+
+# Local databases, backups, and generated output
+/backups/
+/dumps/
+*.dump
+*.backup
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+/tmp/
+/temp/
+/.cache/
+/output/
+/reports/generated/
+*.log
