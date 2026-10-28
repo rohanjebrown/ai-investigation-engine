@@ -256,7 +256,12 @@ class GeminiAnswerGenerator:
                 result = generation_result(value)
             except GenerationResponseError as error:
                 # Never log raw output; it may contain private evidence-derived text.
-                logger.error("Gemini generation failed: %s", error)
+                logger.error(
+                    "Gemini generation failed: %s\n"
+                    "Raw Gemini response: %r",
+                    error,
+                    raw,
+                )
                 raise
 
         except (AttributeError, TypeError, ValueError) as error:
