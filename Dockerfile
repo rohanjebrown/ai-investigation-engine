@@ -32,7 +32,10 @@ RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app 
 WORKDIR /opt/app
 COPY --from=builder /opt/app/.venv /opt/app/.venv
 COPY --from=builder /opt/tokenizer/tokenizer.json /opt/tokenizer/tokenizer.json
+COPY migrations/ migrations/
+COPY alembic.ini ./
+COPY deploy/entrypoint.py deploy/entrypoint.py
 USER 10001:10001
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD ["/opt/app/.venv/bin/python", "-c", "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:'+os.environ.get('PORT','8080')+'/health',timeout=2).read()"]
-ENTRYPOINT ["/opt/app/.venv/bin/python", "-m", "investigation_engine.infrastructure.api.server"]
+ENTRYPOINT ["/opt/app/.venv/bin/python", "/opt/app/deploy/entrypoint.py"]

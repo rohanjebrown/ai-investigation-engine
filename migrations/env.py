@@ -5,7 +5,7 @@ import sys
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import Connection, pool
+from sqlalchemy import Connection, pool, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from investigation_engine.infrastructure.persistence.models import Base
@@ -16,6 +16,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
+
+# One database-wide, session lock serializes revision inspection and upgrades.
+# Keep this constant stable across all application versions.
+MIGRATION_LOCK_KEY = 7_341_902_861
 
 
 def run_migrations_offline() -> None:
@@ -29,9 +33,13 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations(connection: Connection) -> None:
+def run_migrations(connection: Connection, *, lock_already_acquired: bool = False) -> None:
     if connection.dialect.server_version_info < (15,):
         raise RuntimeError("This schema requires PostgreSQL 15+ for NULLS NOT DISTINCT")
+    # Also protect callers that supply their own connection. Its surrounding
+    # transaction keeps this lock through Alembic's revision checks and DDL.
+    if not lock_already_acquired:
+        connection.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": MIGRATION_LOCK_KEY})
     context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()
@@ -47,7 +55,17 @@ async def run_migrations_online() -> None:
     )
     try:
         async with engine.connect() as connection:
-            await connection.run_sync(run_migrations)
+            # Commit acquisition so Alembic can own its migration transactions
+            # while this session-level lock spans revision inspection and DDL.
+            await connection.execute(text("SELECT pg_advisory_lock(:key)"), {"key": MIGRATION_LOCK_KEY})
+            await connection.commit()
+            try:
+                await connection.run_sync(run_migrations, lock_already_acquired=True)
+            finally:
+                if connection.in_transaction():
+                    await connection.rollback()
+                await connection.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": MIGRATION_LOCK_KEY})
+                await connection.commit()
     finally:
         await engine.dispose()
 

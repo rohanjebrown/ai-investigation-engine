@@ -49,10 +49,13 @@ runtime Hugging Face download dependency. No credentials are build inputs.
 The separate `test` target adds disposable-test dependencies and fixtures.
 
 The final image runs UID/GID 10001, one Uvicorn process, no shell/reload, binds
-`0.0.0.0:$PORT`, and logs to stdout/stderr. The direct Python entry point handles
-SIGTERM with an eight-second graceful request deadline. Cloud Run permits ten
-seconds before SIGKILL; long foreground investigations can be interrupted and
-are not durable jobs. Database/provider resources are closed by lifespan.
+`0.0.0.0:$PORT`, and logs to stdout/stderr. Its Python entrypoint runs
+`python -m alembic upgrade head` before the server and then uses `exec` to replace
+itself with Uvicorn. Alembic config and migrations are included in the runtime
+image. The direct Python server entry point handles SIGTERM with an eight-second
+graceful request deadline. Cloud Run permits ten seconds before SIGKILL; long
+foreground investigations can be interrupted and are not durable jobs.
+Database/provider resources are closed by lifespan.
 
 `.dockerignore` excludes Git, local virtualenvs, secret files, `.env*` overrides,
 caches, raw datasets, model artifacts, logs, reports, backups and IDE state.
@@ -82,11 +85,11 @@ docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=33554432 \
   -e PORT=9091 -p 127.0.0.1:9091:9091 ai-investigation-engine:local --smoke
 ```
 
-`/health` is liveness only. Production lifespan must finish validating the
-configured database serving profile and tokenizer before the socket accepts
-requests. It does not run migrations, create records or call Gemini at startup.
-Production startup necessarily queries the intended database; only explicit
-smoke mode isolates all external dependencies.
+`/health` is liveness only. Production migrations must finish before application
+startup; then lifespan validates the configured database serving profile and
+tokenizer before the socket accepts requests. Migrations do not create
+chunking-configuration rows, documents or embeddings. Only explicit smoke mode
+skips database migrations and isolates all external dependencies.
 
 ## Runtime settings, secrets and database
 
@@ -112,14 +115,74 @@ pre-ping and 30-minute recycle. Corresponding `DB_POOL_*`,
 are bounded settings. Ordinary deployments retain documents, versions and
 embeddings in PostgreSQL; `/tmp` holds bounded temporary uploads only.
 
-Before activation, an operator must verify existing database credentials and
-the non-destructive schema state, `vector` extension/version, Alembic revision
-and serving configuration. Use a read-only transaction through the Auth Proxy
-to record database/version identity and document/embedding counts. If migration
-is needed, review `alembic upgrade --sql` and compatibility/backups first, then
-run a controlled operator migration with the intended database configuration.
-Never migrate from container startup or ordinary Cloud Build deployment. The
-pipeline has no production DB credentials and tests cannot use its database.
+### Empty database initialization and first deployment
+
+Before the first API deployment, the operator must create the target database
+and provision the `vector` extension. The extension must exist before revision
+`0002_embedding_storage`; migrations intentionally do not install extensions.
+Start the local proxy in one terminal:
+
+```powershell
+cloud-sql-proxy ai-investigation-engine-512912:europe-west3:investigation-postgres --port 15432
+```
+
+In another terminal, connect as a database administrator and run the extension
+command (the password is prompted, not placed on the command line):
+
+```powershell
+$env:PGHOST = '127.0.0.1'
+$env:PGPORT = '15432'
+$env:PGDATABASE = 'YOUR_DATABASE'
+$env:PGUSER = 'YOUR_DATABASE_ADMIN'
+psql -W -c 'CREATE EXTENSION vector'
+```
+
+Then configure the repository's local `.env` with the migration-capable
+application `DB_NAME`, `DB_USER`, and `DB_PASSWORD` values. Keep it uncommitted.
+Run the same migration command the production entrypoint will use, followed by
+the explicit initial serving-profile registration:
+
+```powershell
+uv run alembic upgrade head
+$env:SERVING_CHUNKING_CONFIGURATION_ID = (uv run python -m investigation_engine.infrastructure.persistence.register_chunking_configuration --strategy fixed_tokens --max-tokens 512 --overlap 32)
+Write-Output $env:SERVING_CHUNKING_CONFIGURATION_ID
+```
+
+The registration command validates the pinned tokenizer artifact and chunking
+parameters, reuses a matching row, creates no placeholder document or embedding,
+and prints the row ID. Set that printed ID as the Cloud Run
+`SERVING_CHUNKING_CONFIGURATION_ID` environment variable along with the existing
+database, secret and model settings before deploying. Production startup remains
+fail-closed when the ID is absent, the row is missing, or its tokenizer identity
+does not match the runtime artifact. Registration is deliberately separate from
+migrations and is never run automatically by a container.
+
+For an already-migrated database, the entrypoint's Alembic command is a no-op
+and preserves the data. A migration failure exits the container before Uvicorn
+starts; Cloud Run will not serve that revision. Each startup serializes the full
+Alembic revision check and upgrade through a PostgreSQL advisory lock, released
+on success and on failure/connection close. Keep migrations backward-compatible
+with overlapping old/new Cloud Run revisions. Startup migrations are appropriate
+only for bounded, backward-compatible DDL: long table rewrites or locks can use
+up deployment time and block traffic. They do not replace backup, review or a
+database recovery plan, and rolling an image back does not reverse a migration.
+
+The `DB_USER` used by the entrypoint must be able to connect to the database,
+use the target schema, create objects there, and own objects it creates so later
+Alembic revisions can alter them. PostgreSQL `CONNECT` plus `USAGE, CREATE` on
+the schema are the base grants; `ALTER`/`DROP` of existing objects additionally
+requires ownership or membership in their owning role. The same role needs the
+application's normal table/sequence access. Do not grant superuser to the
+runtime role. Provision `vector` separately with a Cloud SQL-supported
+administrator role, then use the migration-capable application role for
+Alembic. No Cloud SQL/IAM permissions are changed by this implementation.
+
+For an existing database, verify the schema/revision and record document and
+embedding counts read-only before rollout. Review `alembic upgrade --sql`,
+compatibility and backups when a schema change is planned. The Cloud Build
+pipeline receives no production DB credentials and runs no separate migration
+step; the deployed container performs the migration using its existing Cloud
+Run database credentials and Cloud SQL socket.
 
 Create/reuse the intended Secret Manager resources through the operator's
 approved secret-entry process. Map `DB_PASSWORD`, `GEMINI_API_KEY`, and

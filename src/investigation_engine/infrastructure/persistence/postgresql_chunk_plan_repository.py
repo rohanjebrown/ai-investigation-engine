@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -61,6 +61,30 @@ class PostgreSQLChunkPlanRepository:
 
     def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
         self._sessions = sessions
+
+    async def register_configuration(self, config: ChunkingConfig) -> int:
+        """Persist or reuse a validated configuration without creating a plan."""
+        values = _configuration_values(config)
+        try:
+            async with self._sessions() as session:
+                async with session.begin():
+                    # Serialize this command's lookup/insert so repeated or
+                    # concurrent registrations cannot create duplicate rows.
+                    await session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": 7_341_902_862})
+                    row = await session.scalar(
+                        select(ChunkingConfigurationRow).where(*(
+                            getattr(ChunkingConfigurationRow, key) == value
+                            for key, value in values.items()
+                        )).order_by(ChunkingConfigurationRow.id).limit(1)
+                    )
+                    if row is None:
+                        row = ChunkingConfigurationRow(**values)
+                        session.add(row)
+                        await session.flush()
+                    configuration_id = row.id
+            return configuration_id
+        except SQLAlchemyError as error:
+            raise RepositoryError("Chunking configuration could not be registered") from error
 
     async def save(self, plan: ChunkPlan) -> ChunkPlan:
         if not isinstance(plan, ChunkPlan) or not isinstance(plan.document_version_id, UUID):

@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from hashlib import sha256
 from uuid import uuid7
@@ -43,3 +44,14 @@ def test_missing_pgvector_fails_without_partial_tables_or_installing_extension(m
         assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0001_document_registration"
         assert connection.scalar(text("SELECT to_regclass('chunking_configurations')")) is None
         assert connection.scalar(text("SELECT count(*) FROM pg_extension WHERE extname='vector'")) == 0
+
+
+def test_concurrent_upgrade_attempts_are_serialized(migration_database, migrate):
+    with migration_database.begin() as connection:
+        connection.execute(text("CREATE EXTENSION vector"))
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        results = list(workers.map(lambda _: migrate(migration_database), range(2)))
+    assert results == [None, None]
+    with migration_database.connect() as connection:
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0002_embedding_storage"
+        assert connection.scalar(text("SELECT count(*) FROM chunking_configurations")) == 0

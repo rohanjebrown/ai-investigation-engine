@@ -46,6 +46,17 @@ def counts(engine):
         ))
 
 
+async def test_configuration_registration_is_idempotent_and_creates_no_documents_or_plans(
+    plans, db_engine, config,
+):
+    first, concurrent = await asyncio.gather(
+        plans.register_configuration(config), plans.register_configuration(replace(config)),
+    )
+    repeated = await plans.register_configuration(config)
+    assert first == concurrent == repeated
+    assert counts(db_engine) == (1, 0, 0)
+
+
 async def test_generated_plan_commits_and_new_instance_reconstructs_unicode_and_overlap(
     repository, plans, sessions, db_engine, registration, config, tokenizer,
 ):

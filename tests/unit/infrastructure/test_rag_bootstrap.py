@@ -1,3 +1,4 @@
+from pathlib import Path
 import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
@@ -19,7 +20,8 @@ def resources(monkeypatch):
         serving_chunking_configuration_id=7, generation_timeout_seconds=30, generation_max_attempts=2,
         generation_max_output_tokens=1024, rag_max_evidence=5, rag_max_context_chars=12000,
         database_url=Mock(return_value="synthetic-only"), retrieval_mode="semantic",
-        semantic_candidate_limit=20, keyword_candidate_limit=20, rrf_k=60)
+        semantic_candidate_limit=20, keyword_candidate_limit=20, rrf_k=60,
+        chunking_tokenizer_path=Path("tokenizer.json"))
     monkeypatch.setitem(sys.modules, "investigation_engine.infrastructure.config", SimpleNamespace(settings=settings))
     engine = SimpleNamespace(dispose=AsyncMock(side_effect=lambda: events.append("engine")))
     embed = SimpleNamespace(configuration=EmbeddingConfig(provider="synthetic", model_id="test"),
@@ -63,6 +65,23 @@ async def test_failed_profile_lookup_closes_every_created_resource_without_raw_e
             pytest.fail("Must not serve on incomplete startup")
     assert "never-expose-secret" not in str(caught.value)
     assert r.events[-3:] == ["generation", "embedding", "engine"]
+
+
+async def test_missing_serving_configuration_row_fails_startup(resources):
+    resources.session.get.return_value = None
+    with pytest.raises(RuntimeError, match="RAG lifecycle failed"):
+        async with bootstrap.question_service():
+            pytest.fail("Must not serve with a missing configuration row")
+
+
+async def test_incompatible_tokenizer_profile_fails_startup(resources, monkeypatch):
+    incompatible = SimpleNamespace(identity=TokenizerIdentity(
+        name="other-tokenizer", revision="1", artifact_sha256="1" * 64, runtime_version="test"))
+    monkeypatch.setattr(bootstrap, "HuggingFaceTokenizer", Mock(return_value=incompatible))
+    with pytest.raises(RuntimeError, match="Application lifecycle failed"):
+        async with bootstrap.application_service():
+            pytest.fail("Must not serve with a mismatched tokenizer")
+    assert resources.events[-3:] == ["generation", "embedding", "engine"]
 
 
 async def test_missing_model_fails_before_creating_clients_or_engine(resources):
