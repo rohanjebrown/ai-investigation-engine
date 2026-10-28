@@ -76,6 +76,7 @@ async def application_service():
                 api_key=settings.gemini_api_key, model=settings.gemini_generation_model,
                 timeout_seconds=settings.generation_timeout_seconds, max_attempts=settings.generation_max_attempts,
                 max_output_tokens=settings.generation_max_output_tokens,
+                temperature=getattr(settings, "generation_temperature", None),
             )
             resources.push_async_callback(generation.aclose)
             investigation_model = None
@@ -159,6 +160,7 @@ async def question_service():
                 api_key=settings.gemini_api_key, model=settings.gemini_generation_model,
                 timeout_seconds=settings.generation_timeout_seconds, max_attempts=settings.generation_max_attempts,
                 max_output_tokens=settings.generation_max_output_tokens,
+                temperature=getattr(settings, "generation_temperature", None),
             )
             resources.push_async_callback(generation.aclose)
             async with sessions() as session:

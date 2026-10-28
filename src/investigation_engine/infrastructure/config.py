@@ -2,6 +2,7 @@
 
 import os
 import re
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -30,6 +31,7 @@ class Settings:
     generation_timeout_seconds: int = 30
     generation_max_attempts: int = 2
     generation_max_output_tokens: int = 1024
+    generation_temperature: float | None = None
     rag_max_evidence: int = 5
     rag_max_context_chars: int = 12000
     investigation_enabled: bool = False
@@ -107,6 +109,19 @@ def _boolean_setting(name: str, default: bool) -> bool:
     raise ValueError(f"{name} must be a boolean value")
 
 
+def _temperature_setting() -> float | None:
+    raw = os.environ.get("GENERATION_TEMPERATURE")
+    if raw is None or raw == "":
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        raise ValueError("GENERATION_TEMPERATURE must be between 0 and 1") from None
+    if not math.isfinite(value) or not 0 <= value <= 1:
+        raise ValueError("GENERATION_TEMPERATURE must be between 0 and 1")
+    return value
+
+
 def _load_settings() -> Settings:
     """Load local defaults, preserving existing process environment values."""
     load_dotenv(Path.cwd() / ".env", override=False, interpolate=False)
@@ -160,6 +175,7 @@ def _load_settings() -> Settings:
         generation_timeout_seconds=_integer_setting("GENERATION_TIMEOUT_SECONDS", 30, 1, 120),
         generation_max_attempts=_integer_setting("GENERATION_MAX_ATTEMPTS", 2, 1, 3),
         generation_max_output_tokens=_integer_setting("GENERATION_MAX_OUTPUT_TOKENS", 1024, 128, 4096),
+        generation_temperature=_temperature_setting(),
         rag_max_evidence=_integer_setting("RAG_MAX_EVIDENCE", 5, 1, 10),
         rag_max_context_chars=_integer_setting("RAG_MAX_CONTEXT_CHARS", 12000, 256, 64000),
         investigation_enabled=_boolean_setting("INVESTIGATION_ENABLED", False),

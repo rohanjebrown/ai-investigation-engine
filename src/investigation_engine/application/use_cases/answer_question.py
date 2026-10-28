@@ -66,13 +66,7 @@ class AnswerQuestion:
 
         request = GenerationRequest(question=question, evidence=tuple(inputs))
 
-        try:
-            result = await self._generator.generate(request)
-        except GenerationResponseError:
-            logger.error(
-                "Question generation failed: generator raised GenerationResponseError"
-            )
-            raise
+        result = await self._generator.generate(request)
 
         if not isinstance(result, GenerationResult):
             logger.error(

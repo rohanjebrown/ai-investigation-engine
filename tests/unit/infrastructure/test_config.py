@@ -89,12 +89,15 @@ def test_generation_defaults_and_explicit_typed_environment(load_settings, doten
     settings = load_settings()
     assert settings.gemini_generation_model is None and settings.serving_chunking_configuration_id is None
     assert settings.generation_max_attempts == 2 and settings.rag_max_evidence == 5
+    assert settings.generation_temperature is None
+    monkeypatch.setenv("GENERATION_TEMPERATURE", "0.2")
     monkeypatch.setenv("GEMINI_GENERATION_MODEL", "explicit-test-model")
     monkeypatch.setenv("SERVING_CHUNKING_CONFIGURATION_ID", "7")
     monkeypatch.setenv("RAG_MAX_CONTEXT_CHARS", "16000")
     selected = load_settings()
     assert selected.gemini_generation_model == "explicit-test-model" and selected.serving_chunking_configuration_id == 7
     assert selected.rag_max_context_chars == 16000
+    assert selected.generation_temperature == 0.2
 
 
 def test_embedding_batch_settings_are_typed_and_bounded(load_settings, dotenv_file, monkeypatch):
@@ -109,7 +112,9 @@ def test_embedding_batch_settings_are_typed_and_bounded(load_settings, dotenv_fi
 
 
 @pytest.mark.parametrize("name,value", [("GENERATION_MAX_ATTEMPTS", "4"), ("GENERATION_TIMEOUT_SECONDS", "bad"),
-    ("GENERATION_MAX_OUTPUT_TOKENS", "0"), ("RAG_MAX_EVIDENCE", "11"),
+    ("GENERATION_MAX_OUTPUT_TOKENS", "0"), ("GENERATION_TEMPERATURE", "NaN"),
+    ("GENERATION_TEMPERATURE", "2.1"), ("GENERATION_TEMPERATURE", "-0.1"),
+    ("GENERATION_TEMPERATURE", "bad"), ("RAG_MAX_EVIDENCE", "11"),
     ("RAG_MAX_CONTEXT_CHARS", "64001"), ("SERVING_CHUNKING_CONFIGURATION_ID", "0"),
     ("GEMINI_EMBEDDING_BATCH_SIZE", "101"), ("GEMINI_EMBEDDING_BATCH_TOKEN_LIMIT", "0")])
 def test_generation_setting_bounds_fail_by_name(load_settings, dotenv_file, monkeypatch, name, value):
