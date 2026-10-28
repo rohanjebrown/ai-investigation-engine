@@ -234,9 +234,12 @@ class GeminiAnswerGenerator:
 
             try:
                 result = generation_result(value)
-            except GenerationResponseError:
+            except GenerationResponseError as error:
                 logger.error(
-                    "Gemini generation failed: structured response validation failed"
+                    "Gemini generation failed: %s\n"
+                    "Raw Gemini response: %r",
+                    error,
+                    raw,
                 )
                 raise
 
