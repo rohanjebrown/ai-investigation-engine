@@ -4,16 +4,16 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.17@sha256:03bdc89bb9798628846e60c3a9ad1900
 ENV UV_PYTHON_DOWNLOADS=never UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1
 WORKDIR /opt/app
 COPY pyproject.toml uv.lock README.md ./
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-install-project
+RUN uv sync --locked --no-dev --no-install-project
 COPY src/ src/
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-editable
+RUN uv sync --locked --no-dev --no-editable
 # This public, checksum-pinned 7 MB tokenizer is required for existing indexing.
 # Download at build time only; no credentials, model weights, or runtime network.
 RUN .venv/bin/python -m investigation_engine.infrastructure.tokenization.fetch_runtime /opt/tokenizer/tokenizer.json
 
 # CI dependencies and fixtures never enter the final image.
 FROM builder AS test
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --group dev --no-editable
+RUN uv sync --locked --group dev --no-editable
 COPY tests/ tests/
 COPY scripts/ scripts/
 COPY data/samples/ data/samples/
