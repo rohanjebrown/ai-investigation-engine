@@ -1,0 +1,125 @@
+{
+  "kind": "task16_pre_generation_selection",
+  "evaluation_date": "2026-10-28",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "suite_version": "answer-quality-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "question_ids": [
+    "simple:8813f87c0bdd11eba7f7acde48001122",
+    "2wiki:2207e9060bda11eba7f7acde48001122",
+    "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+    "unanswerable:0",
+    "contradictory:0"
+  ],
+  "sample_size": 5,
+  "selection": [
+    {
+      "id": "simple:8813f87c0bdd11eba7f7acde48001122",
+      "category": "simple_factual",
+      "question": "What is Xawery \u017bu\u0142awski's mother?",
+      "selection_rule": "First case in the frozen answer-quality-v1 suite category order.",
+      "task15_semantic_recall_at_5": 1.0,
+      "task15_semantic_recall_at_20": 1.0
+    },
+    {
+      "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+      "category": "two_hop",
+      "question": "What nationality is the director of film World And Time Enough?",
+      "selection_rule": "Lowest Task 15 semantic evidence fraction at K=20, then K=5, then ID.",
+      "task15_semantic_recall_at_5": 0.5,
+      "task15_semantic_recall_at_20": 0.5
+    },
+    {
+      "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+      "category": "three_plus_hop",
+      "question": "Which film has the director who was born later, El Extra\u00f1o Viaje or Love In Pawn?",
+      "selection_rule": "Lowest Task 15 semantic evidence fraction at K=20, then K=5, then ID.",
+      "task15_semantic_recall_at_5": 0.5,
+      "task15_semantic_recall_at_20": 0.75
+    },
+    {
+      "id": "unanswerable:0",
+      "category": "unanswerable",
+      "question": "On what date was fictional station Unlisted-0 constructed?",
+      "selection_rule": "First case in the frozen answer-quality-v1 suite category order.",
+      "task15_semantic_recall_at_5": null,
+      "task15_semantic_recall_at_20": null
+    },
+    {
+      "id": "contradictory:0",
+      "category": "contradictory",
+      "question": "What is the current access code of fictional vault Conflict-0?",
+      "selection_rule": "First case in the frozen answer-quality-v1 suite category order.",
+      "task15_semantic_recall_at_5": 1.0,
+      "task15_semantic_recall_at_20": 1.0
+    }
+  ],
+  "primary_paired_retrieval_mode": "semantic",
+  "task15_semantic_hybrid_retrieval_metrics_equal": true,
+  "generation_model_configured": null,
+  "generation_api_key_present": true,
+  "embedding_configuration": {
+    "provider": "gemini_developer_api",
+    "model_id": "gemini-embedding-2",
+    "dimensions": 768,
+    "document_format": "gemini_no_title_v1",
+    "normalization": "none"
+  },
+  "chunking_configuration": {
+    "id": 1,
+    "strategy": "whole_passage",
+    "tokenizer_name": "MongoDB/voyage-4",
+    "tokenizer_revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+    "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+    "max_tokens": 32000,
+    "overlap": 0,
+    "algorithm_version": "1"
+  },
+  "persistent_database": {
+    "database": "ai_investigation_evaluation",
+    "host": "127.0.0.1",
+    "port": 55433,
+    "verified_manifest_occurrences": 218,
+    "counts": {
+      "documents": 218,
+      "document_versions": 218,
+      "contents": 197,
+      "version_chunk_plans": 218,
+      "chunk_memberships": 218,
+      "chunk_embeddings": 197,
+      "active_versions": 218,
+      "active_searchable_occurrences": 218,
+      "incomplete_planned_versions": 0,
+      "database_bytes": 10196671,
+      "migration": "0002_embedding_storage",
+      "postgres_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+      "vector_dimensions": 768
+    },
+    "suite_question_text_matches_in_contents": 0,
+    "annotation_fields_in_searchable_content_schema": false
+  },
+  "generation_execution_started": true,
+  "generation_model_requested": "gemini-3.6-flash",
+  "generation_model_source": "Existing model used by the prior live answer-quality evaluation; GEMINI_GENERATION_MODEL has no local override.",
+  "quota_preflight": {
+    "active_ai_studio_rpd_remaining": null,
+    "provider_api_reports_remaining_quota": false,
+    "window_reset_reference": "Google documents RPD reset at midnight Pacific time.",
+    "action": "Use a hard maximum of 15 generation requests, below the prior user-reported 20 RPD, with 12.5 seconds between requests and two requests reserved."
+  },
+  "first_pair_execution_incident": {
+    "question_id": "simple:8813f87c0bdd11eba7f7acde48001122",
+    "mode_requests_attempted": {
+      "single_step": 1,
+      "multi_step": 2
+    },
+    "status": "application results returned but not persisted",
+    "cause": "A local paired-metric aggregator raised NameError before report export.",
+    "provider_error": false,
+    "retries": 0,
+    "response_content_recovered": false,
+    "rerun": false,
+    "follow_up": "Resume on the other four preselected IDs with three prior requests charged against the 15-request cap."
+  }
+}

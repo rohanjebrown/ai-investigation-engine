@@ -1,0 +1,91 @@
+# Existing GitHub trigger: push ^main$ -> this file. No production secrets in CI.
+substitutions:
+  _AR_HOSTNAME: europe-west3-docker.pkg.dev
+  _AR_PROJECT_ID: ai-investigation-engine-512912
+  _AR_REPOSITORY: cloud-run-source-deploy
+  _DEPLOY_REGION: europe-west3
+  _SERVICE_NAME: ai-investigation-engine
+  _CONTAINER_NAME: placeholder-1
+  _RUNTIME_SERVICE_ACCOUNT: 415474464012-compute@developer.gserviceaccount.com
+  _SQL_CONNECTION: ai-investigation-engine-512912:europe-west3:investigation-postgres
+steps:
+  - id: validate-main-commit
+    name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
+    entrypoint: python3
+    args: [deploy/cloud_run.py, validate, '--branch=$BRANCH_NAME', '--commit=$COMMIT_SHA']
+  - id: build-test-image
+    name: gcr.io/cloud-builders/docker
+    env: ['DOCKER_BUILDKIT=1']
+    args: [build, --target, test, --tag, 'investigation-ci:$COMMIT_SHA', .]
+  - id: unit-and-postgresql-tests
+    name: gcr.io/cloud-builders/docker
+    # Explicit host networking + daemon socket for disposable Testcontainers.
+    # No production credentials, host DB mounts, live keys, or --run-external.
+    args:
+      - run
+      - --rm
+      - --network=host
+      - --volume=/var/run/docker.sock:/var/run/docker.sock
+      - --env=TESTCONTAINERS_HOST_OVERRIDE=127.0.0.1
+      - --env=DB_HOST=127.0.0.1
+      - --env=DB_PORT=15432
+      - --env=DB_NAME=unused_ci
+      - --env=DB_USER=unused_ci
+      - --env=DB_PASSWORD=not-a-production-secret
+      - 'investigation-ci:$COMMIT_SHA'
+      - pytest
+      - tests/unit
+      - tests/integration
+      - -q
+  - id: javascript-tests
+    name: node:24-bookworm-slim
+    entrypoint: node
+    args: [--test, tests/frontend/test_web.cjs]
+  - id: build-production-image
+    name: gcr.io/cloud-builders/docker
+    env: ['DOCKER_BUILDKIT=1']
+    args: [build, --target, runtime, --tag, '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA', .]
+  - id: isolated-runtime-smoke
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args: [deploy/smoke_image.sh, '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA']
+  - id: existing-service-runtime-preflight
+    name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
+    entrypoint: python3
+    args:
+      - deploy/cloud_run.py
+      - preflight
+      - '--project=$_AR_PROJECT_ID'
+      - '--region=$_DEPLOY_REGION'
+      - '--service=$_SERVICE_NAME'
+      - '--container=$_CONTAINER_NAME'
+      - '--runtime-account=$_RUNTIME_SERVICE_ACCOUNT'
+      - '--sql-connection=$_SQL_CONNECTION'
+  - id: push-commit-image
+    name: gcr.io/cloud-builders/docker
+    args: [push, '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA']
+  - id: resolve-pushed-digest
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -ceu
+      - "docker inspect --format '{{index .RepoDigests 0}}' '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA' > /workspace/deploy-image.txt"
+  - id: update-existing-service-image-only
+    name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
+    entrypoint: python3
+    args:
+      - deploy/cloud_run.py
+      - deploy
+      - '--project=$_AR_PROJECT_ID'
+      - '--region=$_DEPLOY_REGION'
+      - '--service=$_SERVICE_NAME'
+      - '--container=$_CONTAINER_NAME'
+      - '--runtime-account=$_RUNTIME_SERVICE_ACCOUNT'
+      - '--sql-connection=$_SQL_CONNECTION'
+      - '--image-file=/workspace/deploy-image.txt'
+      - '--image-prefix=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME'
+options:
+  logging: CLOUD_LOGGING_ONLY
+  # The pre-existing trigger has extra console-generated substitutions.
+  substitutionOption: ALLOW_LOOSE
+timeout: 1800s

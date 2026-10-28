@@ -1,0 +1,1288 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T12:34:45.032620+00:00",
+  "question_ids": [
+    "2wiki:2207e9060bda11eba7f7acde48001122"
+  ],
+  "evaluated_case_count": 1,
+  "stopped_early": false,
+  "runs": [
+    {
+      "configuration": {
+        "name": "investigation-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.5-flash-lite",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "max_turns": 6,
+          "max_generation_requests": 6,
+          "max_search_calls": 5,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 25,
+          "max_context_chars": 64000,
+          "max_embedding_requests": 5
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "incorrect_answer": 1
+        },
+        "answer_correctness_counts": {
+          "incorrect": 1
+        },
+        "determinately_scored_answer_count": 1,
+        "deterministic_answer_accuracy": 0.0,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 0,
+        "strict_evidence_recall": 1.0,
+        "partial_evidence_recall": 1.0,
+        "strict_citation_recall": 1.0,
+        "partial_citation_recall": 1.0,
+        "strict_citation_precision": 1.0,
+        "partial_citation_precision": 1.0,
+        "all_gold_facts_strictly_retrieved": 1,
+        "all_gold_facts_strictly_cited": 1,
+        "mean_latency_ms": 39182.25480000547,
+        "mean_search_calls": 3,
+        "mean_generation_requests": 4,
+        "mean_follow_up_searches_with_new_required_evidence": 1,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "two_hop": {
+          "outcome_counts": {
+            "incorrect_answer": 1
+          },
+          "answer_correctness_counts": {
+            "incorrect": 1
+          },
+          "determinately_scored_answer_count": 1,
+          "deterministic_answer_accuracy": 0.0,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 1.0,
+          "partial_evidence_recall": 1.0,
+          "strict_citation_recall": 1.0,
+          "partial_citation_recall": 1.0,
+          "strict_citation_precision": 1.0,
+          "partial_citation_precision": 1.0,
+          "all_gold_facts_strictly_retrieved": 1,
+          "all_gold_facts_strictly_cited": 1,
+          "mean_latency_ms": 39182.25480000547,
+          "mean_search_calls": 3,
+          "mean_generation_requests": 4,
+          "mean_follow_up_searches_with_new_required_evidence": 1,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "question": "What nationality is the director of film World And Time Enough?",
+          "category": "two_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "United States",
+          "acceptable_answers": [
+            "United States"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "sentence_index": 1,
+              "start": 15,
+              "end": 171
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 146
+            }
+          ],
+          "status": "answered",
+          "outcome": "incorrect_answer",
+          "answer": "American",
+          "citations": [
+            "E1",
+            "E6"
+          ],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": "World And Time Enough film director nationality",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "duration_ms": 849.3754000010085,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 2,
+              "query": "\"Eric Mueller\" director nationality",
+              "evidence_ids": [
+                "E6",
+                "E1",
+                "E3",
+                "E7",
+                "E8"
+              ],
+              "result_count": 5,
+              "duration_ms": 813.0125000025146,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 3,
+              "query": "\"Eric Mueller\" director \"World and Time Enough\" american",
+              "evidence_ids": [
+                "E1",
+                "E6",
+                "E3",
+                "E7",
+                "E8"
+              ],
+              "result_count": 5,
+              "duration_ms": 770.7156000033137,
+              "succeeded": true,
+              "disposition": "succeeded"
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-6cde-71e1-8ecc-0678a8ef54d5",
+              "document_version_id": "01a181cd-6cde-71e1-8ecc-0679d8e2cea0",
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "start": 0,
+              "end": 234,
+              "text": "World and Time Enough is a 1994 independent gay-themed romantic comedy-drama written and directed by Eric Mueller and starring Gregory Giles, Matt Guidry and Kraig Swartz. It was filmed on location in Edina and Minneapolis, Minnesota.",
+              "title": "World and Time Enough",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 14,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 15,
+                  "end": 171,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 172,
+                  "end": 234,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7626738947247728,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-6981-75d9-848d-1131cd8959e6",
+              "document_version_id": "01a181cd-6981-75d9-848d-1132ab3643c2",
+              "content_sha256": "fd235f69a3e528162bd767adacf7f840f6e405cbd979b2fc325e2fcf874460eb",
+              "start": 0,
+              "end": 716,
+              "text": "Kenneth Lauren Burns (born 1953) is an American filmmaker, known for his style of using archival footage and photographs in documentary films. His widely known documentary series include \"The Civil War\" (1990), \"Baseball\" (1994), \"Jazz\" (2001), \"The War\" (2007),  (2009), \"Prohibition\" (2011), \"The Roosevelts\" (2014), \"The Vietnam War\" (2017), and \"Country Music\" (2019). He was also executive producer of both \"The West\" (1996, directed by Stephen Ives), and \"Cancer: The Emperor of All Maladies\" (2015, directed by Barak Goodman). Burns' documentaries have earned two Academy Award nominations (for 1981's \"Brooklyn Bridge\" and 1985's \"The Statue of Liberty\") and have won several Emmy Awards, among other honors.",
+              "title": "Ken Burns",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "464cfa460bd911eba7f7acde48001122",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Ken Burns",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 142,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 143,
+                  "end": 372,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 373,
+                  "end": 533,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 534,
+                  "end": 716,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.6511661243986462,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-66f6-708b-bd07-48d856a86c8e",
+              "document_version_id": "01a181cd-66f6-708b-bd07-48d9e28f1ea5",
+              "content_sha256": "80d973ef3bf00f439f108eb2f64e37329d8b27fc60481138f781efc66307a0fd",
+              "start": 0,
+              "end": 92,
+              "text": "Jason Moore( born October 22, 1970) is an American director of film, theatre and television.",
+              "title": "Jason Moore (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 0
+                },
+                "metadata": {},
+                "display_name": "Jason Moore (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 92,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6506366715404398,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-68bb-74ab-82ca-1ea0d1ae62ad",
+              "document_version_id": "01a181cd-68bb-74ab-82ca-1ea1899accbd",
+              "content_sha256": "2109a6f82319b1e56abd3c30f1e5999c647fceb4a837eba14f8224f376e658a4",
+              "start": 0,
+              "end": 157,
+              "text": "James Cruze( born Jens Vera Cruz Bosen, March 27, 1884 near Ogden, Utah – August 3, 1942 in Hollywood, California) was a silent film actor and film director.",
+              "title": "James Cruze",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "645c9a5a08c311ebbd8dac1f6bf848b6",
+                  "context_position": 5
+                },
+                "metadata": {},
+                "display_name": "James Cruze",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 157,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.646887444423534,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6943-735f-9ce4-db4e2ef40c1e",
+              "document_version_id": "01a181cd-6943-735f-9ce4-db4f4dde9386",
+              "content_sha256": "73c88391a514a49b16cb7b3af63330f6b0cdb3b74aba1900d25dcbcff4d2a5b9",
+              "start": 0,
+              "end": 782,
+              "text": "Robert Bresson( 25 September 1901 – 18 December 1999) was a French film director. Known for his ascetic approach, Bresson contributed notably to the art of cinema; his non-professional actors, ellipses, and sparse use of scoring have led his works to be regarded as preeminent examples of minimalist film. Bresson is among the most highly regarded French filmmakers of all time. His works\" A Man Escaped\"( 1956),\" Pickpocket\"( 1959) and\" Au hasard Balthazar\"( 1966) were ranked among the 100 greatest films ever made in the 2012\" Sight& Sound\" critics' poll. Other films of his, such as\" Mouchette\"( 1967) and\" L' Argent\"( 1983), also received many votes. Jean- Luc Godard once wrote,\" He is the French cinema, as Dostoevsky is the Russian novel and Mozart is German[\" sic\"] music.\"",
+              "title": "Robert Bresson",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Robert Bresson",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 81,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 82,
+                  "end": 305,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 306,
+                  "end": 378,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 379,
+                  "end": 558,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 559,
+                  "end": 655,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 656,
+                  "end": 782,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6414115620080105,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E6",
+              "document_id": "01a181cd-6cf7-724d-bf69-3a60a597ccd1",
+              "document_version_id": "01a181cd-6cf7-724d-bf69-3a61e2e12a53",
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "start": 0,
+              "end": 1937,
+              "text": "Eric C. Mueller (born November 6, 1970) is a former Olympic and National team rower, representing the United States at the 1996 and 2000 Olympics. He was born in Kansas City, Missouri. Mueller, one of the most successful men's rowers in Wisconsin history, begins his third season as the Badgers' freshmen coach. Mueller returns to Madison for the second time as an assistant coach. He spent 1998–99 as the assistant varsity coach, before leaving to train for the 2000 Olympic Summer Games in Sydney, Australia. During his previous stint, he was responsible for the Badgers' small boats and led them to four gold medals and one silver medal at the Intercollegiate Rowing Association national championships. The result helped Wisconsin begin a four-year run as winners of the Ten Eyck Trophy as national team points champion. Since his return, the UW freshmen have improved from a bottom six national finish in the year before his joining the program to a return to the national grand finals. As a rower, Mueller secured three letters at Wisconsin while a member of the varsity eight from 1991–93. At national championships during his career, the boat placed sixth, once, and ninth, twice. A Cedarburg, native , Mueller earned a bachelor's degree in mechanical engineering from Wisconsin in 1994. Following his Badger career, Mueller went on to win an Olympic silver medal in the men's quadruple sculls in 1996 in Atlanta. He also placed fifth at the 2000 Olympics with the men's four. U.S. national team member in 1995, ‘96, ‘00, ‘01 and ‘02 , he was part of the men's eight champion at the 2002 World Cup in Lucerne, Switzerland, and finished third at the 2002 World Championships in Seville, Spain. His men's four took fourth at the 2001 World Championships, while his men's eight was a bronze medalist at the 2000 World Cup, again in Lucerne. He also won a bronze medal with the men's quadruple sculls in Lucerne at the 1996 World Cup.",
+              "title": "Eric Mueller",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 146,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 147,
+                  "end": 184,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 185,
+                  "end": 311,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 312,
+                  "end": 381,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 382,
+                  "end": 510,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 511,
+                  "end": 705,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 706,
+                  "end": 823,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                },
+                {
+                  "start": 824,
+                  "end": 990,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 7
+                    }
+                  ]
+                },
+                {
+                  "start": 991,
+                  "end": 1095,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 8
+                    }
+                  ]
+                },
+                {
+                  "start": 1096,
+                  "end": 1187,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 9
+                    }
+                  ]
+                },
+                {
+                  "start": 1188,
+                  "end": 1207,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 10
+                    }
+                  ]
+                },
+                {
+                  "start": 1208,
+                  "end": 1294,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 11
+                    }
+                  ]
+                },
+                {
+                  "start": 1295,
+                  "end": 1420,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 12
+                    }
+                  ]
+                },
+                {
+                  "start": 1421,
+                  "end": 1483,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 13
+                    }
+                  ]
+                },
+                {
+                  "start": 1484,
+                  "end": 1540,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 14
+                    }
+                  ]
+                },
+                {
+                  "start": 1541,
+                  "end": 1699,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 15
+                    }
+                  ]
+                },
+                {
+                  "start": 1700,
+                  "end": 1844,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 16
+                    }
+                  ]
+                },
+                {
+                  "start": 1845,
+                  "end": 1937,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 17
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7480431945298849,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E7",
+              "document_id": "01a181cd-670b-7021-ad83-88063c7a85e2",
+              "document_version_id": "01a181cd-670b-7021-ad83-8807eb9e3f8c",
+              "content_sha256": "f320a4ef3068751e5cc39a07de5366a71ba0b0e80a4ebc9773ae1d766a9b9a6a",
+              "start": 0,
+              "end": 433,
+              "text": "Brian Patrick Kennedy( born 5 November 1961) is an Irish- born art museum director who has worked in Ireland and Australia, and now lives and works in the United States. He is currently the director of the Peabody Essex Museum. He was the director of the Toledo Museum of Art in Ohio from 2010 to 2019. He was the director of the Hood Museum of Art from 2005 to 2010, and the National Gallery of Australia( Canberra) from 1997- 2004.",
+              "title": "Brian Kennedy (gallery director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 2
+                },
+                "metadata": {},
+                "display_name": "Brian Kennedy (gallery director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 169,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 170,
+                  "end": 227,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 228,
+                  "end": 302,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 303,
+                  "end": 433,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6489078966811913,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E8",
+              "document_id": "01a181cd-6b6c-71e9-9658-e609938a6b45",
+              "document_version_id": "01a181cd-6b6c-71e9-9658-e60acc9367b0",
+              "content_sha256": "f320a4ef3068751e5cc39a07de5366a71ba0b0e80a4ebc9773ae1d766a9b9a6a",
+              "start": 0,
+              "end": 433,
+              "text": "Brian Patrick Kennedy( born 5 November 1961) is an Irish- born art museum director who has worked in Ireland and Australia, and now lives and works in the United States. He is currently the director of the Peabody Essex Museum. He was the director of the Toledo Museum of Art in Ohio from 2010 to 2019. He was the director of the Hood Museum of Art from 2005 to 2010, and the National Gallery of Australia( Canberra) from 1997- 2004.",
+              "title": "Brian Kennedy (gallery director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2935f1640bda11eba7f7acde48001122",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Brian Kennedy (gallery director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 169,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 170,
+                  "end": 227,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 228,
+                  "end": 302,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 303,
+                  "end": 433,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6489078966811913,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-6cde-71e1-8ecc-0678a8ef54d5",
+              "document_version_id": "01a181cd-6cde-71e1-8ecc-0679d8e2cea0",
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "start": 0,
+              "end": 234,
+              "text": "World and Time Enough is a 1994 independent gay-themed romantic comedy-drama written and directed by Eric Mueller and starring Gregory Giles, Matt Guidry and Kraig Swartz. It was filmed on location in Edina and Minneapolis, Minnesota.",
+              "title": "World and Time Enough",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 14,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 15,
+                  "end": 171,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 172,
+                  "end": 234,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7626738947247728,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E6",
+              "document_id": "01a181cd-6cf7-724d-bf69-3a60a597ccd1",
+              "document_version_id": "01a181cd-6cf7-724d-bf69-3a61e2e12a53",
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "start": 0,
+              "end": 1937,
+              "text": "Eric C. Mueller (born November 6, 1970) is a former Olympic and National team rower, representing the United States at the 1996 and 2000 Olympics. He was born in Kansas City, Missouri. Mueller, one of the most successful men's rowers in Wisconsin history, begins his third season as the Badgers' freshmen coach. Mueller returns to Madison for the second time as an assistant coach. He spent 1998–99 as the assistant varsity coach, before leaving to train for the 2000 Olympic Summer Games in Sydney, Australia. During his previous stint, he was responsible for the Badgers' small boats and led them to four gold medals and one silver medal at the Intercollegiate Rowing Association national championships. The result helped Wisconsin begin a four-year run as winners of the Ten Eyck Trophy as national team points champion. Since his return, the UW freshmen have improved from a bottom six national finish in the year before his joining the program to a return to the national grand finals. As a rower, Mueller secured three letters at Wisconsin while a member of the varsity eight from 1991–93. At national championships during his career, the boat placed sixth, once, and ninth, twice. A Cedarburg, native , Mueller earned a bachelor's degree in mechanical engineering from Wisconsin in 1994. Following his Badger career, Mueller went on to win an Olympic silver medal in the men's quadruple sculls in 1996 in Atlanta. He also placed fifth at the 2000 Olympics with the men's four. U.S. national team member in 1995, ‘96, ‘00, ‘01 and ‘02 , he was part of the men's eight champion at the 2002 World Cup in Lucerne, Switzerland, and finished third at the 2002 World Championships in Seville, Spain. His men's four took fourth at the 2001 World Championships, while his men's eight was a bronze medalist at the 2000 World Cup, again in Lucerne. He also won a bronze medal with the men's quadruple sculls in Lucerne at the 1996 World Cup.",
+              "title": "Eric Mueller",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 146,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 147,
+                  "end": 184,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 185,
+                  "end": 311,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 312,
+                  "end": 381,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 382,
+                  "end": 510,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 511,
+                  "end": 705,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 706,
+                  "end": 823,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                },
+                {
+                  "start": 824,
+                  "end": 990,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 7
+                    }
+                  ]
+                },
+                {
+                  "start": 991,
+                  "end": 1095,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 8
+                    }
+                  ]
+                },
+                {
+                  "start": 1096,
+                  "end": 1187,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 9
+                    }
+                  ]
+                },
+                {
+                  "start": 1188,
+                  "end": 1207,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 10
+                    }
+                  ]
+                },
+                {
+                  "start": 1208,
+                  "end": 1294,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 11
+                    }
+                  ]
+                },
+                {
+                  "start": 1295,
+                  "end": 1420,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 12
+                    }
+                  ]
+                },
+                {
+                  "start": 1421,
+                  "end": 1483,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 13
+                    }
+                  ]
+                },
+                {
+                  "start": 1484,
+                  "end": 1540,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 14
+                    }
+                  ]
+                },
+                {
+                  "start": 1541,
+                  "end": 1699,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 15
+                    }
+                  ]
+                },
+                {
+                  "start": 1700,
+                  "end": 1844,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 16
+                    }
+                  ]
+                },
+                {
+                  "start": 1845,
+                  "end": 1937,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 17
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7480431945298849,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "answer_correctness": "incorrect",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 8,
+            "strict_fact_count": 2,
+            "strict_recall": 1.0,
+            "all_required_strict": true,
+            "strict_precision": 0.25,
+            "partial_fact_count": 2,
+            "partial_recall": 1.0,
+            "partial_precision": 0.25,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 2,
+            "strict_fact_count": 2,
+            "strict_recall": 1.0,
+            "all_required_strict": true,
+            "strict_precision": 1.0,
+            "partial_fact_count": 2,
+            "partial_recall": 1.0,
+            "partial_precision": 1.0,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "reasoning_or_synthesis_failure",
+            "observation": "Observed outcome: incorrect_answer.",
+            "hypothesis": "Gold matching and output status expose the failure class but do not prove its semantic cause."
+          },
+          "semantic_claim_support": {
+            "status": "human_review_required",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 3,
+            "generation_requests": 4,
+            "embedding_query_requests": 3,
+            "latency_ms": 39182.25480000547,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 2,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 1
+          },
+          "usage": {
+            "prompt_tokens": 18485,
+            "candidate_tokens": 117,
+            "thinking_tokens": 0
+          },
+          "model_version": "gemini-3.5-flash-lite",
+          "error_type": null,
+          "assistant_evidence_review": {
+            "protocol_complete": true,
+            "citation_identifiers_valid": true,
+            "lexical_scoring_note": "American is a demonym corresponding to the gold answer United States, but the frozen acceptable-answer list contains only United States. The original automatic incorrect score is preserved.",
+            "entity_support_issue": "E1 identifies Eric Mueller as the film director. E6 describes Olympic rower Eric C. Mueller and does not link him to the film. The excerpts do not establish that these are the same person.",
+            "conclusion": "Structural citations and annotated coverage are complete; semantic support for the director-nationality claim remains unresolved."
+          }
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used.",
+    "Execution failures without a completed application result have unobserved evidence metrics, not zero-recall scores."
+  ],
+  "total_elapsed_ms": 39443.1196000005,
+  "execution": {
+    "kind": "persistent_local_frozen_sample",
+    "generation_model_requested": "gemini-3.5-flash-lite",
+    "generation_budget_model_scope": "gemini-3.5-flash-lite",
+    "generation_model_configuration_source": "explicit evaluation CLI configuration",
+    "max_output_tokens": 4096,
+    "generation_request_cap": 19,
+    "generation_requests_observed": 4,
+    "generation_requests_by_mode": {
+      "single_step": 0,
+      "multi_step": 4
+    },
+    "assumed_daily_rpd_limit": 20,
+    "remaining_rpd_independently_verified": false,
+    "prior_generation_requests_this_daily_window": 0,
+    "prior_single_step_requests_this_daily_window": 0,
+    "prior_multi_step_requests_this_daily_window": 0,
+    "prior_embedding_request_totals": "Historical requests excluded; this invocation made 3 query embeddings and no document embeddings.",
+    "reserved_daily_requests": 1,
+    "active_quota_not_independently_api_readable": true,
+    "generation_request_interval_seconds": 12.5,
+    "provider_retries": 0,
+    "embedding_model": "gemini-embedding-2",
+    "embedding_dimensions": 768,
+    "embedding_configuration": {
+      "provider": "gemini_developer_api",
+      "model_id": "gemini-embedding-2",
+      "dimensions": 768,
+      "document_format": "gemini_no_title_v1",
+      "normalization": "none"
+    },
+    "embedding_inputs_observed": 3,
+    "embedding_text_cap": 15,
+    "embedding_request_counts": {
+      "count_tokens": 3,
+      "embed_content": 3
+    },
+    "counted_embedding_tokens": 46,
+    "database": {
+      "documents": 218,
+      "document_versions": 218,
+      "contents": 197,
+      "version_chunk_plans": 218,
+      "chunk_memberships": 218,
+      "chunk_embeddings": 197,
+      "active_versions": 218,
+      "active_searchable_occurrences": 218,
+      "incomplete_planned_versions": 0,
+      "database_bytes": 10196671,
+      "migration": "0002_embedding_storage",
+      "postgres_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+      "vector_dimensions": 768
+    },
+    "verified_manifest_occurrences": 218,
+    "test_database": "persistent local PostgreSQL 18.4/pgvector evaluation database",
+    "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+    "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+    "selected_question_ids": [
+      "2wiki:2207e9060bda11eba7f7acde48001122"
+    ],
+    "task15_semantic_hybrid_metrics_equal": true,
+    "cloud_sql_contacted": false,
+    "budget_note": "One frozen investigation, max 6 generation attempts and 5 searches; no retries. The local daily ceiling of 20 is not a claimed provider quota. Other model usage remains separately recorded.",
+    "incomplete_reason": null,
+    "generation_provider_requests": {
+      "quick_answer": 0,
+      "investigation": 4
+    },
+    "total_generation_attempts_including_prior": 4,
+    "generation_failures": [],
+    "configured_daily_ceiling_source": "Conservative local ceiling for this user-authorized alternative; active model-specific RPD is not independently verified.",
+    "known_other_model_daily_attempts_before_run": {
+      "gemini-3.6-flash": 20,
+      "gemma-4-31b-it": 1,
+      "gemma-4-26b-a4b-it": 1
+    },
+    "model_metadata_preflight": {
+      "name": "models/gemini-3.5-flash-lite",
+      "version": "3.5-flash-lite-07-2026",
+      "input_token_limit": 1048576,
+      "output_token_limit": 65536,
+      "supported_actions": [
+        "generateContent",
+        "countTokens",
+        "createCachedContent",
+        "batchGenerateContent"
+      ]
+    }
+  }
+}

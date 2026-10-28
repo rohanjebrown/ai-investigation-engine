@@ -1,0 +1,3685 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T10:15:11.646377+00:00",
+  "question_ids": [
+    "simple:8813f87c0bdd11eba7f7acde48001122",
+    "2wiki:2207e9060bda11eba7f7acde48001122",
+    "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+    "unanswerable:0",
+    "contradictory:0"
+  ],
+  "evaluated_case_count": 5,
+  "stopped_early": true,
+  "runs": [
+    {
+      "configuration": {
+        "name": "quick-answer-real-gemini",
+        "mode": "single_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": {
+          "max_evidence": 5,
+          "max_context_chars": 12000
+        },
+        "investigation_budgets": null
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "correct_abstention": 1,
+          "execution_failure": 1,
+          "incorrect_abstention": 2,
+          "missed_contradiction": 1
+        },
+        "answer_correctness_counts": {
+          "no_answer": 2,
+          "not_applicable": 2,
+          "unavailable": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 1,
+        "incorrect_abstentions": 2,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 1,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 0,
+        "strict_evidence_recall": 0.6666666666666666,
+        "partial_evidence_recall": 0.6666666666666666,
+        "strict_citation_recall": 0.0,
+        "partial_citation_recall": 0.0,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 1,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 10320.461624998643,
+        "mean_search_calls": 1,
+        "mean_generation_requests": 1,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 5
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "missed_contradiction": 1
+          },
+          "answer_correctness_counts": {
+            "not_applicable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 1,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 1.0,
+          "partial_evidence_recall": 1.0,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 1,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 4082.5385999996797,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "simple_factual": {
+          "outcome_counts": {
+            "execution_failure": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "three_plus_hop": {
+          "outcome_counts": {
+            "incorrect_abstention": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 1,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 0.5,
+          "partial_evidence_recall": 0.5,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 15487.898100000166,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "two_hop": {
+          "outcome_counts": {
+            "incorrect_abstention": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 1,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 0.5,
+          "partial_evidence_recall": 0.5,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 8481.198299996322,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "unanswerable": {
+          "outcome_counts": {
+            "correct_abstention": 1
+          },
+          "answer_correctness_counts": {
+            "not_applicable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 1,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 13230.211499998404,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "simple:8813f87c0bdd11eba7f7acde48001122",
+          "question": "What is Xawery Żuławski's mother?",
+          "category": "simple_factual",
+          "expected_behavior": "answer",
+          "expected_answer": "Małgorzata Braunek",
+          "acceptable_answers": [
+            "Małgorzata Braunek"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "sentence_index": 2,
+              "start": 128,
+              "end": 202
+            }
+          ],
+          "status": "failed",
+          "outcome": "execution_failure",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "result_persistence_failure",
+            "observation": "The application calls completed, but a local report aggregator raised before their result rows were written.",
+            "hypothesis": "Exact answers and evidence are unavailable. Calls were not repeated to avoid regenerating successful responses."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": null,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemini-3.6-flash",
+          "error_type": "LocalReportSerializationError",
+          "provider_diagnostic": null
+        },
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "question": "What nationality is the director of film World And Time Enough?",
+          "category": "two_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "United States",
+          "acceptable_answers": [
+            "United States"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "sentence_index": 1,
+              "start": 15,
+              "end": 171
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 146
+            }
+          ],
+          "status": "insufficient_evidence",
+          "outcome": "incorrect_abstention",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-6cde-71e1-8ecc-0678a8ef54d5",
+              "document_version_id": "01a181cd-6cde-71e1-8ecc-0679d8e2cea0",
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "start": 0,
+              "end": 234,
+              "text": "World and Time Enough is a 1994 independent gay-themed romantic comedy-drama written and directed by Eric Mueller and starring Gregory Giles, Matt Guidry and Kraig Swartz. It was filmed on location in Edina and Minneapolis, Minnesota.",
+              "title": "World and Time Enough",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 14,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 15,
+                  "end": 171,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 172,
+                  "end": 234,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7713913917541997,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-6981-75d9-848d-1131cd8959e6",
+              "document_version_id": "01a181cd-6981-75d9-848d-1132ab3643c2",
+              "content_sha256": "fd235f69a3e528162bd767adacf7f840f6e405cbd979b2fc325e2fcf874460eb",
+              "start": 0,
+              "end": 716,
+              "text": "Kenneth Lauren Burns (born 1953) is an American filmmaker, known for his style of using archival footage and photographs in documentary films. His widely known documentary series include \"The Civil War\" (1990), \"Baseball\" (1994), \"Jazz\" (2001), \"The War\" (2007),  (2009), \"Prohibition\" (2011), \"The Roosevelts\" (2014), \"The Vietnam War\" (2017), and \"Country Music\" (2019). He was also executive producer of both \"The West\" (1996, directed by Stephen Ives), and \"Cancer: The Emperor of All Maladies\" (2015, directed by Barak Goodman). Burns' documentaries have earned two Academy Award nominations (for 1981's \"Brooklyn Bridge\" and 1985's \"The Statue of Liberty\") and have won several Emmy Awards, among other honors.",
+              "title": "Ken Burns",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "464cfa460bd911eba7f7acde48001122",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Ken Burns",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 142,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 143,
+                  "end": 372,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 373,
+                  "end": 533,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 534,
+                  "end": 716,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.6480943836772045,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-6e2a-7524-9a26-621bf09f64b3",
+              "document_version_id": "01a181cd-6e2a-7524-9a26-621cf1972be0",
+              "content_sha256": "947687691b583cec28b292fc0b8e6e09ac17b3babad04a5ff3e9a29798197a01",
+              "start": 0,
+              "end": 344,
+              "text": "Roberto Gastone Zeffiro Rossellini( 8 May 1906 – 3 June 1977) was an Italian film director, screenwriter, and producer. Rossellini was one of the directors of the Italian neorealist cinema, contributing to the movement with films such as\" Rome, Open City\"( 1945),\" Paisan\"( 1946),\" Germany, Year Zero\"( 1948), and\" General Della Rovere\"( 1959).",
+              "title": "Roberto Rossellini",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Roberto Rossellini",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 119,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 120,
+                  "end": 344,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6474292381487506,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-66f6-708b-bd07-48d856a86c8e",
+              "document_version_id": "01a181cd-66f6-708b-bd07-48d9e28f1ea5",
+              "content_sha256": "80d973ef3bf00f439f108eb2f64e37329d8b27fc60481138f781efc66307a0fd",
+              "start": 0,
+              "end": 92,
+              "text": "Jason Moore( born October 22, 1970) is an American director of film, theatre and television.",
+              "title": "Jason Moore (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 0
+                },
+                "metadata": {},
+                "display_name": "Jason Moore (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 92,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6467343989927476,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6943-735f-9ce4-db4e2ef40c1e",
+              "document_version_id": "01a181cd-6943-735f-9ce4-db4f4dde9386",
+              "content_sha256": "73c88391a514a49b16cb7b3af63330f6b0cdb3b74aba1900d25dcbcff4d2a5b9",
+              "start": 0,
+              "end": 782,
+              "text": "Robert Bresson( 25 September 1901 – 18 December 1999) was a French film director. Known for his ascetic approach, Bresson contributed notably to the art of cinema; his non-professional actors, ellipses, and sparse use of scoring have led his works to be regarded as preeminent examples of minimalist film. Bresson is among the most highly regarded French filmmakers of all time. His works\" A Man Escaped\"( 1956),\" Pickpocket\"( 1959) and\" Au hasard Balthazar\"( 1966) were ranked among the 100 greatest films ever made in the 2012\" Sight& Sound\" critics' poll. Other films of his, such as\" Mouchette\"( 1967) and\" L' Argent\"( 1983), also received many votes. Jean- Luc Godard once wrote,\" He is the French cinema, as Dostoevsky is the Russian novel and Mozart is German[\" sic\"] music.\"",
+              "title": "Robert Bresson",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Robert Bresson",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 81,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 82,
+                  "end": 305,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 306,
+                  "end": 378,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 379,
+                  "end": 558,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 559,
+                  "end": 655,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 656,
+                  "end": 782,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6441331546068614,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 1,
+            "strict_recall": 0.5,
+            "all_required_strict": false,
+            "strict_precision": 0.2,
+            "partial_fact_count": 1,
+            "partial_recall": 0.5,
+            "partial_precision": 0.2,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "search_planning_or_retrieval_failure",
+            "observation": "Strictly retrieved 1 of 2 required facts.",
+            "hypothesis": "Search logs identify query order and returned evidence, but do not establish whether planning or ranking caused the gap."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 8481.198299996322,
+            "required_facts_retrieved": 1,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": true,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 914,
+            "candidate_tokens": 15,
+            "thinking_tokens": 186
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "question": "Which film has the director who was born later, El Extraño Viaje or Love In Pawn?",
+          "category": "three_plus_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "El Extraño Viaje",
+          "acceptable_answers": [
+            "El Extraño Viaje"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 86
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Love in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "6a070f2a47236b4e26ec61aca53f3b5163c45f9955a32b30c9af585a66db3370",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 118
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Fernando Fernán Gómez",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 222
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Charles Saunders (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "658be9ea41f708c229faf23844941e694fa80744055f8d172a744c5fbe022c79",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 181
+            }
+          ],
+          "status": "insufficient_evidence",
+          "outcome": "incorrect_abstention",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-67cb-7237-9643-7e564912ffc2",
+              "document_version_id": "01a181cd-67cb-7237-9643-7e570a1a8ada",
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "start": 0,
+              "end": 310,
+              "text": "El extraño viaje is a 1964 Spanish black drama film directed by Fernando Fernán Gómez. Famous film director Jess Franco acts as the brother of the protagonist. The film was a huge flop on its limited release. It was voted seventh best Spanish film by professionals and critics in 1996 Spanish cinema centenary.",
+              "title": "El extraño viaje",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 86,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 87,
+                  "end": 159,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 160,
+                  "end": 208,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 209,
+                  "end": 310,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7789081466849108,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-6800-7372-bf12-007c8fe6831c",
+              "document_version_id": "01a181cd-6800-7372-bf12-007d1e81a2cc",
+              "content_sha256": "6a070f2a47236b4e26ec61aca53f3b5163c45f9955a32b30c9af585a66db3370",
+              "start": 0,
+              "end": 118,
+              "text": "Love in Pawn is a 1953 British comedy film directed by Charles Saunders and starring Bernard Braden and Barbara Kelly.",
+              "title": "Love in Pawn",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Love in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 118,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.732257044700249,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-6812-70e6-9267-897b7437aa20",
+              "document_version_id": "01a181cd-6812-70e6-9267-897cdd658c19",
+              "content_sha256": "a4bca66ff918fc2ee195eaaef3a1b0c4235a1ab052cf5ab9cfc4a59e4dcf846a",
+              "start": 0,
+              "end": 80,
+              "text": "A Lover in Pawn is a 1920 Swedish silent drama film directed by Victor Sjöström.",
+              "title": "A Lover in Pawn",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 6
+                },
+                "metadata": {},
+                "display_name": "A Lover in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 80,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.7037958436377441,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-67d4-743c-900c-4081827cfdc2",
+              "document_version_id": "01a181cd-67d4-743c-900c-4082b90645bd",
+              "content_sha256": "1a78c1df9c76caba315faef52c2903b92fc9b4854be9f1d87d4b060fc08290ae",
+              "start": 0,
+              "end": 388,
+              "text": "Luck in Pawn is a 1919 American silent romance film starring Marguerite Clark and directed by Walter Edwards. It was produced by Famous Players- Lasky and distributed through Paramount Pictures. The film is based on a play by Marvin Taylor,\" Luck in Pawn\", and ran briefly on Broadway in 1919. The film is listed as being preserved at the Library of Congress and New Zealand Film Archive.",
+              "title": "Luck in Pawn",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 2
+                },
+                "metadata": {},
+                "display_name": "Luck in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 109,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 110,
+                  "end": 194,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 195,
+                  "end": 293,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 294,
+                  "end": 388,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6698374337636223,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6809-76eb-a43c-d55c6f0f9494",
+              "document_version_id": "01a181cd-6809-76eb-a43c-d55dacc7b8f1",
+              "content_sha256": "8f92981e9e9c21d147d75eee289c0d6247d2f8db18c31cc2a8ecaafbd0dc05a0",
+              "start": 0,
+              "end": 336,
+              "text": "Rafaela Díaz Valiente( 9 April 1906 – 9 June 1996) better known as Rafaela Aparicio was a famous Spanish film and theatre actress. She made more than 100 films. The most remembered are Carlos Saura's\" Anna and the WolvesMama Turns 100\" and Fernando Fernán Gómez's\" El extraño viaje\". She died of a stroke in Madrid in a retirement home.",
+              "title": "Rafaela Aparicio",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 5
+                },
+                "metadata": {},
+                "display_name": "Rafaela Aparicio",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 7,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 8,
+                  "end": 130,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 131,
+                  "end": 160,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 161,
+                  "end": 283,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 284,
+                  "end": 336,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6467868371303177,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 2,
+            "strict_recall": 0.5,
+            "all_required_strict": false,
+            "strict_precision": 0.4,
+            "partial_fact_count": 2,
+            "partial_recall": 0.5,
+            "partial_precision": 0.4,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "search_planning_or_retrieval_failure",
+            "observation": "Strictly retrieved 2 of 4 required facts.",
+            "hypothesis": "Search logs identify query order and returned evidence, but do not establish whether planning or ranking caused the gap."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 15487.898100000166,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": true,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 579,
+            "candidate_tokens": 15,
+            "thinking_tokens": 263
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "unanswerable:0",
+          "question": "On what date was fictional station Unlisted-0 constructed?",
+          "category": "unanswerable",
+          "expected_behavior": "abstain",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [],
+          "status": "insufficient_evidence",
+          "outcome": "correct_abstention",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-7001-706b-b1be-eb64c43a9561",
+              "document_version_id": "01a181cd-7001-706b-b1be-eb653438806e",
+              "content_sha256": "800c7ae3d1675c92724326299df12e8e1cdb5d5d2e8c380262ede09da39d77b0",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-0 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-0",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-0"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-0",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.8607381235233706,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-701f-7055-83cb-a78080b7400c",
+              "document_version_id": "01a181cd-701f-7055-83cb-a7812f164e49",
+              "content_sha256": "0874238c5794ea7ab706021ed3ac87785d360dff640c4d7a3fb47c7f082c4f72",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-1 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-1",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-1"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-1",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.8445916308735836,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-709d-7603-a612-be3f77cf3fec",
+              "document_version_id": "01a181cd-709d-7603-a612-be407dfe9e85",
+              "content_sha256": "7b2199779d8a580c6164a46b219b476256dd44e1787eec004a6ce0ef57fddc9a",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-5 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-5",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-5"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-5",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.8315811157226621,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-7042-7591-a0b9-ace2c632d1ae",
+              "document_version_id": "01a181cd-7042-7591-a0b9-ace3b807fdea",
+              "content_sha256": "8ce10aff7e5104091d760e8ad58806cdefeae1c4b917be10ff4d4500f62ca5ba",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-2 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-2",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-2"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-2",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.8288612859762496,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-707e-770d-8991-40d854968a18",
+              "document_version_id": "01a181cd-707e-770d-8991-40d93a2fa5e9",
+              "content_sha256": "caf1392cc29249bc94b5aaa3d0bf330062e01e2d28a078a460da161751b560b2",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-4 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-4",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-4"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-4",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.8283719709584676,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "not_applicable",
+          "retrieval_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": null,
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 13230.211499998404,
+            "required_facts_retrieved": 0,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 373,
+            "candidate_tokens": 15,
+            "thinking_tokens": 301
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "contradictory:0",
+          "question": "What is the current access code of fictional vault Conflict-0?",
+          "category": "contradictory",
+          "expected_behavior": "report_conflict",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-a"
+                },
+                "display_name": "contradiction-0-a",
+                "metadata": {}
+              },
+              "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 63
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-b"
+                },
+                "display_name": "contradiction-0-b",
+                "metadata": {}
+              },
+              "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 64
+            }
+          ],
+          "status": "insufficient_evidence",
+          "outcome": "missed_contradiction",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-700c-722d-b6be-d77ab79f98a2",
+              "document_version_id": "01a181cd-700c-722d-b6be-d77bab9b07c8",
+              "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+              "start": 0,
+              "end": 63,
+              "text": "The current access code of fictional vault Conflict-0 is amber.",
+              "title": "contradiction-0-a",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-0-a"
+                },
+                "metadata": {},
+                "display_name": "contradiction-0-a",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 63,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.9302392463308892,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-7016-7665-b7cc-e5c2c3390536",
+              "document_version_id": "01a181cd-7016-7665-b7cc-e5c300113bfa",
+              "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+              "start": 0,
+              "end": 64,
+              "text": "The current access code of fictional vault Conflict-0 is violet.",
+              "title": "contradiction-0-b",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-0-b"
+                },
+                "metadata": {},
+                "display_name": "contradiction-0-b",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 64,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.9284357641828911,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-702a-7370-ad14-a01d00a125bf",
+              "document_version_id": "01a181cd-702a-7370-ad14-a01e587fcc55",
+              "content_sha256": "3edde44aa866964f4f286363ff89e8e4fc0f8a7dc3c1cde79d861e3ed7d0e4b0",
+              "start": 0,
+              "end": 63,
+              "text": "The current access code of fictional vault Conflict-1 is amber.",
+              "title": "contradiction-1-a",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-1-a"
+                },
+                "metadata": {},
+                "display_name": "contradiction-1-a",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 63,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.9123305626112704,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-7034-7076-b03e-9424695ec4c1",
+              "document_version_id": "01a181cd-7034-7076-b03e-94256c310b9d",
+              "content_sha256": "767de3eda5850b850f598103dd458ae6a0d8af39788db9f74f94f73342f75979",
+              "start": 0,
+              "end": 64,
+              "text": "The current access code of fictional vault Conflict-1 is violet.",
+              "title": "contradiction-1-b",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-1-b"
+                },
+                "metadata": {},
+                "display_name": "contradiction-1-b",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 64,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.9119524955749576,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-705a-764b-9d65-b173264b151b",
+              "document_version_id": "01a181cd-705a-764b-9d65-b17450fd60ed",
+              "content_sha256": "01acfbe99fa9740667c8f6606800325de72c24071a8ce024081611135d2b4673",
+              "start": 0,
+              "end": 64,
+              "text": "The current access code of fictional vault Conflict-2 is violet.",
+              "title": "contradiction-2-b",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-2-b"
+                },
+                "metadata": {},
+                "display_name": "contradiction-2-b",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 64,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.9070875380918505,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "not_applicable",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 2,
+            "strict_recall": 1.0,
+            "all_required_strict": true,
+            "strict_precision": 0.4,
+            "partial_fact_count": 2,
+            "partial_recall": 1.0,
+            "partial_precision": 0.4,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": false,
+          "failure_analysis": {
+            "classification": "reasoning_or_synthesis_failure",
+            "observation": "Observed outcome: missed_contradiction.",
+            "hypothesis": "Gold matching and output status expose the failure class but do not prove its semantic cause."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 4082.5385999996797,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 344,
+            "candidate_tokens": 15,
+            "thinking_tokens": 379
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        }
+      ]
+    },
+    {
+      "configuration": {
+        "name": "investigation-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "per_question_generation_cap": 2,
+          "max_search_calls": 1,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 10,
+          "max_context_chars": 24000,
+          "max_embedding_requests_per_question": 1
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "execution_failure": 1,
+          "incomplete": 3,
+          "provider_failure": 1
+        },
+        "answer_correctness_counts": {
+          "no_answer": 2,
+          "not_applicable": 1,
+          "unavailable": 2
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 3,
+        "provider_failures": 1,
+        "strict_evidence_recall": 0.5,
+        "partial_evidence_recall": 0.5,
+        "strict_citation_recall": 0.0,
+        "partial_citation_recall": 0.0,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 27199.505966666038,
+        "mean_search_calls": 2,
+        "mean_generation_requests": 2,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 5
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "provider_failure": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 1,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "simple_factual": {
+          "outcome_counts": {
+            "execution_failure": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "three_plus_hop": {
+          "outcome_counts": {
+            "incomplete": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 1,
+          "provider_failures": 0,
+          "strict_evidence_recall": 0.5,
+          "partial_evidence_recall": 0.5,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 22667.69529999874,
+          "mean_search_calls": 2,
+          "mean_generation_requests": 2,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "two_hop": {
+          "outcome_counts": {
+            "incomplete": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 1,
+          "provider_failures": 0,
+          "strict_evidence_recall": 0.5,
+          "partial_evidence_recall": 0.5,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 19006.792300002417,
+          "mean_search_calls": 2,
+          "mean_generation_requests": 2,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "unanswerable": {
+          "outcome_counts": {
+            "incomplete": 1
+          },
+          "answer_correctness_counts": {
+            "not_applicable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 1,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 39924.03029999696,
+          "mean_search_calls": 2,
+          "mean_generation_requests": 2,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "simple:8813f87c0bdd11eba7f7acde48001122",
+          "question": "What is Xawery Żuławski's mother?",
+          "category": "simple_factual",
+          "expected_behavior": "answer",
+          "expected_answer": "Małgorzata Braunek",
+          "acceptable_answers": [
+            "Małgorzata Braunek"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "sentence_index": 2,
+              "start": 128,
+              "end": 202
+            }
+          ],
+          "status": "failed",
+          "outcome": "execution_failure",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "result_persistence_failure",
+            "observation": "The application calls completed, but a local report aggregator raised before their result rows were written.",
+            "hypothesis": "Exact answers and evidence are unavailable. Calls were not repeated to avoid regenerating successful responses."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": null,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemini-3.6-flash",
+          "error_type": "LocalReportSerializationError",
+          "provider_diagnostic": null
+        },
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "question": "What nationality is the director of film World And Time Enough?",
+          "category": "two_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "United States",
+          "acceptable_answers": [
+            "United States"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "sentence_index": 1,
+              "start": 15,
+              "end": 171
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 146
+            }
+          ],
+          "status": "incomplete",
+          "outcome": "incomplete",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": "World And Time Enough director",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "duration_ms": 739.352600001439,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 2,
+              "query": "Eric Mueller",
+              "evidence_ids": [],
+              "result_count": 0,
+              "duration_ms": 0.0,
+              "succeeded": false,
+              "disposition": "search_limit"
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-6cde-71e1-8ecc-0678a8ef54d5",
+              "document_version_id": "01a181cd-6cde-71e1-8ecc-0679d8e2cea0",
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "start": 0,
+              "end": 234,
+              "text": "World and Time Enough is a 1994 independent gay-themed romantic comedy-drama written and directed by Eric Mueller and starring Gregory Giles, Matt Guidry and Kraig Swartz. It was filmed on location in Edina and Minneapolis, Minnesota.",
+              "title": "World and Time Enough",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 14,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 15,
+                  "end": 171,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 172,
+                  "end": 234,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7649828019770051,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-66f6-708b-bd07-48d856a86c8e",
+              "document_version_id": "01a181cd-66f6-708b-bd07-48d9e28f1ea5",
+              "content_sha256": "80d973ef3bf00f439f108eb2f64e37329d8b27fc60481138f781efc66307a0fd",
+              "start": 0,
+              "end": 92,
+              "text": "Jason Moore( born October 22, 1970) is an American director of film, theatre and television.",
+              "title": "Jason Moore (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 0
+                },
+                "metadata": {},
+                "display_name": "Jason Moore (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 92,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.660563272069967,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-66a2-77e5-a1cb-96c389b17af2",
+              "document_version_id": "01a181cd-66a2-77e5-a1cb-96c40aeff983",
+              "content_sha256": "745c9acd6dbfa743a5acdc364414babe2921f7e9cfe5bea896e59f4f9955c362",
+              "start": 0,
+              "end": 68,
+              "text": "Peter Levin is an American director of film, television and theatre.",
+              "title": "Peter Levin",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "Peter Levin",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 68,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6468123304062605,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-6751-7478-a1e6-89583caa1b00",
+              "document_version_id": "01a181cd-6751-7478-a1e6-8959a816aea3",
+              "content_sha256": "745c9acd6dbfa743a5acdc364414babe2921f7e9cfe5bea896e59f4f9955c362",
+              "start": 0,
+              "end": 68,
+              "text": "Peter Levin is an American director of film, television and theatre.",
+              "title": "Peter Levin",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Peter Levin",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 68,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6468123304062605,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6b0b-7207-bf85-e456ff36ad80",
+              "document_version_id": "01a181cd-6b0b-7207-bf85-e457e3239006",
+              "content_sha256": "745c9acd6dbfa743a5acdc364414babe2921f7e9cfe5bea896e59f4f9955c362",
+              "start": 0,
+              "end": 68,
+              "text": "Peter Levin is an American director of film, television and theatre.",
+              "title": "Peter Levin",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2935f1640bda11eba7f7acde48001122",
+                  "context_position": 2
+                },
+                "metadata": {},
+                "display_name": "Peter Levin",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 68,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6468123304062605,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 1,
+            "strict_recall": 0.5,
+            "all_required_strict": false,
+            "strict_precision": 0.2,
+            "partial_fact_count": 1,
+            "partial_recall": 0.5,
+            "partial_precision": 0.2,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "budget_exhaustion",
+            "observation": "The workflow returned incomplete or recorded a configured resource limit.",
+            "hypothesis": "The current per-run budgets ended the investigation before a final decision."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 2,
+            "generation_requests": 2,
+            "embedding_query_requests": 1,
+            "latency_ms": 19006.792300002417,
+            "required_facts_retrieved": 1,
+            "required_facts_cited": 0,
+            "budget_exhausted": true,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 2526,
+            "candidate_tokens": 37,
+            "thinking_tokens": 63
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "question": "Which film has the director who was born later, El Extraño Viaje or Love In Pawn?",
+          "category": "three_plus_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "El Extraño Viaje",
+          "acceptable_answers": [
+            "El Extraño Viaje"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 86
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Love in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "6a070f2a47236b4e26ec61aca53f3b5163c45f9955a32b30c9af585a66db3370",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 118
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Fernando Fernán Gómez",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 222
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Charles Saunders (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "658be9ea41f708c229faf23844941e694fa80744055f8d172a744c5fbe022c79",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 181
+            }
+          ],
+          "status": "incomplete",
+          "outcome": "incomplete",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": "El Extraño Viaje director born",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "duration_ms": 768.6390999951982,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 2,
+              "query": "Love In Pawn director",
+              "evidence_ids": [],
+              "result_count": 0,
+              "duration_ms": 0.0,
+              "succeeded": false,
+              "disposition": "search_limit"
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-67cb-7237-9643-7e564912ffc2",
+              "document_version_id": "01a181cd-67cb-7237-9643-7e570a1a8ada",
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "start": 0,
+              "end": 310,
+              "text": "El extraño viaje is a 1964 Spanish black drama film directed by Fernando Fernán Gómez. Famous film director Jess Franco acts as the brother of the protagonist. The film was a huge flop on its limited release. It was voted seventh best Spanish film by professionals and critics in 1996 Spanish cinema centenary.",
+              "title": "El extraño viaje",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 86,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 87,
+                  "end": 159,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 160,
+                  "end": 208,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 209,
+                  "end": 310,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7948673352203787,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-681a-723c-915f-64e42a7a239e",
+              "document_version_id": "01a181cd-681a-723c-915f-64e5ca7f5be5",
+              "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+              "start": 0,
+              "end": 1765,
+              "text": "Fernando Fernández Gómez (28 August 1921 – 21 November 2007) better known as Fernando Fernán-Gómez was a Spanish actor, screenwriter, film director, theater director and member of the Royal Spanish Academy for seven years. He was born in Argentina while his mother, Spanish actress Carola Fernán-Gómez, was making a tour in Latin America. He would later use her surname for his stage name when he moved to Spain in 1924. After the Spanish Civil War he began to study law but interrupted his studies to work in theater. In 1942 he began to act in movies but also continued working on plays. He formed his own theater company and received awards for directing and writing. In the 1950s he began to direct movies, including the film of his novel, \"El viaje a ninguna parte\". He received praise for his 1958 comedy \"La vida por delante\", which led to a sequel, \"La vida alrededor\". In 1977, he won the Silver Bear for Best Actor at the 27th Berlin International Film Festival for his role in \"The Anchorite\". He won the award again at the 35th Berlin International Film Festival in 1985 for his role in \"Stico\" and finally the Honorary Golden Bear at the 55th Berlin International Film Festival in 2005. Having been very much in demand during the 1970s and 1980s, the 1990s was a less active period for him, but towards the end of his life, he enjoyed something of a revival, featuring in three major projects: \"Todo sobre mi madrePlenilunio\", and a starring role in the hit \"La lengua de las mariposas\". He married María Dolores Pradera in 1945; they divorced in 1959. He married Emma Cohen in 2000. Fernando Fernán Gómez died in Madrid on 21 November 2007 from a heart failure. As he was a lifelong anarchist, his coffin was covered in a black and red anarchist flag.",
+              "title": "Fernando Fernán Gómez",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Fernando Fernán Gómez",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 222,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 223,
+                  "end": 338,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 339,
+                  "end": 420,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 421,
+                  "end": 518,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 519,
+                  "end": 589,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 590,
+                  "end": 670,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 671,
+                  "end": 771,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                },
+                {
+                  "start": 772,
+                  "end": 877,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 7
+                    }
+                  ]
+                },
+                {
+                  "start": 878,
+                  "end": 1004,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 8
+                    }
+                  ]
+                },
+                {
+                  "start": 1005,
+                  "end": 1199,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 9
+                    }
+                  ]
+                },
+                {
+                  "start": 1200,
+                  "end": 1500,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 10
+                    }
+                  ]
+                },
+                {
+                  "start": 1501,
+                  "end": 1565,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 11
+                    }
+                  ]
+                },
+                {
+                  "start": 1566,
+                  "end": 1596,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 12
+                    }
+                  ]
+                },
+                {
+                  "start": 1597,
+                  "end": 1675,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 13
+                    }
+                  ]
+                },
+                {
+                  "start": 1676,
+                  "end": 1765,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 14
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.6857293656903432,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-6809-76eb-a43c-d55c6f0f9494",
+              "document_version_id": "01a181cd-6809-76eb-a43c-d55dacc7b8f1",
+              "content_sha256": "8f92981e9e9c21d147d75eee289c0d6247d2f8db18c31cc2a8ecaafbd0dc05a0",
+              "start": 0,
+              "end": 336,
+              "text": "Rafaela Díaz Valiente( 9 April 1906 – 9 June 1996) better known as Rafaela Aparicio was a famous Spanish film and theatre actress. She made more than 100 films. The most remembered are Carlos Saura's\" Anna and the WolvesMama Turns 100\" and Fernando Fernán Gómez's\" El extraño viaje\". She died of a stroke in Madrid in a retirement home.",
+              "title": "Rafaela Aparicio",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 5
+                },
+                "metadata": {},
+                "display_name": "Rafaela Aparicio",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 7,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 8,
+                  "end": 130,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 131,
+                  "end": 160,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 161,
+                  "end": 283,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 284,
+                  "end": 336,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6752236083017217,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-6e6c-7324-95dd-547b937516e5",
+              "document_version_id": "01a181cd-6e6d-742a-9d1e-a97840808b82",
+              "content_sha256": "6cdc80bffcd40d5b36e87b5dcb1554003b7a61e9e5323a79b5af68f457e75fe5",
+              "start": 0,
+              "end": 296,
+              "text": "Richard O. Fleischer( December 8, 1916 – March 25, 2006) was an American film director known for such movies as\" The Narrow Margin\"( 1952),\" 20,000 Leagues Under the Sea\"( 1954),\" Fantastic Voyage\"( 1966), the Oscar- award winning musical film\" Doctor Dolittle\"( 1967) and\" Soylent Green\"( 1973).",
+              "title": "Richard Fleischer",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "ae331827088b11ebbd6fac1f6bf848b6",
+                  "context_position": 5
+                },
+                "metadata": {},
+                "display_name": "Richard Fleischer",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 296,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6730477213859989,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6858-73ab-8f14-5d6b3083ed72",
+              "document_version_id": "01a181cd-6858-73ab-8f14-5d6c78dbc8ac",
+              "content_sha256": "6626fb015bacfacba539a2b53593283d35ab77195d286fe43c3c82f51405dee9",
+              "start": 0,
+              "end": 500,
+              "text": "Luis Saslavsky( April 21, 1903 – March 20, 1995) was an Argentine film director, screenwriter and film producer, and one of the influential directors in the Cinema of Argentina of the classic era. He was Jewish. Saskavsky was born in Rosario, Santa Fe, Argentina. He directed and wrote over 40 films between 1931 and 1979. He directed films such as Crimen a las tres in 1935 and wrote for films such as Allá en el Norte in 1973. He retired from the industry in 1979. He died in Buenos Aires, aged 91.",
+              "title": "Luis Saslavsky",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "05f8a691087b11ebbd67ac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Luis Saslavsky",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 196,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 197,
+                  "end": 211,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 212,
+                  "end": 263,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 264,
+                  "end": 322,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 323,
+                  "end": 428,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 429,
+                  "end": 466,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 467,
+                  "end": 500,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6570361682666259,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 2,
+            "strict_recall": 0.5,
+            "all_required_strict": false,
+            "strict_precision": 0.4,
+            "partial_fact_count": 2,
+            "partial_recall": 0.5,
+            "partial_precision": 0.4,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "budget_exhaustion",
+            "observation": "The workflow returned incomplete or recorded a configured resource limit.",
+            "hypothesis": "The current per-run budgets ended the investigation before a final decision."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 2,
+            "generation_requests": 2,
+            "embedding_query_requests": 1,
+            "latency_ms": 22667.69529999874,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 0,
+            "budget_exhausted": true,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 4015,
+            "candidate_tokens": 41,
+            "thinking_tokens": 78
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "unanswerable:0",
+          "question": "On what date was fictional station Unlisted-0 constructed?",
+          "category": "unanswerable",
+          "expected_behavior": "abstain",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [],
+          "status": "incomplete",
+          "outcome": "incomplete",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": "Unlisted-0",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "duration_ms": 705.716600001324,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 2,
+              "query": "\"Unlisted-0\" \"constructed\"",
+              "evidence_ids": [],
+              "result_count": 0,
+              "duration_ms": 0.0,
+              "succeeded": false,
+              "disposition": "search_limit"
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-7001-706b-b1be-eb64c43a9561",
+              "document_version_id": "01a181cd-7001-706b-b1be-eb653438806e",
+              "content_sha256": "800c7ae3d1675c92724326299df12e8e1cdb5d5d2e8c380262ede09da39d77b0",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-0 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-0",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-0"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-0",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7583540946170999,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-701f-7055-83cb-a78080b7400c",
+              "document_version_id": "01a181cd-701f-7055-83cb-a7812f164e49",
+              "content_sha256": "0874238c5794ea7ab706021ed3ac87785d360dff640c4d7a3fb47c7f082c4f72",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-1 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-1",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-1"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-1",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.7396778750036087,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-7042-7591-a0b9-ace2c632d1ae",
+              "document_version_id": "01a181cd-7042-7591-a0b9-ace3b807fdea",
+              "content_sha256": "8ce10aff7e5104091d760e8ad58806cdefeae1c4b917be10ff4d4500f62ca5ba",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-2 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-2",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-2"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-2",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.7364456967776235,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-709d-7603-a612-be3f77cf3fec",
+              "document_version_id": "01a181cd-709d-7603-a612-be407dfe9e85",
+              "content_sha256": "7b2199779d8a580c6164a46b219b476256dd44e1787eec004a6ce0ef57fddc9a",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-5 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-5",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-5"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-5",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.7348570105689162,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-707e-770d-8991-40d854968a18",
+              "document_version_id": "01a181cd-707e-770d-8991-40d93a2fa5e9",
+              "content_sha256": "caf1392cc29249bc94b5aaa3d0bf330062e01e2d28a078a460da161751b560b2",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-4 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-4",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-4"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-4",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.7327588796615809,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "not_applicable",
+          "retrieval_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "budget_exhaustion",
+            "observation": "The workflow returned incomplete or recorded a configured resource limit.",
+            "hypothesis": "The current per-run budgets ended the investigation before a final decision."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 2,
+            "generation_requests": 2,
+            "embedding_query_requests": 1,
+            "latency_ms": 39924.03029999696,
+            "required_facts_retrieved": 0,
+            "required_facts_cited": 0,
+            "budget_exhausted": true,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 2169,
+            "candidate_tokens": 43,
+            "thinking_tokens": 739
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "contradictory:0",
+          "question": "What is the current access code of fictional vault Conflict-0?",
+          "category": "contradictory",
+          "expected_behavior": "report_conflict",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-a"
+                },
+                "display_name": "contradiction-0-a",
+                "metadata": {}
+              },
+              "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 63
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-b"
+                },
+                "display_name": "contradiction-0-b",
+                "metadata": {}
+              },
+              "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 64
+            }
+          ],
+          "status": "provider_error",
+          "outcome": "provider_failure",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "provider_failure",
+            "observation": "Execution raised GenerationProviderError; no completed result exposed its evidence or citations.",
+            "hypothesis": "The sanitized exception type does not identify the failing workflow stage or underlying provider/database cause."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": 24505.776400001196,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemini-3.6-flash",
+          "error_type": "GenerationProviderError",
+          "provider_diagnostic": {
+            "operation": "generate_content",
+            "model_id": "gemini-3.6-flash",
+            "http_status": 503,
+            "category": "availability",
+            "retryable": true,
+            "rate_or_quota_limit": false,
+            "request_count": 8
+          }
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [
+    {
+      "baseline": "quick-answer-real-gemini",
+      "other": "investigation-real-gemini",
+      "paired_cases": 3,
+      "paired_question_ids": [
+        "2wiki:2207e9060bda11eba7f7acde48001122",
+        "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+        "unanswerable:0"
+      ],
+      "outcome_changes": [
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "baseline": "incorrect_abstention",
+          "other": "incomplete"
+        },
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "baseline": "incorrect_abstention",
+          "other": "incomplete"
+        },
+        {
+          "id": "unanswerable:0",
+          "baseline": "correct_abstention",
+          "other": "incomplete"
+        }
+      ],
+      "answer_correctness_changes": [],
+      "strict_evidence_recall_delta": 0.0,
+      "strict_citation_recall_delta": 0.0,
+      "latency_delta_ms": 14799.73666666774,
+      "generation_request_delta": 1,
+      "interpretation": "Paired descriptive differences only; no statistical significance or superiority is inferred."
+    }
+  ],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used.",
+    "Execution failures without a completed application result have unobserved evidence metrics, not zero-recall scores."
+  ],
+  "total_elapsed_ms": 147841.35980000428,
+  "execution": {
+    "kind": "persistent_task16_live_paired_sample",
+    "generation_model_requested": "gemini-3.6-flash",
+    "generation_model_configuration_source": "prior live evaluation model; GEMINI_GENERATION_MODEL has no local override",
+    "generation_request_cap": 15,
+    "generation_requests_observed": 15,
+    "generation_requests_by_mode": {
+      "single_step": 5,
+      "multi_step": 10
+    },
+    "assumed_daily_rpd_limit": 20,
+    "remaining_rpd_independently_verified": false,
+    "prior_generation_requests_this_daily_window": 3,
+    "prior_single_step_requests_this_daily_window": 1,
+    "prior_multi_step_requests_this_daily_window": 2,
+    "prior_embedding_request_totals": "unknown: the first paired response was lost before its local ledger was written",
+    "reserved_daily_requests": 2,
+    "active_quota_not_independently_api_readable": true,
+    "generation_request_interval_seconds": 12.5,
+    "provider_retries": 0,
+    "embedding_model": "gemini-embedding-2",
+    "embedding_dimensions": 768,
+    "embedding_configuration": {
+      "provider": "gemini_developer_api",
+      "model_id": "gemini-embedding-2",
+      "dimensions": 768,
+      "document_format": "gemini_no_title_v1",
+      "normalization": "none"
+    },
+    "embedding_inputs_observed": 8,
+    "embedding_input_cap": 15,
+    "embedding_request_counts": {
+      "count_tokens": 8,
+      "embed_content": 8
+    },
+    "counted_embedding_tokens": 134,
+    "database": {
+      "documents": 218,
+      "document_versions": 218,
+      "contents": 197,
+      "version_chunk_plans": 218,
+      "chunk_memberships": 218,
+      "chunk_embeddings": 197,
+      "active_versions": 218,
+      "active_searchable_occurrences": 218,
+      "incomplete_planned_versions": 0,
+      "database_bytes": 10196671,
+      "migration": "0002_embedding_storage",
+      "postgres_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+      "vector_dimensions": 768
+    },
+    "verified_manifest_occurrences": 218,
+    "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+    "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+    "selected_question_ids": [
+      "simple:8813f87c0bdd11eba7f7acde48001122",
+      "2wiki:2207e9060bda11eba7f7acde48001122",
+      "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+      "unanswerable:0",
+      "contradictory:0"
+    ],
+    "task15_semantic_hybrid_metrics_equal": true,
+    "cloud_sql_contacted": false,
+    "budget_note": "At most 15 generation requests: one Quick Answer request and up to two investigation turns for each of five pairs. Each investigation can perform one search. Runs start only when three requests remain under the configured cap.",
+    "incomplete_reason": "Stopped after a provider failure; sanitized diagnostic is recorded in the affected question row.",
+    "generation_provider_requests": {
+      "quick_answer": 5,
+      "investigation": 10
+    },
+    "completed_question_pairs": 5,
+    "generation_failures": [
+      {
+        "operation": "generate_content",
+        "model_id": "gemini-3.6-flash",
+        "http_status": 503,
+        "category": "availability",
+        "retryable": true,
+        "rate_or_quota_limit": false,
+        "request_count": 8
+      }
+    ],
+    "pairs_with_persisted_results": 4,
+    "pairs_attempted_including_lost_result": 5,
+    "fully_observed_paired_cases": 3,
+    "generation_usage_observed": true,
+    "reported_generation_token_usage_by_mode": {
+      "single_step": {
+        "prompt_tokens": 2210,
+        "candidate_tokens": 60,
+        "thinking_tokens": 1129
+      },
+      "multi_step": {
+        "prompt_tokens": 8710,
+        "candidate_tokens": 121,
+        "thinking_tokens": 880
+      }
+    },
+    "reported_generation_token_usage_total": {
+      "prompt_tokens": 10920,
+      "candidate_tokens": 181,
+      "thinking_tokens": 2009
+    },
+    "generation_response_usage_unavailable_for_attempts": 4,
+    "unavailable_usage_note": "Three attempts belonged to the first paired run whose result was lost by a local aggregation bug; the 503 response has no usage metadata.",
+    "test_database": "persistent local PostgreSQL 18.4/pgvector evaluation database",
+    "embedding_text_cap": 15,
+    "structural_citation_validation": {
+      "stored_citation_entries_observed": 0,
+      "valid_entries": 0,
+      "invalid_entries": 0,
+      "note": "All persisted application outcomes returned no citations. The lost first pair and provider-error result have no saved response to validate."
+    }
+  }
+}

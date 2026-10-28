@@ -1,0 +1,1023 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "668b1a12b649a0ef2143f9b8ed22de0050a651c7e42fb9bae627b44273fb312b",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T06:41:48.262859+00:00",
+  "question_ids": [
+    "2wiki:8813f87c0bdd11eba7f7acde48001122",
+    "contradictory:0"
+  ],
+  "evaluated_case_count": 2,
+  "stopped_early": true,
+  "runs": [
+    {
+      "configuration": {
+        "name": "single-step-real-gemini",
+        "mode": "single_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 128,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": {
+          "max_evidence": 5,
+          "max_context_chars": 12000
+        },
+        "investigation_budgets": null
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "correct_answer": 1,
+          "provider_failure": 1
+        },
+        "answer_correctness_counts": {
+          "correct": 1,
+          "unavailable": 1
+        },
+        "determinately_scored_answer_count": 1,
+        "deterministic_answer_accuracy": 1.0,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 1,
+        "strict_evidence_recall": 1.0,
+        "partial_evidence_recall": 1.0,
+        "strict_citation_recall": 1.0,
+        "partial_citation_recall": 1.0,
+        "strict_citation_precision": 1.0,
+        "partial_citation_precision": 1.0,
+        "all_gold_facts_strictly_retrieved": 1,
+        "all_gold_facts_strictly_cited": 1,
+        "mean_latency_ms": 6641.485799998918,
+        "mean_search_calls": 1,
+        "mean_generation_requests": 1,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 2
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "provider_failure": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 1,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "two_hop": {
+          "outcome_counts": {
+            "correct_answer": 1
+          },
+          "answer_correctness_counts": {
+            "correct": 1
+          },
+          "determinately_scored_answer_count": 1,
+          "deterministic_answer_accuracy": 1.0,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 1.0,
+          "partial_evidence_recall": 1.0,
+          "strict_citation_recall": 1.0,
+          "partial_citation_recall": 1.0,
+          "strict_citation_precision": 1.0,
+          "partial_citation_precision": 1.0,
+          "all_gold_facts_strictly_retrieved": 1,
+          "all_gold_facts_strictly_cited": 1,
+          "mean_latency_ms": 6641.485799998918,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+          "question": "Who is the mother of the director of film Polish-Russian War (Film)?",
+          "category": "two_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "Małgorzata Braunek",
+          "acceptable_answers": [
+            "Małgorzata Braunek"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Polish-Russian War (film)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+              "sentence_index": 1,
+              "start": 19,
+              "end": 173
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "sentence_index": 2,
+              "start": 128,
+              "end": 202
+            }
+          ],
+          "status": "answered",
+          "outcome": "correct_answer",
+          "answer": "The mother of the director of Polish-Russian War (Xawery Żuławski) is actress Małgorzata Braunek.",
+          "citations": [
+            "E1",
+            "E2"
+          ],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a1813d-d27f-722a-ae43-bb3d605c54ca",
+              "document_version_id": "01a1813d-d27f-722a-ae43-bb3e9e063adb",
+              "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+              "start": 0,
+              "end": 173,
+              "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+              "title": "Polish-Russian War (film)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Polish-Russian War (film)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 18,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 19,
+                  "end": 173,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7990869524544509,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a1813d-d2d9-736f-9771-f67b0ec96d87",
+              "document_version_id": "01a1813d-d2d9-736f-9771-f67c6f2481c8",
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "start": 0,
+              "end": 434,
+              "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 201",
+              "title": "Xawery Żuławski",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 76,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 77,
+                  "end": 127,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 128,
+                  "end": 202,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 203,
+                  "end": 427,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 428,
+                  "end": 508,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.7635240490322096,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a1813d-d2d9-736f-9771-f67b0ec96d87",
+              "document_version_id": "01a1813d-d2d9-736f-9771-f67c6f2481c8",
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "start": 434,
+              "end": 642,
+              "text": "3, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+              "title": "Xawery Żuławski",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 428,
+                  "end": 508,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 509,
+                  "end": 572,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 573,
+                  "end": 642,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6946247898117893,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a1813d-d342-702d-af6e-58ff2e5da8b1",
+              "document_version_id": "01a1813d-d342-702d-af6e-5900a853079f",
+              "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+              "start": 0,
+              "end": 372,
+              "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+              "title": "Liberty Ross",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Liberty Ross",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 83,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 84,
+                  "end": 175,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 176,
+                  "end": 315,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 316,
+                  "end": 372,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6329126667369086,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a1813d-d25d-7705-8f11-6d7804aa7b5b",
+              "document_version_id": "01a1813d-d25d-7705-8f11-6d79f85f3315",
+              "content_sha256": "c6fcd32f52d3c2e5be3f623876c45c82e555ded1366abed9c33904645033b70f",
+              "start": 0,
+              "end": 38,
+              "text": "She was the mother of Prince Morinaga.",
+              "title": "Minamoto no Chikako",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Minamoto no Chikako",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 38,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6262000643014569,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a1813d-d27f-722a-ae43-bb3d605c54ca",
+              "document_version_id": "01a1813d-d27f-722a-ae43-bb3e9e063adb",
+              "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+              "start": 0,
+              "end": 173,
+              "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+              "title": "Polish-Russian War (film)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Polish-Russian War (film)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 18,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 19,
+                  "end": 173,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7990869524544509,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a1813d-d2d9-736f-9771-f67b0ec96d87",
+              "document_version_id": "01a1813d-d2d9-736f-9771-f67c6f2481c8",
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "start": 0,
+              "end": 434,
+              "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 201",
+              "title": "Xawery Żuławski",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 76,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 77,
+                  "end": 127,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 128,
+                  "end": 202,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 203,
+                  "end": 427,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 428,
+                  "end": 508,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.7635240490322096,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "answer_correctness": "correct",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 2,
+            "strict_recall": 1.0,
+            "all_required_strict": true,
+            "strict_precision": 0.4,
+            "partial_fact_count": 2,
+            "partial_recall": 1.0,
+            "partial_precision": 0.4,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 2,
+            "strict_fact_count": 2,
+            "strict_recall": 1.0,
+            "all_required_strict": true,
+            "strict_precision": 1.0,
+            "partial_fact_count": 2,
+            "partial_recall": 1.0,
+            "partial_precision": 1.0,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": null,
+          "semantic_claim_support": {
+            "status": "human_review_required",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 6641.485799998918,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 2,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 633,
+            "candidate_tokens": 44,
+            "thinking_tokens": 263
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "contradictory:0",
+          "question": "What is the current access code of fictional vault Conflict-0?",
+          "category": "contradictory",
+          "expected_behavior": "report_conflict",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-a"
+                },
+                "display_name": "contradiction-0-a",
+                "metadata": {}
+              },
+              "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 63
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-b"
+                },
+                "display_name": "contradiction-0-b",
+                "metadata": {}
+              },
+              "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 64
+            }
+          ],
+          "status": "provider_error",
+          "outcome": "provider_failure",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "provider_failure",
+            "observation": "Execution raised GenerationProviderError; no completed result exposed its evidence or citations.",
+            "hypothesis": "The sanitized exception type does not identify the failing workflow stage or underlying provider cause."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": 12407.856700003322,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemini-3.6-flash",
+          "error_type": "GenerationProviderError"
+        }
+      ]
+    },
+    {
+      "configuration": {
+        "name": "multi-step-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 128,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "per_question_generation_caps": {
+            "two_hop": 3,
+            "contradictory": 2
+          },
+          "max_search_calls": 2,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 10,
+          "max_context_chars": 24000,
+          "max_embedding_requests_per_question": 2
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "not_run": 2
+        },
+        "answer_correctness_counts": {
+          "unavailable": 2
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 0,
+        "strict_evidence_recall": null,
+        "partial_evidence_recall": null,
+        "strict_citation_recall": null,
+        "partial_citation_recall": null,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": null,
+        "mean_search_calls": null,
+        "mean_generation_requests": null,
+        "mean_follow_up_searches_with_new_required_evidence": null,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 2
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "two_hop": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+          "category": "two_hop",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        },
+        {
+          "id": "contradictory:0",
+          "category": "contradictory",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [
+    {
+      "baseline": "single-step-real-gemini",
+      "other": "multi-step-real-gemini",
+      "paired_cases": 0,
+      "paired_question_ids": [],
+      "outcome_changes": [],
+      "answer_correctness_changes": [],
+      "strict_evidence_recall_delta": null,
+      "strict_citation_recall_delta": null,
+      "latency_delta_ms": null,
+      "generation_request_delta": null,
+      "interpretation": "Paired descriptive differences only; no statistical significance or superiority is inferred."
+    }
+  ],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used."
+  ],
+  "total_elapsed_ms": 19062.184999995225,
+  "execution": {
+    "kind": "partial_live_real_gemini_sample",
+    "generation_model_requested": "gemini-3.6-flash",
+    "generation_model_versions": [
+      "gemini-3.6-flash"
+    ],
+    "generation_requests_observed": 2,
+    "generation_request_cap": 7,
+    "generation_rpm_user_reported": 5,
+    "generation_tpm_user_reported": 250000,
+    "generation_rpd_user_reported": 20,
+    "embedding_model": "gemini-embedding-2",
+    "embedding_dimensions": 768,
+    "embedding_inputs_observed": 17,
+    "embedding_text_cap": 22,
+    "embedding_request_counts": {
+      "count_tokens": 17,
+      "embed_content": 17
+    },
+    "embedding_rpm_user_reported": 100,
+    "embedding_tpm_user_reported": 30000,
+    "embedding_rpd_user_reported": 1000,
+    "billing_status": "free tier, billing disabled (user reported)",
+    "provider_retries": 0,
+    "cloud_sql_contacted": false,
+    "test_database": "disposable local PostgreSQL/pgvector only",
+    "budget_note": "Hard stop at 7 generation requests and 22 embedding text inputs; provider failures stop later evaluation calls.",
+    "source_occurrences_indexed": 12,
+    "unique_contents_indexed": 12,
+    "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+    "indexed_question_categories": [
+      "two_hop",
+      "contradictory"
+    ],
+    "previous_generation_request_upper_bound_user_attested": 12,
+    "known_generation_requests_upper_bound_with_this_run": 14,
+    "untracked_project_usage_independently_verified": false,
+    "failure_stop": "Stopped after the provider error; all multi-step cases were not_run. No automatic retry or further Gemini request occurred."
+  }
+}

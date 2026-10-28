@@ -1,0 +1,11 @@
+[
+  {
+    "mode": "multi_step",
+    "case_id": "2wiki:2207e9060bda11eba7f7acde48001122",
+    "expected_fingerprint": "c75ca7b540bd29ae0daa7f6b76454269a86620c785e6415039dd5ac8ea307306",
+    "evidence_support": "unsupported",
+    "entity_identity": "unresolved",
+    "rationale": "E1 establishes the director name. E6 establishes a nationality-related fact about an Olympic rower with a shared name, but no cited passage links that rower to the film director. Occupational differences warrant corroboration and do not alone prove different people. The cited excerpts fail to establish the necessary identity bridge.",
+    "reviewer": "Codex source audit, Task 16D; explicit reviewable judgment, not an automatic semantic score"
+  }
+]

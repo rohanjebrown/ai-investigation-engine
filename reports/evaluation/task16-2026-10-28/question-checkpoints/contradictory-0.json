@@ -1,0 +1,682 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T10:17:39.169836+00:00",
+  "question_ids": [
+    "contradictory:0"
+  ],
+  "evaluated_case_count": 1,
+  "stopped_early": true,
+  "runs": [
+    {
+      "configuration": {
+        "name": "quick-answer-real-gemini",
+        "mode": "single_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": {
+          "max_evidence": 5,
+          "max_context_chars": 12000
+        },
+        "investigation_budgets": null
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "missed_contradiction": 1
+        },
+        "answer_correctness_counts": {
+          "not_applicable": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 1,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 0,
+        "strict_evidence_recall": 1.0,
+        "partial_evidence_recall": 1.0,
+        "strict_citation_recall": 0.0,
+        "partial_citation_recall": 0.0,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 1,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 4082.5385999996797,
+        "mean_search_calls": 1,
+        "mean_generation_requests": 1,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "missed_contradiction": 1
+          },
+          "answer_correctness_counts": {
+            "not_applicable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 1,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 1.0,
+          "partial_evidence_recall": 1.0,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 1,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 4082.5385999996797,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "contradictory:0",
+          "question": "What is the current access code of fictional vault Conflict-0?",
+          "category": "contradictory",
+          "expected_behavior": "report_conflict",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-a"
+                },
+                "display_name": "contradiction-0-a",
+                "metadata": {}
+              },
+              "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 63
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-b"
+                },
+                "display_name": "contradiction-0-b",
+                "metadata": {}
+              },
+              "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 64
+            }
+          ],
+          "status": "insufficient_evidence",
+          "outcome": "missed_contradiction",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-700c-722d-b6be-d77ab79f98a2",
+              "document_version_id": "01a181cd-700c-722d-b6be-d77bab9b07c8",
+              "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+              "start": 0,
+              "end": 63,
+              "text": "The current access code of fictional vault Conflict-0 is amber.",
+              "title": "contradiction-0-a",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-0-a"
+                },
+                "metadata": {},
+                "display_name": "contradiction-0-a",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 63,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.9302392463308892,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-7016-7665-b7cc-e5c2c3390536",
+              "document_version_id": "01a181cd-7016-7665-b7cc-e5c300113bfa",
+              "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+              "start": 0,
+              "end": 64,
+              "text": "The current access code of fictional vault Conflict-0 is violet.",
+              "title": "contradiction-0-b",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-0-b"
+                },
+                "metadata": {},
+                "display_name": "contradiction-0-b",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 64,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.9284357641828911,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-702a-7370-ad14-a01d00a125bf",
+              "document_version_id": "01a181cd-702a-7370-ad14-a01e587fcc55",
+              "content_sha256": "3edde44aa866964f4f286363ff89e8e4fc0f8a7dc3c1cde79d861e3ed7d0e4b0",
+              "start": 0,
+              "end": 63,
+              "text": "The current access code of fictional vault Conflict-1 is amber.",
+              "title": "contradiction-1-a",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-1-a"
+                },
+                "metadata": {},
+                "display_name": "contradiction-1-a",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 63,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.9123305626112704,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-7034-7076-b03e-9424695ec4c1",
+              "document_version_id": "01a181cd-7034-7076-b03e-94256c310b9d",
+              "content_sha256": "767de3eda5850b850f598103dd458ae6a0d8af39788db9f74f94f73342f75979",
+              "start": 0,
+              "end": 64,
+              "text": "The current access code of fictional vault Conflict-1 is violet.",
+              "title": "contradiction-1-b",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-1-b"
+                },
+                "metadata": {},
+                "display_name": "contradiction-1-b",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 64,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.9119524955749576,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-705a-764b-9d65-b173264b151b",
+              "document_version_id": "01a181cd-705a-764b-9d65-b17450fd60ed",
+              "content_sha256": "01acfbe99fa9740667c8f6606800325de72c24071a8ce024081611135d2b4673",
+              "start": 0,
+              "end": 64,
+              "text": "The current access code of fictional vault Conflict-2 is violet.",
+              "title": "contradiction-2-b",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "contradiction-2-b"
+                },
+                "metadata": {},
+                "display_name": "contradiction-2-b",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 64,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.9070875380918505,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "not_applicable",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 2,
+            "strict_recall": 1.0,
+            "all_required_strict": true,
+            "strict_precision": 0.4,
+            "partial_fact_count": 2,
+            "partial_recall": 1.0,
+            "partial_precision": 0.4,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": false,
+          "failure_analysis": {
+            "classification": "citation_failure",
+            "observation": "Citations strictly cover 0 of 2 required facts.",
+            "hypothesis": "Required evidence was available in the model-facing retrieved set but not fully cited."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 4082.5385999996797,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 344,
+            "candidate_tokens": 15,
+            "thinking_tokens": 379
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        }
+      ]
+    },
+    {
+      "configuration": {
+        "name": "investigation-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "per_question_generation_cap": 2,
+          "max_search_calls": 1,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 10,
+          "max_context_chars": 24000,
+          "max_embedding_requests_per_question": 1
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "provider_failure": 1
+        },
+        "answer_correctness_counts": {
+          "unavailable": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 1,
+        "strict_evidence_recall": null,
+        "partial_evidence_recall": null,
+        "strict_citation_recall": null,
+        "partial_citation_recall": null,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": null,
+        "mean_search_calls": null,
+        "mean_generation_requests": null,
+        "mean_follow_up_searches_with_new_required_evidence": null,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "provider_failure": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 1,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "contradictory:0",
+          "question": "What is the current access code of fictional vault Conflict-0?",
+          "category": "contradictory",
+          "expected_behavior": "report_conflict",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-a"
+                },
+                "display_name": "contradiction-0-a",
+                "metadata": {}
+              },
+              "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 63
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "revision": "1",
+                "record_locator": {
+                  "record": "contradiction-0-b"
+                },
+                "display_name": "contradiction-0-b",
+                "metadata": {}
+              },
+              "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 64
+            }
+          ],
+          "status": "provider_error",
+          "outcome": "provider_failure",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "provider_failure",
+            "observation": "Execution raised GenerationProviderError; no completed result exposed its evidence or citations.",
+            "hypothesis": "The sanitized exception type does not identify the failing workflow stage or underlying provider/database cause."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": 24505.776400001196,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemini-3.6-flash",
+          "error_type": "GenerationProviderError",
+          "provider_diagnostic": {
+            "operation": "generate_content",
+            "model_id": "gemini-3.6-flash",
+            "http_status": 503,
+            "category": "availability",
+            "retryable": true,
+            "rate_or_quota_limit": false,
+            "request_count": 8
+          }
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [
+    {
+      "baseline": "quick-answer-real-gemini",
+      "other": "investigation-real-gemini",
+      "paired_cases": 1,
+      "paired_question_ids": [
+        "contradictory:0"
+      ],
+      "outcome_changes": [
+        {
+          "id": "contradictory:0",
+          "baseline": "missed_contradiction",
+          "other": "provider_failure"
+        }
+      ],
+      "answer_correctness_changes": [
+        {
+          "id": "contradictory:0",
+          "baseline": "not_applicable",
+          "other": "unavailable"
+        }
+      ],
+      "strict_evidence_recall_delta": null,
+      "strict_citation_recall_delta": null,
+      "latency_delta_ms": 20423.237800001516,
+      "generation_request_delta": null,
+      "interpretation": "Paired descriptive differences only; no statistical significance or superiority is inferred."
+    }
+  ],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used.",
+    "Execution failures without a completed application result have unobserved evidence metrics, not zero-recall scores."
+  ],
+  "total_elapsed_ms": 28611.562199999753
+}

@@ -1,0 +1,1345 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T10:16:17.365298+00:00",
+  "question_ids": [
+    "2wiki:298f23b8088a11ebbd6eac1f6bf848b6"
+  ],
+  "evaluated_case_count": 1,
+  "stopped_early": false,
+  "runs": [
+    {
+      "configuration": {
+        "name": "quick-answer-real-gemini",
+        "mode": "single_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": {
+          "max_evidence": 5,
+          "max_context_chars": 12000
+        },
+        "investigation_budgets": null
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "incorrect_abstention": 1
+        },
+        "answer_correctness_counts": {
+          "no_answer": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 1,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 0,
+        "strict_evidence_recall": 0.5,
+        "partial_evidence_recall": 0.5,
+        "strict_citation_recall": 0.0,
+        "partial_citation_recall": 0.0,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 15487.898100000166,
+        "mean_search_calls": 1,
+        "mean_generation_requests": 1,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "three_plus_hop": {
+          "outcome_counts": {
+            "incorrect_abstention": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 1,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 0.5,
+          "partial_evidence_recall": 0.5,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 15487.898100000166,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "question": "Which film has the director who was born later, El Extraño Viaje or Love In Pawn?",
+          "category": "three_plus_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "El Extraño Viaje",
+          "acceptable_answers": [
+            "El Extraño Viaje"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 86
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Love in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "6a070f2a47236b4e26ec61aca53f3b5163c45f9955a32b30c9af585a66db3370",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 118
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Fernando Fernán Gómez",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 222
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Charles Saunders (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "658be9ea41f708c229faf23844941e694fa80744055f8d172a744c5fbe022c79",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 181
+            }
+          ],
+          "status": "insufficient_evidence",
+          "outcome": "incorrect_abstention",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-67cb-7237-9643-7e564912ffc2",
+              "document_version_id": "01a181cd-67cb-7237-9643-7e570a1a8ada",
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "start": 0,
+              "end": 310,
+              "text": "El extraño viaje is a 1964 Spanish black drama film directed by Fernando Fernán Gómez. Famous film director Jess Franco acts as the brother of the protagonist. The film was a huge flop on its limited release. It was voted seventh best Spanish film by professionals and critics in 1996 Spanish cinema centenary.",
+              "title": "El extraño viaje",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 86,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 87,
+                  "end": 159,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 160,
+                  "end": 208,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 209,
+                  "end": 310,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7789081466849108,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-6800-7372-bf12-007c8fe6831c",
+              "document_version_id": "01a181cd-6800-7372-bf12-007d1e81a2cc",
+              "content_sha256": "6a070f2a47236b4e26ec61aca53f3b5163c45f9955a32b30c9af585a66db3370",
+              "start": 0,
+              "end": 118,
+              "text": "Love in Pawn is a 1953 British comedy film directed by Charles Saunders and starring Bernard Braden and Barbara Kelly.",
+              "title": "Love in Pawn",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Love in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 118,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.732257044700249,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-6812-70e6-9267-897b7437aa20",
+              "document_version_id": "01a181cd-6812-70e6-9267-897cdd658c19",
+              "content_sha256": "a4bca66ff918fc2ee195eaaef3a1b0c4235a1ab052cf5ab9cfc4a59e4dcf846a",
+              "start": 0,
+              "end": 80,
+              "text": "A Lover in Pawn is a 1920 Swedish silent drama film directed by Victor Sjöström.",
+              "title": "A Lover in Pawn",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 6
+                },
+                "metadata": {},
+                "display_name": "A Lover in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 80,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.7037958436377441,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-67d4-743c-900c-4081827cfdc2",
+              "document_version_id": "01a181cd-67d4-743c-900c-4082b90645bd",
+              "content_sha256": "1a78c1df9c76caba315faef52c2903b92fc9b4854be9f1d87d4b060fc08290ae",
+              "start": 0,
+              "end": 388,
+              "text": "Luck in Pawn is a 1919 American silent romance film starring Marguerite Clark and directed by Walter Edwards. It was produced by Famous Players- Lasky and distributed through Paramount Pictures. The film is based on a play by Marvin Taylor,\" Luck in Pawn\", and ran briefly on Broadway in 1919. The film is listed as being preserved at the Library of Congress and New Zealand Film Archive.",
+              "title": "Luck in Pawn",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 2
+                },
+                "metadata": {},
+                "display_name": "Luck in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 109,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 110,
+                  "end": 194,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 195,
+                  "end": 293,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 294,
+                  "end": 388,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6698374337636223,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6809-76eb-a43c-d55c6f0f9494",
+              "document_version_id": "01a181cd-6809-76eb-a43c-d55dacc7b8f1",
+              "content_sha256": "8f92981e9e9c21d147d75eee289c0d6247d2f8db18c31cc2a8ecaafbd0dc05a0",
+              "start": 0,
+              "end": 336,
+              "text": "Rafaela Díaz Valiente( 9 April 1906 – 9 June 1996) better known as Rafaela Aparicio was a famous Spanish film and theatre actress. She made more than 100 films. The most remembered are Carlos Saura's\" Anna and the WolvesMama Turns 100\" and Fernando Fernán Gómez's\" El extraño viaje\". She died of a stroke in Madrid in a retirement home.",
+              "title": "Rafaela Aparicio",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 5
+                },
+                "metadata": {},
+                "display_name": "Rafaela Aparicio",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 7,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 8,
+                  "end": 130,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 131,
+                  "end": 160,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 161,
+                  "end": 283,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 284,
+                  "end": 336,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6467868371303177,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 2,
+            "strict_recall": 0.5,
+            "all_required_strict": false,
+            "strict_precision": 0.4,
+            "partial_fact_count": 2,
+            "partial_recall": 0.5,
+            "partial_precision": 0.4,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "search_planning_or_retrieval_failure",
+            "observation": "Strictly retrieved 2 of 4 required facts.",
+            "hypothesis": "Search logs identify query order and returned evidence, but do not establish whether planning or ranking caused the gap."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 15487.898100000166,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": true,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 579,
+            "candidate_tokens": 15,
+            "thinking_tokens": 263
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        }
+      ]
+    },
+    {
+      "configuration": {
+        "name": "investigation-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "per_question_generation_cap": 2,
+          "max_search_calls": 1,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 10,
+          "max_context_chars": 24000,
+          "max_embedding_requests_per_question": 1
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "incomplete": 1
+        },
+        "answer_correctness_counts": {
+          "no_answer": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 1,
+        "provider_failures": 0,
+        "strict_evidence_recall": 0.5,
+        "partial_evidence_recall": 0.5,
+        "strict_citation_recall": 0.0,
+        "partial_citation_recall": 0.0,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 22667.69529999874,
+        "mean_search_calls": 2,
+        "mean_generation_requests": 2,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "three_plus_hop": {
+          "outcome_counts": {
+            "incomplete": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 1,
+          "provider_failures": 0,
+          "strict_evidence_recall": 0.5,
+          "partial_evidence_recall": 0.5,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 22667.69529999874,
+          "mean_search_calls": 2,
+          "mean_generation_requests": 2,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "question": "Which film has the director who was born later, El Extraño Viaje or Love In Pawn?",
+          "category": "three_plus_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "El Extraño Viaje",
+          "acceptable_answers": [
+            "El Extraño Viaje"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 86
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Love in Pawn",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "6a070f2a47236b4e26ec61aca53f3b5163c45f9955a32b30c9af585a66db3370",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 118
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Fernando Fernán Gómez",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 222
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Charles Saunders (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "658be9ea41f708c229faf23844941e694fa80744055f8d172a744c5fbe022c79",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 181
+            }
+          ],
+          "status": "incomplete",
+          "outcome": "incomplete",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": "El Extraño Viaje director born",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "duration_ms": 768.6390999951982,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 2,
+              "query": "Love In Pawn director",
+              "evidence_ids": [],
+              "result_count": 0,
+              "duration_ms": 0.0,
+              "succeeded": false,
+              "disposition": "search_limit"
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-67cb-7237-9643-7e564912ffc2",
+              "document_version_id": "01a181cd-67cb-7237-9643-7e570a1a8ada",
+              "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+              "start": 0,
+              "end": 310,
+              "text": "El extraño viaje is a 1964 Spanish black drama film directed by Fernando Fernán Gómez. Famous film director Jess Franco acts as the brother of the protagonist. The film was a huge flop on its limited release. It was voted seventh best Spanish film by professionals and critics in 1996 Spanish cinema centenary.",
+              "title": "El extraño viaje",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "El extraño viaje",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 86,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 87,
+                  "end": 159,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 160,
+                  "end": 208,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 209,
+                  "end": 310,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7948673352203787,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-681a-723c-915f-64e42a7a239e",
+              "document_version_id": "01a181cd-681a-723c-915f-64e5ca7f5be5",
+              "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+              "start": 0,
+              "end": 1765,
+              "text": "Fernando Fernández Gómez (28 August 1921 – 21 November 2007) better known as Fernando Fernán-Gómez was a Spanish actor, screenwriter, film director, theater director and member of the Royal Spanish Academy for seven years. He was born in Argentina while his mother, Spanish actress Carola Fernán-Gómez, was making a tour in Latin America. He would later use her surname for his stage name when he moved to Spain in 1924. After the Spanish Civil War he began to study law but interrupted his studies to work in theater. In 1942 he began to act in movies but also continued working on plays. He formed his own theater company and received awards for directing and writing. In the 1950s he began to direct movies, including the film of his novel, \"El viaje a ninguna parte\". He received praise for his 1958 comedy \"La vida por delante\", which led to a sequel, \"La vida alrededor\". In 1977, he won the Silver Bear for Best Actor at the 27th Berlin International Film Festival for his role in \"The Anchorite\". He won the award again at the 35th Berlin International Film Festival in 1985 for his role in \"Stico\" and finally the Honorary Golden Bear at the 55th Berlin International Film Festival in 2005. Having been very much in demand during the 1970s and 1980s, the 1990s was a less active period for him, but towards the end of his life, he enjoyed something of a revival, featuring in three major projects: \"Todo sobre mi madrePlenilunio\", and a starring role in the hit \"La lengua de las mariposas\". He married María Dolores Pradera in 1945; they divorced in 1959. He married Emma Cohen in 2000. Fernando Fernán Gómez died in Madrid on 21 November 2007 from a heart failure. As he was a lifelong anarchist, his coffin was covered in a black and red anarchist flag.",
+              "title": "Fernando Fernán Gómez",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Fernando Fernán Gómez",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 222,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 223,
+                  "end": 338,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 339,
+                  "end": 420,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 421,
+                  "end": 518,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 519,
+                  "end": 589,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 590,
+                  "end": 670,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 671,
+                  "end": 771,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                },
+                {
+                  "start": 772,
+                  "end": 877,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 7
+                    }
+                  ]
+                },
+                {
+                  "start": 878,
+                  "end": 1004,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 8
+                    }
+                  ]
+                },
+                {
+                  "start": 1005,
+                  "end": 1199,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 9
+                    }
+                  ]
+                },
+                {
+                  "start": 1200,
+                  "end": 1500,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 10
+                    }
+                  ]
+                },
+                {
+                  "start": 1501,
+                  "end": 1565,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 11
+                    }
+                  ]
+                },
+                {
+                  "start": 1566,
+                  "end": 1596,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 12
+                    }
+                  ]
+                },
+                {
+                  "start": 1597,
+                  "end": 1675,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 13
+                    }
+                  ]
+                },
+                {
+                  "start": 1676,
+                  "end": 1765,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 14
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.6857293656903432,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-6809-76eb-a43c-d55c6f0f9494",
+              "document_version_id": "01a181cd-6809-76eb-a43c-d55dacc7b8f1",
+              "content_sha256": "8f92981e9e9c21d147d75eee289c0d6247d2f8db18c31cc2a8ecaafbd0dc05a0",
+              "start": 0,
+              "end": 336,
+              "text": "Rafaela Díaz Valiente( 9 April 1906 – 9 June 1996) better known as Rafaela Aparicio was a famous Spanish film and theatre actress. She made more than 100 films. The most remembered are Carlos Saura's\" Anna and the WolvesMama Turns 100\" and Fernando Fernán Gómez's\" El extraño viaje\". She died of a stroke in Madrid in a retirement home.",
+              "title": "Rafaela Aparicio",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+                  "context_position": 5
+                },
+                "metadata": {},
+                "display_name": "Rafaela Aparicio",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 7,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 8,
+                  "end": 130,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 131,
+                  "end": 160,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 161,
+                  "end": 283,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 284,
+                  "end": 336,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6752236083017217,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-6e6c-7324-95dd-547b937516e5",
+              "document_version_id": "01a181cd-6e6d-742a-9d1e-a97840808b82",
+              "content_sha256": "6cdc80bffcd40d5b36e87b5dcb1554003b7a61e9e5323a79b5af68f457e75fe5",
+              "start": 0,
+              "end": 296,
+              "text": "Richard O. Fleischer( December 8, 1916 – March 25, 2006) was an American film director known for such movies as\" The Narrow Margin\"( 1952),\" 20,000 Leagues Under the Sea\"( 1954),\" Fantastic Voyage\"( 1966), the Oscar- award winning musical film\" Doctor Dolittle\"( 1967) and\" Soylent Green\"( 1973).",
+              "title": "Richard Fleischer",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "ae331827088b11ebbd6fac1f6bf848b6",
+                  "context_position": 5
+                },
+                "metadata": {},
+                "display_name": "Richard Fleischer",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 296,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6730477213859989,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6858-73ab-8f14-5d6b3083ed72",
+              "document_version_id": "01a181cd-6858-73ab-8f14-5d6c78dbc8ac",
+              "content_sha256": "6626fb015bacfacba539a2b53593283d35ab77195d286fe43c3c82f51405dee9",
+              "start": 0,
+              "end": 500,
+              "text": "Luis Saslavsky( April 21, 1903 – March 20, 1995) was an Argentine film director, screenwriter and film producer, and one of the influential directors in the Cinema of Argentina of the classic era. He was Jewish. Saskavsky was born in Rosario, Santa Fe, Argentina. He directed and wrote over 40 films between 1931 and 1979. He directed films such as Crimen a las tres in 1935 and wrote for films such as Allá en el Norte in 1973. He retired from the industry in 1979. He died in Buenos Aires, aged 91.",
+              "title": "Luis Saslavsky",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "05f8a691087b11ebbd67ac1f6bf848b6",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Luis Saslavsky",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 196,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 197,
+                  "end": 211,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 212,
+                  "end": 263,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 264,
+                  "end": 322,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 323,
+                  "end": 428,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 429,
+                  "end": 466,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 467,
+                  "end": 500,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6570361682666259,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 2,
+            "strict_recall": 0.5,
+            "all_required_strict": false,
+            "strict_precision": 0.4,
+            "partial_fact_count": 2,
+            "partial_recall": 0.5,
+            "partial_precision": 0.4,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 4,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "budget_exhaustion",
+            "observation": "The workflow returned incomplete or recorded a configured resource limit.",
+            "hypothesis": "The current per-run budgets ended the investigation before a final decision."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 2,
+            "generation_requests": 2,
+            "embedding_query_requests": 1,
+            "latency_ms": 22667.69529999874,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 0,
+            "budget_exhausted": true,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 4015,
+            "candidate_tokens": 41,
+            "thinking_tokens": 78
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [
+    {
+      "baseline": "quick-answer-real-gemini",
+      "other": "investigation-real-gemini",
+      "paired_cases": 1,
+      "paired_question_ids": [
+        "2wiki:298f23b8088a11ebbd6eac1f6bf848b6"
+      ],
+      "outcome_changes": [
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "baseline": "incorrect_abstention",
+          "other": "incomplete"
+        }
+      ],
+      "answer_correctness_changes": [],
+      "strict_evidence_recall_delta": 0.0,
+      "strict_citation_recall_delta": 0.0,
+      "latency_delta_ms": 7179.797199998575,
+      "generation_request_delta": 1,
+      "interpretation": "Paired descriptive differences only; no statistical significance or superiority is inferred."
+    }
+  ],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used.",
+    "Execution failures without a completed application result have unobserved evidence metrics, not zero-recall scores."
+  ],
+  "total_elapsed_ms": 38173.613099999784
+}

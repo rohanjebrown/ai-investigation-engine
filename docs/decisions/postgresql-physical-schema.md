@@ -1,5 +1,7 @@
 # ADR: Physical PostgreSQL document registration schema
 
+**E21 extension:** The [embedding storage ADR](embedding-storage.md) records the subsequent five-table derived-schema approval and 0002 migration. The three authoritative tables and initial migration described here are unchanged. Cloud execution and remaining U14 lifecycle still require separate approval.
+
 **Date:** 2026-10-25  
 **Status:** CONFIRMED for the approved U07 schema and ORM/migration foundation.  
 **Approval:** [E15](register.md#e15); [U07](register.md#u07), scoped ownership/deletion [U10](register.md#u10), retry semantics [U08](register.md#u08).  

@@ -1,0 +1,128 @@
+{
+  "manifest_version": "2wiki-corpus-v1",
+  "dataset": "xanhho/2WikiMultihopQA",
+  "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "splits": [
+    "dev"
+  ],
+  "selection": "complete pinned development split, original Parquet row/context order",
+  "input_sha256": "c0d8b60b9026b728fb07ad74c5252a0f188f6942e8ba5c02df4dfa369502ea8d",
+  "question_rows": 12576,
+  "passage_occurrences": 125760,
+  "unique_source_occurrences": 125760,
+  "unique_exact_contents": 56680,
+  "duplicate_occurrences": 69080,
+  "excluded_records": 0,
+  "occurrence_text_utf8_bytes": 44839228,
+  "unique_text_utf8_bytes": 24513423,
+  "unique_sentence_layouts": 56702,
+  "ordered_records_sha256": "af1e97c0c787782c8946eb9a951c2c7f40fff2b001d29a4b2974fd382da17a64",
+  "counting_limitation": "Exact-text uniqueness is a conservative baseline, not proof of semantic independence. Chunks are excluded.",
+  "chunking": [
+    {
+      "configuration": {
+        "strategy": "whole_passage",
+        "tokenizer": {
+          "name": "MongoDB/voyage-4",
+          "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+          "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+          "runtime_version": "0.23.3"
+        },
+        "max_tokens": 32000,
+        "overlap": 0,
+        "algorithm_version": "1"
+      },
+      "memberships": 125760,
+      "unique_content_ranges": 56680,
+      "split_occurrences": 0,
+      "sentences": 400892,
+      "whole_sentences_covered": 400892,
+      "characters": {
+        "count": 125760,
+        "min": 12,
+        "median": 203,
+        "p95": 1229,
+        "max": 9764,
+        "mean": 355.15652830788804
+      },
+      "reference_tokens": {
+        "count": 125760,
+        "min": 3,
+        "median": 58,
+        "p95": 317,
+        "max": 2591,
+        "mean": 93.3514631043257
+      }
+    },
+    {
+      "configuration": {
+        "strategy": "fixed_tokens",
+        "tokenizer": {
+          "name": "MongoDB/voyage-4",
+          "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+          "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+          "runtime_version": "0.23.3"
+        },
+        "max_tokens": 128,
+        "overlap": 16,
+        "algorithm_version": "1"
+      },
+      "memberships": 167949,
+      "unique_content_ranges": 83473,
+      "split_occurrences": 22669,
+      "sentences": 400892,
+      "whole_sentences_covered": 380458,
+      "characters": {
+        "count": 167949,
+        "min": 12,
+        "median": 247,
+        "p95": 574,
+        "max": 850,
+        "mean": 282.42946966043263
+      },
+      "reference_tokens": {
+        "count": 167949,
+        "min": 3,
+        "median": 67,
+        "p95": 128,
+        "max": 128,
+        "mean": 73.92067234696248
+      }
+    },
+    {
+      "configuration": {
+        "strategy": "sentence_packing",
+        "tokenizer": {
+          "name": "MongoDB/voyage-4",
+          "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+          "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+          "runtime_version": "0.23.3"
+        },
+        "max_tokens": 128,
+        "overlap": 0,
+        "algorithm_version": "1"
+      },
+      "memberships": 169760,
+      "unique_content_ranges": 84637,
+      "split_occurrences": 22669,
+      "sentences": 400892,
+      "whole_sentences_covered": 400558,
+      "characters": {
+        "count": 169760,
+        "min": 1,
+        "median": 245,
+        "p95": 518,
+        "max": 760,
+        "mean": 263.1037052309142
+      },
+      "reference_tokens": {
+        "count": 169760,
+        "min": 1,
+        "median": 67,
+        "p95": 124,
+        "max": 128,
+        "mean": 69.42997761545712
+      }
+    }
+  ]
+}

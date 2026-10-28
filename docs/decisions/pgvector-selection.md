@@ -1,10 +1,16 @@
 # ADR: pgvector, PostgreSQL full-text search, and custom RRF
 
+**E21 update (2026-10-27):** The [embedding storage ADR](embedding-storage.md) now governs the approved and implemented five-table storage mappings/migration and experimental no-title Gemini 768/cosine baseline. Statements below deferring physical derived schema describe the earlier milestone. Persistence workflows, generation, retrieval, production provider and remaining U14 lifecycle stay unresolved; no cloud migration has run.
+
 **Date:** 2026-10-25  
-**Status:** CONFIRMED technology selection; retrieval is not implemented.  
+**Status:** CONFIRMED technology selection; semantic retrieval (E27) and the scoped hybrid baseline (E31) are implemented.
 **Decision owners:** [U12](register.md#u12) for storage and [U13](register.md#u13) for keyword retrieval/fusion; approval [E13](register.md#e13).
 
 ## Context and requirements
+
+**Current implementation:** The historical sections below retain the technology-selection
+reasoning. The [E31 implementation](#hybrid-retrieval-e31) supersedes their statements
+that retrieval, keyword configuration and fusion contracts remain entirely unimplemented.
 
 [U05](register.md#u05) already selects PostgreSQL as the authoritative relational database. This ADR adds retrieval technology without repeating the [PostgreSQL versus MySQL rationale](postgresql-vs-mysql.md).
 
@@ -88,3 +94,84 @@ Record corpus/vector counts, index-build duration, CPU/RAM/I/O, ingest throughpu
 U11 retains chunking, model, dimensions, and effective-input/reuse configuration. U07/U12 retain physical vector schema, indexes, metrics, parameters, candidate/source-resolution contracts, and filtering behavior. U13 retains fusion and keyword parameters. U14 retains lifecycle/recovery mechanics. U17 retains targets, evaluation configurations, and results.
 
 Official capability sources were checked on 2026-10-25. No extension, database, vector index, embedding pipeline, or retrieval implementation was created. This record approves the direction while preserving the stated implementation boundaries.
+
+## Hybrid retrieval (E31)
+
+Implemented on 2026-10-28 under the original hybrid task and its resume instruction.
+This is a correctness and evaluation baseline, with significant measured scale limitations.
+No migration, dependency, provider, indexing, answer-generation or UI change was needed.
+
+### Keyword SQL and eligibility
+
+PostgreSQL constructs `to_tsvector('pg_catalog.english', substr(text, start+1, end-start))`
+for each exact canonical chunk slice. It matches a bound `plainto_tsquery` and ranks
+with descending `ts_rank`. This is native FTS, not BM25. English stemming and stopword
+removal affect derived search only. All meaningful query terms must match the same
+chunk; punctuation/stopword-only queries produce no lexical hits. Titles are not indexed.
+Canonical text, character ranges and native source locators remain unchanged.
+
+Both channels share the existing selected-profile eligibility CTEs: trusted shared/owner
+visibility, nondeleted documents, current versions belonging to the document, unambiguous
+selected chunking plan, complete valid membership geometry and every required selected
+embedding. Restrictions apply before each independent top-K. Incomplete configurations
+are excluded from keyword results too. Legacy equivalent embedding configurations retain
+the existing canonical-key handling.
+
+`HybridEvidenceRepository.search_channels` returns two independently ranked bounded
+lists. PostgreSQL executes both branches in one UNION ALL statement/snapshot and one
+repository-owned transaction. Python does not fetch all vectors or filter a global top-K.
+The transaction closes before answer generation; a channel error fails the request,
+without silently falling back to a different retrieval mode.
+
+### Application-owned RRF
+
+`reciprocal_rank_fusion` sums `1 / (k + rank)` over available channels, with equal weights
+and one-based list positions. Default k is 60. It never combines incomparable raw scores.
+Identity is `(document_version_id, start, end)`: independent occurrences sharing Content
+or a vector stay separate, as do overlapping ranges. The first duplicate per channel wins;
+duplicates contribute once and remaining unique ranks are compacted. Conflicting source
+payloads under the same identity raise an error. Single-channel hits remain eligible.
+Ties use document ID, version ID, start and end; the final limit applies after fusion.
+Candidate-list truncation affects results and must be recorded during evaluation.
+
+Evidence `score_kind` distinguishes `cosine_similarity`, `keyword_rank` and `rrf`.
+Fused evidence also exposes nullable `semantic_score`, `keyword_score`, `semantic_rank`
+and `keyword_rank`; absent channels have null values. These are additive HTTP fields,
+not probabilities, calibrated relevance, or proof of factual support. Citations continue
+resolving only through trusted version-specific evidence and original intersecting spans.
+
+### Configuration and integration
+
+Flat trusted settings: RETRIEVAL_MODE defaults to semantic (alternative hybrid),
+SEMANTIC_CANDIDATE_LIMIT and KEYWORD_CANDIDATE_LIMIT default to 20 (each 1-100),
+and RRF_K defaults to 60 (0-10000). Zero is supported explicitly for experiments.
+Semantic mode retains its existing requested result limit and exact cosine behavior.
+Hybrid embeds the query once, retrieves configured channel candidates and fuses to the
+requested final limit. The public question endpoint still accepts only a question and
+always uses shared-only scope. No model, owner, profile or retrieval knobs are client-owned.
+Existing RAG evidence selection, structural citation validation, prompts and browser assets
+are unchanged. Automated HTTP composition verifies both modes with real disposable
+PostgreSQL and fake AI, including private isolation and released generation-time connections.
+
+### Performance and remaining approval
+
+See the [local benchmark](../validation/hybrid-retrieval-performance.md). Current runtime
+FTS has no materialized lexeme/GIN index, and exact vector search has no ANN index.
+Existing PK/FK indexes support joins; they do not avoid corpus-wide eligibility and scoring
+work. The baseline is available for controlled quality evaluation, not certified for
+interactive corpus-scale service. Index design and any derived-storage migration need
+separate review/approval. Full evaluation, production language/parameters and latency targets
+remain U17/U18; lifecycle publication remains U14.
+
+A full-Content GIN prefilter is unsafe for arbitrary chunk boundaries: the chunk `micro`
+from `microelectronics` has a lexeme absent from the full-Content vector. Matching another
+chunk must also never qualify an unrelated range. The recommended next performance design
+is a persisted lexeme representation of exact reusable `(Content, start, end)` ranges with
+explicit FTS configuration and GIN indexing, joined back to eligible version memberships.
+It needs a maintenance/backfill contract and cannot be added as a cross-table expression
+index over the current membership table. No such schema or index is implemented here.
+Eligibility costs must be measured separately; a GIN index alone will not remove them.
+
+### E33 retrieval optimization
+
+The schema and serving semantics above are unchanged. E33 replaces whole-chunk whitespace removal with equivalent boundary trimming for blankness and defers title/source/excerpt joins until after each fully eligible channel limit. Both channels still execute in one snapshot; completeness and visibility are not post-filtered. The [performance checkpoint](../validation/hybrid-retrieval-performance.md#e33-schema-preserving-optimization-2026-10-28) records reproducible before/after measurements. No readiness cache, new index/table, approximate search or lifecycle change is selected.

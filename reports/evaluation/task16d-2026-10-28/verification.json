@@ -1,0 +1,47 @@
+{
+  "task": "16D",
+  "new_live_generation_requests": 0,
+  "new_model_metadata_requests": 0,
+  "new_query_embedding_requests": 0,
+  "new_document_embeddings": 0,
+  "scorer_version": "answer-values-v2-nationality-aliases",
+  "guidance_version": "grounding-v2-entity-context",
+  "guidance_live_verified": false,
+  "tests": {
+    "full_command": "uv run pytest tests/unit tests/integration -q",
+    "passed": 669,
+    "unit_passed": 508,
+    "postgresql_integration_passed": 161,
+    "skipped": 4,
+    "skip_reason": "Opt-in live services",
+    "duration_seconds": 190.07,
+    "final_focused_passed": 68,
+    "new_deterministic_regression_cases": 24,
+    "javascript_command": "node --test tests/frontend/test_web.cjs",
+    "javascript_passed": 26,
+    "compile_check": "passed",
+    "warnings": ["Upstream google.genai.types _UnionGenericAlias deprecation"]
+  },
+  "saved_response_assessment": {
+    "source_model": "gemini-3.5-flash-lite",
+    "answer": "American",
+    "gold_answer_unchanged": "United States",
+    "old_literal_score": "incorrect",
+    "new_benchmark_answer_score": "correct",
+    "citation_identifier_validity": "valid",
+    "annotated_citation_precision": 1.0,
+    "annotated_citation_recall": 1.0,
+    "semantic_evidence_support": "unsupported",
+    "cross_document_entity_identity": "unresolved",
+    "actual_director_nationality_independently_proven": false,
+    "review_basis": "Attributed Codex source audit bound to the saved answer/evidence fingerprint, not an automatic semantic score"
+  },
+  "model_configuration": {
+    "configured_application_model": null,
+    "evaluation_fallback_unchanged": "gemini-3.6-flash",
+    "historical_3_6_failure_reverified": false
+  },
+  "deployment_readiness": "hold_public_grounded_factual_answer_deployment_preparation",
+  "historical_and_gold_integrity": "Input hashes verified unchanged; see provenance.json",
+  "new_report": "rescored-flash-lite/answer-quality.json"
+}

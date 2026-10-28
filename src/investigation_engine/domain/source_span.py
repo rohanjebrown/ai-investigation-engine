@@ -7,6 +7,9 @@ class LocatorKind(StrEnum):
     PARAGRAPH = "paragraph"
     SENTENCE = "sentence"
     LINE = "line"
+    TABLE = "table"
+    ROW = "row"
+    CELL = "cell"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

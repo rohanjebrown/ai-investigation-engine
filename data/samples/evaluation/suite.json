@@ -1,0 +1,2329 @@
+{
+  "version": "retrieval-v1",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "cases": [
+    {
+      "id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+      "question": "Who is the mother of the director of film Polish-Russian War (Film)?",
+      "category": "two_hop",
+      "expected_answer": "Małgorzata Braunek",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "sentence_index": 1,
+          "start": 19,
+          "end": 173
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "sentence_index": 2,
+          "start": 128,
+          "end": 202
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "8813f87c0bdd11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Polish-Russian War",
+          "director",
+          "Xawery Żuławski"
+        ],
+        [
+          "Xawery Żuławski",
+          "mother",
+          "Małgorzata Braunek"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:8813f87c0bdd11eba7f7acde48001122",
+      "question": "What is Xawery Żuławski's mother?",
+      "category": "simple_factual",
+      "expected_answer": "Małgorzata Braunek",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "sentence_index": 2,
+          "start": 128,
+          "end": 202
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "8813f87c0bdd11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Xawery Żuławski",
+          "mother",
+          "Małgorzata Braunek"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:e2a3bf2a0bdd11eba7f7acde48001122",
+      "question": "When did John V, Prince Of Anhalt-Zerbst's father die?",
+      "category": "two_hop",
+      "expected_answer": "12 June 1516",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "e2a3bf2a0bdd11eba7f7acde48001122",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "John V, Prince of Anhalt-Zerbst",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "3f9082cf94f54adfb05546e978c4371f6f7c321adf49f4347c58705695e01e10",
+          "sentence_index": 2,
+          "start": 246,
+          "end": 459
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "e2a3bf2a0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Ernest I, Prince of Anhalt-Dessau",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "4bc18f138b13ab5b5452523dc26b8e4e2bc3c682e6b52522982957a0aad24f39",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 154
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "e2a3bf2a0bdd11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "John V of Anhalt-Zerbst",
+          "father",
+          "Ernest I, Prince of Anhalt-Dessau"
+        ],
+        [
+          "Ernest I, Prince of Anhalt-Dessau",
+          "date of death",
+          "12 June 1516"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:e2a3bf2a0bdd11eba7f7acde48001122",
+      "question": "What is Ernest I, Prince of Anhalt-Dessau's date of death?",
+      "category": "simple_factual",
+      "expected_answer": "12 June 1516",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "e2a3bf2a0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Ernest I, Prince of Anhalt-Dessau",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "4bc18f138b13ab5b5452523dc26b8e4e2bc3c682e6b52522982957a0aad24f39",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 154
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "e2a3bf2a0bdd11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Ernest I, Prince of Anhalt-Dessau",
+          "date of death",
+          "12 June 1516"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:0cd3bdea0bde11eba7f7acde48001122",
+      "question": "What is the award that the director of film Wearing Velvet Slippers Under A Golden Umbrella won?",
+      "category": "two_hop",
+      "expected_answer": "Myanmar Motion Picture Academy Awards",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "Wearing Velvet Slippers under a Golden Umbrella",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "401495a98569cf904de9dd4504e678b16a62d12fb93d260a34cb6c95f4346115",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 189
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+              "context_position": 5
+            },
+            "metadata": {},
+            "display_name": "Wunna",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "04d0acc1465ae2875f81e0d21f64ced310250eae4c1dfeec3d54497a0fddb187",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 102
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "0cd3bdea0bde11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Wearing Velvet Slippers under a Golden Umbrella",
+          "director",
+          "Wunna"
+        ],
+        [
+          "Wunna",
+          "award received",
+          "Myanmar Motion Picture Academy Awards"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:0cd3bdea0bde11eba7f7acde48001122",
+      "question": "What is Wunna's award received?",
+      "category": "simple_factual",
+      "expected_answer": "Myanmar Motion Picture Academy Awards",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+              "context_position": 5
+            },
+            "metadata": {},
+            "display_name": "Wunna",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "04d0acc1465ae2875f81e0d21f64ced310250eae4c1dfeec3d54497a0fddb187",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 102
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "0cd3bdea0bde11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Wunna",
+          "award received",
+          "Myanmar Motion Picture Academy Awards"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:f9dcb4a60bda11eba7f7acde48001122",
+      "question": "Where was the director of film Ronnie Rocket born?",
+      "category": "two_hop",
+      "expected_answer": "Missoula, Montana",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Ronnie Rocket",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "c82693d99bfac2736d7a2978a79ea21e7b4413d6687ad895fe87c038631a3ded",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 99
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "David Lynch",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "00fba3da4c43f8819697307a4bbe76a987c400c677f1e46d74347c858ddc5751",
+          "sentence_index": 4,
+          "start": 935,
+          "end": 1193
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "f9dcb4a60bda11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Ronnie Rocket",
+          "director",
+          "David Lynch"
+        ],
+        [
+          "David Lynch",
+          "place of birth",
+          "Missoula, Montana"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:f9dcb4a60bda11eba7f7acde48001122",
+      "question": "What is David Lynch's place of birth?",
+      "category": "simple_factual",
+      "expected_answer": "Missoula, Montana",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "David Lynch",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "00fba3da4c43f8819697307a4bbe76a987c400c677f1e46d74347c858ddc5751",
+          "sentence_index": 4,
+          "start": 935,
+          "end": 1193
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "f9dcb4a60bda11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "David Lynch",
+          "place of birth",
+          "Missoula, Montana"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:019bed300bde11eba7f7acde48001122",
+      "question": "Where was the father of Ștefan I. Nenițescu born?",
+      "category": "two_hop",
+      "expected_answer": "Galați",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "019bed300bde11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Ștefan I. Nenițescu",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "78424e84b1024659d66e2e36faea31f107552325684a8288fd948a82f1193d80",
+          "sentence_index": 1,
+          "start": 89,
+          "end": 186
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "019bed300bde11eba7f7acde48001122",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "Ioan S. Nenițescu",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "c993e486bca18c3775ffc311a7697198d8a19c9b72dd1d0877683674a2c3bf2e",
+          "sentence_index": 1,
+          "start": 89,
+          "end": 195
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "019bed300bde11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Ștefan I. Nenițescu",
+          "father",
+          "Ioan S. Nenițescu"
+        ],
+        [
+          "Ioan S. Nenițescu",
+          "place of birth",
+          "Galați"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:019bed300bde11eba7f7acde48001122",
+      "question": "What is Ioan S. Nenițescu's place of birth?",
+      "category": "simple_factual",
+      "expected_answer": "Galați",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "019bed300bde11eba7f7acde48001122",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "Ioan S. Nenițescu",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "c993e486bca18c3775ffc311a7697198d8a19c9b72dd1d0877683674a2c3bf2e",
+          "sentence_index": 1,
+          "start": 89,
+          "end": 195
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "019bed300bde11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Ioan S. Nenițescu",
+          "place of birth",
+          "Galați"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+      "question": "Which film has the director who was born later, El Extraño Viaje or Love In Pawn?",
+      "category": "three_plus_hop",
+      "expected_answer": "El Extraño Viaje",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "El extraño viaje",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "a3925072a1de0d64887f8ea7a2312bf3a78f1d526a0be030cf8dcbb1bac12bad",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 86
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Love in Pawn",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "6a070f2a47236b4e26ec61aca53f3b5163c45f9955a32b30c9af585a66db3370",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 118
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Fernando Fernán Gómez",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 222
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Charles Saunders (director)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "658be9ea41f708c229faf23844941e694fa80744055f8d172a744c5fbe022c79",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 181
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "El extraño viaje",
+          "director",
+          "Fernando Fernán Gómez"
+        ],
+        [
+          "Love in Pawn",
+          "director",
+          "Charles Saunders"
+        ],
+        [
+          "Fernando Fernán Gómez",
+          "date of birth",
+          "28 August 1921"
+        ],
+        [
+          "Charles Saunders (director)",
+          "date of birth",
+          "8 April 1904"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:05f8a691087b11ebbd67ac1f6bf848b6",
+      "question": "Which film has the director died first, Crimen A Las Tres or The Working Class Goes To Heaven?",
+      "category": "three_plus_hop",
+      "expected_answer": "The Working Class Goes To Heaven",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "05f8a691087b11ebbd67ac1f6bf848b6",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Crimen a las tres",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "c800df3858f57e7ee6853aba30c49244b8308f059358b78ded24348e39b89214",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 83
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "05f8a691087b11ebbd67ac1f6bf848b6",
+              "context_position": 5
+            },
+            "metadata": {},
+            "display_name": "The Working Class Goes to Heaven",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "f56715a8cc69535f55ec3f5939861be62be84343c370a4fe0adc644cf123e280",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 125
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "05f8a691087b11ebbd67ac1f6bf848b6",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Luis Saslavsky",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "6626fb015bacfacba539a2b53593283d35ab77195d286fe43c3c82f51405dee9",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 196
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "05f8a691087b11ebbd67ac1f6bf848b6",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "Elio Petri",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "819be0e6a2ce06e773e0003017bb3ad576ecfd93495bac5058f44d940dbfd524",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 180
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "05f8a691087b11ebbd67ac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "Crimen a las tres",
+          "director",
+          "Luis Saslavsky"
+        ],
+        [
+          "The Working Class Goes to Heaven",
+          "director",
+          "Elio Petri"
+        ],
+        [
+          "Luis Saslavsky",
+          "date of death",
+          "March 20, 1995"
+        ],
+        [
+          "Elio Petri",
+          "date of death",
+          "10 November 1982"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:645c9a5a08c311ebbd8dac1f6bf848b6",
+      "question": "Which film has the director born first, Once A Gentleman or The Girl In White?",
+      "category": "three_plus_hop",
+      "expected_answer": "Once A Gentleman",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "645c9a5a08c311ebbd8dac1f6bf848b6",
+              "context_position": 0
+            },
+            "metadata": {},
+            "display_name": "Once a Gentleman",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "2fd1b7c119a25e8e89755c3e610da7108cd4f46463f7774d58d76fb237f07571",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 143
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "645c9a5a08c311ebbd8dac1f6bf848b6",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "The Girl in White",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "1d3be1f8b50d5b139a4a121849b0e3ec3edb2c445b67d392e6fced111c93c872",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 64
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "645c9a5a08c311ebbd8dac1f6bf848b6",
+              "context_position": 5
+            },
+            "metadata": {},
+            "display_name": "James Cruze",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "2109a6f82319b1e56abd3c30f1e5999c647fceb4a837eba14f8224f376e658a4",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 157
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "645c9a5a08c311ebbd8dac1f6bf848b6",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "John Sturges",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "856214a2621d1de467c4d7f1fdbf4b17d0573b698e7bd35c6f1c566c56b0ecbf",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 85
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "645c9a5a08c311ebbd8dac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "Once a Gentleman",
+          "director",
+          "James Cruze"
+        ],
+        [
+          "The Girl in White",
+          "director",
+          "John Sturges"
+        ],
+        [
+          "James Cruze",
+          "date of birth",
+          "March 27, 1884"
+        ],
+        [
+          "John Sturges",
+          "date of birth",
+          "January 3, 1910"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:5bec3cd408a711ebbd7fac1f6bf848b6",
+      "question": "Which film has the director who died earlier, Il Seduttore or The Trial Of Joan Of Arc?",
+      "category": "three_plus_hop",
+      "expected_answer": "The Trial Of Joan Of Arc",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Il seduttore",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "a3bc9879a5f9eca21b9c59de48c9720d357306ff70b51271f8bdaf439937bba6",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 97
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "The Trial of Joan of Arc",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "26baf97ebe1f540a9959ae86bed15bf4d73fb452224aeab5e694431c78a4599a",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 85
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+              "context_position": 0
+            },
+            "metadata": {},
+            "display_name": "Franco Rossi (director)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "8522b62ddf10f188cc40a769b390985aa81c6b52164ceee12e0baab42b868252",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 226
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Robert Bresson",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "73c88391a514a49b16cb7b3af63330f6b0cdb3b74aba1900d25dcbcff4d2a5b9",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 81
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "Il seduttore",
+          "director",
+          "Franco Rossi"
+        ],
+        [
+          "The Trial of Joan of Arc",
+          "director",
+          "Robert Bresson"
+        ],
+        [
+          "Franco Rossi (director)",
+          "date of death",
+          "5 June 2000"
+        ],
+        [
+          "Robert Bresson",
+          "date of death",
+          "18 December 1999"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:464cfa460bd911eba7f7acde48001122",
+      "question": "Where was the director of film Thomas Jefferson (Film) born?",
+      "category": "two_hop",
+      "expected_answer": "Brooklyn",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "464cfa460bd911eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Thomas Jefferson (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "bc06a2d83061e36581fef4646730b98366deb4080c5350c407fcf750e1b5aa4b",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 97
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "464cfa460bd911eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Ken Burns",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "fd235f69a3e528162bd767adacf7f840f6e405cbd979b2fc325e2fcf874460eb",
+          "sentence_index": 3,
+          "start": 534,
+          "end": 716
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "464cfa460bd911eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Thomas Jefferson",
+          "director",
+          "Ken Burns"
+        ],
+        [
+          "Ken Burns",
+          "place of birth",
+          "Brooklyn"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:464cfa460bd911eba7f7acde48001122",
+      "question": "What is Ken Burns's place of birth?",
+      "category": "simple_factual",
+      "expected_answer": "Brooklyn",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "464cfa460bd911eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Ken Burns",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "fd235f69a3e528162bd767adacf7f840f6e405cbd979b2fc325e2fcf874460eb",
+          "sentence_index": 3,
+          "start": 534,
+          "end": 716
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "464cfa460bd911eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Ken Burns",
+          "place of birth",
+          "Brooklyn"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:c05e16a40bdd11eba7f7acde48001122",
+      "question": "Why did Grand Duke Kirill Vladimirovich Of Russia's wife die?",
+      "category": "two_hop",
+      "expected_answer": "stroke",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "c05e16a40bdd11eba7f7acde48001122",
+              "context_position": 5
+            },
+            "metadata": {},
+            "display_name": "Grand Duke Kirill Vladimirovich of Russia",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "13c63852e8e614fb3054bff405500142e79ef1219bdfaa8e94416f7c52029bf1",
+          "sentence_index": 3,
+          "start": 465,
+          "end": 562
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "c05e16a40bdd11eba7f7acde48001122",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Princess Victoria Melita of Saxe-Coburg and Gotha",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "b7c63dfb311c04c61dce0861ecac842f9482ed3c276bbb04889a823bf2c1678e",
+          "sentence_index": 17,
+          "start": 2126,
+          "end": 2211
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "c05e16a40bdd11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Grand Duke Kirill Vladimirovich of Russia",
+          "spouse",
+          "Princess Victoria Melita of Saxe-Coburg and Gotha"
+        ],
+        [
+          "Princess Victoria Melita of Saxe-Coburg and Gotha",
+          "cause of death",
+          "stroke"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:c05e16a40bdd11eba7f7acde48001122",
+      "question": "What is Princess Victoria Melita of Saxe-Coburg and Gotha's cause of death?",
+      "category": "simple_factual",
+      "expected_answer": "stroke",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "c05e16a40bdd11eba7f7acde48001122",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Princess Victoria Melita of Saxe-Coburg and Gotha",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "b7c63dfb311c04c61dce0861ecac842f9482ed3c276bbb04889a823bf2c1678e",
+          "sentence_index": 17,
+          "start": 2126,
+          "end": 2211
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "c05e16a40bdd11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Princess Victoria Melita of Saxe-Coburg and Gotha",
+          "cause of death",
+          "stroke"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:2935f1640bda11eba7f7acde48001122",
+      "question": "Where was the place of death of the director of film Beat Girl?",
+      "category": "two_hop",
+      "expected_answer": "Nice",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "2935f1640bda11eba7f7acde48001122",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "Beat Girl",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "3bdd36aec791e0a257e5493d231335cbb3c5d839fde217dfc93ab8f9ab342a89",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 82
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "2935f1640bda11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Edmond T. Gréville",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "b27f730b3f30bf1951b46d313b3f05e83e4dc451ed522aa4c359939d44b079af",
+          "sentence_index": 1,
+          "start": 55,
+          "end": 86
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "2935f1640bda11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Beat Girl",
+          "director",
+          "Edmond T. Gréville"
+        ],
+        [
+          "Edmond T. Gréville",
+          "place of death",
+          "Nice"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "simple:2935f1640bda11eba7f7acde48001122",
+      "question": "What is Edmond T. Gréville's place of death?",
+      "category": "simple_factual",
+      "expected_answer": "Nice",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "2935f1640bda11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Edmond T. Gréville",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "b27f730b3f30bf1951b46d313b3f05e83e4dc451ed522aa4c359939d44b079af",
+          "sentence_index": 1,
+          "start": 55,
+          "end": 86
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "2935f1640bda11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Edmond T. Gréville",
+          "place of death",
+          "Nice"
+        ]
+      ],
+      "category_basis": "Derived single-relation question; annotated object occurs in exactly one supporting sentence.",
+      "expected_behavior": "answer",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:3f857208086c11ebbd61ac1f6bf848b6",
+      "question": "Which film has the director born first, The Raven'S Dance or Keïta! L'Héritage Du Griot?",
+      "category": "three_plus_hop",
+      "expected_answer": "The Raven'S Dance",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "3f857208086c11ebbd61ac1f6bf848b6",
+              "context_position": 2
+            },
+            "metadata": {},
+            "display_name": "The Raven's Dance",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "a3fc3a35bae6648d91b24cdf8ea23305708cf7a83308b656fc17862ce12c24a0",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 73
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "3f857208086c11ebbd61ac1f6bf848b6",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Keïta! l'Héritage du griot",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "4edfb16f38c32173d861feed6464d510de53780ea764f784ec172f6116b0f891",
+          "sentence_index": 2,
+          "start": 51,
+          "end": 158
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "3f857208086c11ebbd61ac1f6bf848b6",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "Markku Lehmuskallio",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "51c0e5120a2d61d94f738464a9e468b95b70dd9363cc2e6123f94c21ac3fedb5",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 105
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "3f857208086c11ebbd61ac1f6bf848b6",
+              "context_position": 0
+            },
+            "metadata": {},
+            "display_name": "Dani Kouyaté",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "731eb9cb4eb500862ea343987c9c6745e6e1e6394ecfe5f9c11c6e5a4d131591",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 155
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "3f857208086c11ebbd61ac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "The Raven's Dance",
+          "director",
+          "Markku Lehmuskallio"
+        ],
+        [
+          "Keïta! l'Héritage du griot",
+          "director",
+          "Dani Kouyaté"
+        ],
+        [
+          "Markku Lehmuskallio",
+          "date of birth",
+          "31 December 1938"
+        ],
+        [
+          "Dani Kouyaté",
+          "date of birth",
+          "June 4, 1961"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:dfe93efe0bdd11eba7f7acde48001122",
+      "question": "When did Jean Martin (Singer)'s husband die?",
+      "category": "two_hop",
+      "expected_answer": "1983",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "dfe93efe0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Jean Martin (singer)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "3c9f0a0370c1044597f8cf6bb92b892560c9882cb23028795ec90751176d2747",
+          "sentence_index": 2,
+          "start": 148,
+          "end": 261
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "dfe93efe0bdd11eba7f7acde48001122",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "William Black (businessman)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "4d07f74a2ad63ef43bf1eee3b3a7a16dbc7639c740743d7a81bc244fb37e4d95",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 117
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "dfe93efe0bdd11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Jean Martin",
+          "spouse",
+          "William Black"
+        ],
+        [
+          "William Black",
+          "date of death",
+          "1983"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:1d890623088711ebbd6dac1f6bf848b6",
+      "question": "Which film has the director who died earlier, Tangled Destinies or The Daltons' Women?",
+      "category": "three_plus_hop",
+      "expected_answer": "Tangled Destinies",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "1d890623088711ebbd6dac1f6bf848b6",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "Tangled Destinies",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "4591890cd393461660b051b8cfd919fd9d38e7012100300f35569c9cc8ad46fc",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 71
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "1d890623088711ebbd6dac1f6bf848b6",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "The Daltons' Women",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "e7209e4c5b38e28782afc3699b83eca093d20fd48ca0776fc344af471d87c30a",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 111
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "1d890623088711ebbd6dac1f6bf848b6",
+              "context_position": 0
+            },
+            "metadata": {},
+            "display_name": "Frank R. Strayer",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "6fbcf86fedc2552f85bdfb7c8f7be1ae9e94ab56bcfef466448787059791a2de",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 106
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "1d890623088711ebbd6dac1f6bf848b6",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Thomas Carr (director)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "7fe869fecbaa7f6bbb7a31628775a3bbb1dabeca0ab10f420748e4bd90d0a608",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 128
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "1d890623088711ebbd6dac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "Tangled Destinies",
+          "director",
+          "Frank R. Strayer"
+        ],
+        [
+          "The Daltons' Women",
+          "director",
+          "Thomas Carr"
+        ],
+        [
+          "Frank R. Strayer",
+          "date of death",
+          "February 3, 1964"
+        ],
+        [
+          "Thomas Carr (director)",
+          "date of death",
+          "April 23, 1997"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+      "question": "What nationality is the director of film World And Time Enough?",
+      "category": "two_hop",
+      "expected_answer": "United States",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "2207e9060bda11eba7f7acde48001122",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "World and Time Enough",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+          "sentence_index": 1,
+          "start": 15,
+          "end": 171
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "2207e9060bda11eba7f7acde48001122",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Eric Mueller",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 146
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "2207e9060bda11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "World and Time Enough",
+          "director",
+          "Eric Mueller"
+        ],
+        [
+          "Eric Mueller",
+          "country of citizenship",
+          "United States"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:7abc1e3008d511ebbd98ac1f6bf848b6",
+      "question": "Which film has the director died earlier, Poker In Bed or The Machine To Kill Bad People?",
+      "category": "three_plus_hop",
+      "expected_answer": "The Machine To Kill Bad People",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+              "context_position": 0
+            },
+            "metadata": {},
+            "display_name": "Poker in Bed",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "fd8396da8b28d4e78faf1cbb3259f90113dceeb1bbd1319d2c973d0faba014b4",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 141
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "The Machine to Kill Bad People",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "4075cf61e13c2569ac245abe4f96fc6d98113e336afd9623b89022bdc84a732d",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 198
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "Giuliano Carnimeo",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "b11b9811b0e846477e27cf6f634713759ff1cd6c6c3528f3be797d3c86e64af5",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 131
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Roberto Rossellini",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "947687691b583cec28b292fc0b8e6e09ac17b3babad04a5ff3e9a29798197a01",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 119
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "Poker in Bed",
+          "director",
+          "Giuliano Carnimeo"
+        ],
+        [
+          "The Machine to Kill Bad People",
+          "director",
+          "Roberto Rossellini"
+        ],
+        [
+          "Giuliano Carnimeo",
+          "date of death",
+          "10 September 2016"
+        ],
+        [
+          "Roberto Rossellini",
+          "date of death",
+          "3 June 1977"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:ae331827088b11ebbd6fac1f6bf848b6",
+      "question": "Which film whose director is younger, Heads I Win, Tails You Lose or The Incredible Sarah?",
+      "category": "three_plus_hop",
+      "expected_answer": "Heads I Win, Tails You Lose",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "ae331827088b11ebbd6fac1f6bf848b6",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "Heads I Win, Tails You Lose",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "041902c992b35e18999992e7d238d6c40c892864f6ac1ba5f3e7501b2b7f3e3c",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 125
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "ae331827088b11ebbd6fac1f6bf848b6",
+              "context_position": 2
+            },
+            "metadata": {},
+            "display_name": "The Incredible Sarah",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "407cacab819e49842c596b0f8a4c3bc7263382e5bf6f96e6c92daf4623c30e2b",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 108
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "ae331827088b11ebbd6fac1f6bf848b6",
+              "context_position": 6
+            },
+            "metadata": {},
+            "display_name": "Nanni Loy",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "11300a4b5e4ee7b0c2bea1cfeaf375d5d29b71e59fbf1b5a8eaa0e9f1aecacb0",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 109
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "ae331827088b11ebbd6fac1f6bf848b6",
+              "context_position": 5
+            },
+            "metadata": {},
+            "display_name": "Richard Fleischer",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "6cdc80bffcd40d5b36e87b5dcb1554003b7a61e9e5323a79b5af68f457e75fe5",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 296
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "ae331827088b11ebbd6fac1f6bf848b6",
+      "annotation_triples": [
+        [
+          "Heads I Win, Tails You Lose",
+          "director",
+          "Nanni Loy"
+        ],
+        [
+          "The Incredible Sarah",
+          "director",
+          "Richard Fleischer"
+        ],
+        [
+          "Nanni Loy",
+          "date of birth",
+          "23 October 1925"
+        ],
+        [
+          "Richard Fleischer",
+          "date of birth",
+          "December 8, 1916"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Bridge-comparison: two subject-to-person-to-attribute chains, then compare; not a claim of a linear four-hop path.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:a9cc5f240bdb11eba7f7acde48001122",
+      "question": "Who is the spouse of the director of film Eden And After?",
+      "category": "two_hop",
+      "expected_answer": "Catherine Robbe-Grillet",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "a9cc5f240bdb11eba7f7acde48001122",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Eden and After",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "f97c07a8388e91f95b14693c7b9a97ae69d7ecb502ad3c93d1aa4899b2978f73",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 93
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "a9cc5f240bdb11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Alain Robbe-Grillet",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "1405bbc6b2ac6cfcc6b5eb98a4f07f0ad1fb39895e173d4882e6df16d4eda637",
+          "sentence_index": 3,
+          "start": 378,
+          "end": 435
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "a9cc5f240bdb11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Eden and After",
+          "director",
+          "Alain Robbe-Grillet"
+        ],
+        [
+          "Alain Robbe-Grillet",
+          "spouse",
+          "Catherine Robbe-Grillet"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "2wiki:6ebe05740bde11eba7f7acde48001122",
+      "question": "Where was the place of death of Anastasia Of Serbia's husband?",
+      "category": "two_hop",
+      "expected_answer": "Hilandar",
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "6ebe05740bde11eba7f7acde48001122",
+              "context_position": 3
+            },
+            "metadata": {},
+            "display_name": "Anastasia of Serbia",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "6b9185ff0c8841bb78ca4e55eeb8b90d8c39e0ee377551b442bf266a709c8031",
+          "sentence_index": 1,
+          "start": 14,
+          "end": 127
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "6ebe05740bde11eba7f7acde48001122",
+              "context_position": 1
+            },
+            "metadata": {},
+            "display_name": "Stefan Nemanja",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "content_sha256": "36dda9884fed8346f81f7dd468745155d86aca72d34c2e6742fd3dbacd082d19",
+          "sentence_index": 6,
+          "start": 1075,
+          "end": 1211
+        }
+      ],
+      "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+      "split": "dev",
+      "original_question_id": "6ebe05740bde11eba7f7acde48001122",
+      "annotation_triples": [
+        [
+          "Anastasia of Serbia",
+          "spouse",
+          "Stefan Nemanja"
+        ],
+        [
+          "Stefan Nemanja",
+          "place of death",
+          "Hilandar"
+        ]
+      ],
+      "expected_behavior": "answer",
+      "category_basis": "Two annotated compositional relations",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "unanswerable:0",
+      "question": "On what date was fictional station Unlisted-0 constructed?",
+      "category": "unanswerable",
+      "expected_answer": null,
+      "required_evidence": [],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "abstain",
+      "category_basis": "Controlled fictional entity; no construction date in the fixed corpus.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "contradictory:0",
+      "question": "What is the current access code of fictional vault Conflict-0?",
+      "category": "contradictory",
+      "expected_answer": null,
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-0-a"
+            },
+            "display_name": "contradiction-0-a",
+            "metadata": {}
+          },
+          "content_sha256": "0a758ccee7872a5523e0f970c29f53868fe793bbfc0df3aebcba234fed950a3e",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 63
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-0-b"
+            },
+            "display_name": "contradiction-0-b",
+            "metadata": {}
+          },
+          "content_sha256": "83a26b8f8ea6af70c581f76b03741de3b4cd17945e2431ab2d03c716ed91444a",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "report_conflict",
+      "category_basis": "Two same-time assertions disagree; neither source has priority.",
+      "corpus_id": "2wiki-dev-controlled-v1",
+      "expected_conflict_claims": [
+        {
+          "value": "amber",
+          "required_evidence_index": 0
+        },
+        {
+          "value": "violet",
+          "required_evidence_index": 1
+        }
+      ]
+    },
+    {
+      "id": "unanswerable:1",
+      "question": "On what date was fictional station Unlisted-1 constructed?",
+      "category": "unanswerable",
+      "expected_answer": null,
+      "required_evidence": [],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "abstain",
+      "category_basis": "Controlled fictional entity; no construction date in the fixed corpus.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "contradictory:1",
+      "question": "What is the current access code of fictional vault Conflict-1?",
+      "category": "contradictory",
+      "expected_answer": null,
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-1-a"
+            },
+            "display_name": "contradiction-1-a",
+            "metadata": {}
+          },
+          "content_sha256": "3edde44aa866964f4f286363ff89e8e4fc0f8a7dc3c1cde79d861e3ed7d0e4b0",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 63
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-1-b"
+            },
+            "display_name": "contradiction-1-b",
+            "metadata": {}
+          },
+          "content_sha256": "767de3eda5850b850f598103dd458ae6a0d8af39788db9f74f94f73342f75979",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "report_conflict",
+      "category_basis": "Two same-time assertions disagree; neither source has priority.",
+      "corpus_id": "2wiki-dev-controlled-v1",
+      "expected_conflict_claims": [
+        {
+          "value": "amber",
+          "required_evidence_index": 0
+        },
+        {
+          "value": "violet",
+          "required_evidence_index": 1
+        }
+      ]
+    },
+    {
+      "id": "unanswerable:2",
+      "question": "On what date was fictional station Unlisted-2 constructed?",
+      "category": "unanswerable",
+      "expected_answer": null,
+      "required_evidence": [],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "abstain",
+      "category_basis": "Controlled fictional entity; no construction date in the fixed corpus.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "contradictory:2",
+      "question": "What is the current access code of fictional vault Conflict-2?",
+      "category": "contradictory",
+      "expected_answer": null,
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-2-a"
+            },
+            "display_name": "contradiction-2-a",
+            "metadata": {}
+          },
+          "content_sha256": "402501c8ebf68284a22c90e9e8ca93a33ce40ef93535fb0ff8412cf56e4add37",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 63
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-2-b"
+            },
+            "display_name": "contradiction-2-b",
+            "metadata": {}
+          },
+          "content_sha256": "01acfbe99fa9740667c8f6606800325de72c24071a8ce024081611135d2b4673",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "report_conflict",
+      "category_basis": "Two same-time assertions disagree; neither source has priority.",
+      "corpus_id": "2wiki-dev-controlled-v1",
+      "expected_conflict_claims": [
+        {
+          "value": "amber",
+          "required_evidence_index": 0
+        },
+        {
+          "value": "violet",
+          "required_evidence_index": 1
+        }
+      ]
+    },
+    {
+      "id": "unanswerable:3",
+      "question": "On what date was fictional station Unlisted-3 constructed?",
+      "category": "unanswerable",
+      "expected_answer": null,
+      "required_evidence": [],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "abstain",
+      "category_basis": "Controlled fictional entity; no construction date in the fixed corpus.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "contradictory:3",
+      "question": "What is the current access code of fictional vault Conflict-3?",
+      "category": "contradictory",
+      "expected_answer": null,
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-3-a"
+            },
+            "display_name": "contradiction-3-a",
+            "metadata": {}
+          },
+          "content_sha256": "e7f4ee811797461b3116ae2b5d8c7dcb8c98f86377b48cc58d85406d607057dc",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 63
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-3-b"
+            },
+            "display_name": "contradiction-3-b",
+            "metadata": {}
+          },
+          "content_sha256": "105b4bceab187027c79e2c6f39c69dff788ad29d0b576b6d121a32640c628a98",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "report_conflict",
+      "category_basis": "Two same-time assertions disagree; neither source has priority.",
+      "corpus_id": "2wiki-dev-controlled-v1",
+      "expected_conflict_claims": [
+        {
+          "value": "amber",
+          "required_evidence_index": 0
+        },
+        {
+          "value": "violet",
+          "required_evidence_index": 1
+        }
+      ]
+    },
+    {
+      "id": "unanswerable:4",
+      "question": "On what date was fictional station Unlisted-4 constructed?",
+      "category": "unanswerable",
+      "expected_answer": null,
+      "required_evidence": [],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "abstain",
+      "category_basis": "Controlled fictional entity; no construction date in the fixed corpus.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "contradictory:4",
+      "question": "What is the current access code of fictional vault Conflict-4?",
+      "category": "contradictory",
+      "expected_answer": null,
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-4-a"
+            },
+            "display_name": "contradiction-4-a",
+            "metadata": {}
+          },
+          "content_sha256": "7ca9f0bf221ca173f88fde0e98516ca82a0502498a19c1f5821d886e6064bf64",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 63
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-4-b"
+            },
+            "display_name": "contradiction-4-b",
+            "metadata": {}
+          },
+          "content_sha256": "75526540c03800568672e65b8a088ba34cb9a6b015ae66914288f732c21d89ba",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "report_conflict",
+      "category_basis": "Two same-time assertions disagree; neither source has priority.",
+      "corpus_id": "2wiki-dev-controlled-v1",
+      "expected_conflict_claims": [
+        {
+          "value": "amber",
+          "required_evidence_index": 0
+        },
+        {
+          "value": "violet",
+          "required_evidence_index": 1
+        }
+      ]
+    },
+    {
+      "id": "unanswerable:5",
+      "question": "On what date was fictional station Unlisted-5 constructed?",
+      "category": "unanswerable",
+      "expected_answer": null,
+      "required_evidence": [],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "abstain",
+      "category_basis": "Controlled fictional entity; no construction date in the fixed corpus.",
+      "corpus_id": "2wiki-dev-controlled-v1"
+    },
+    {
+      "id": "contradictory:5",
+      "question": "What is the current access code of fictional vault Conflict-5?",
+      "category": "contradictory",
+      "expected_answer": null,
+      "required_evidence": [
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-5-a"
+            },
+            "display_name": "contradiction-5-a",
+            "metadata": {}
+          },
+          "content_sha256": "c227a20444697b9adcbda763575b242764add99e98aa93d8effdcb6d7e8e01aa",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 63
+        },
+        {
+          "source": {
+            "kind": "dataset",
+            "source_id": "controlled-evaluation",
+            "revision": "1",
+            "record_locator": {
+              "record": "contradiction-5-b"
+            },
+            "display_name": "contradiction-5-b",
+            "metadata": {}
+          },
+          "content_sha256": "606569f0cc8edb810695e8846d328b4ec379669bf49b170447c9905bc089076d",
+          "sentence_index": 0,
+          "start": 0,
+          "end": 64
+        }
+      ],
+      "dataset_revision": "1",
+      "split": "controlled",
+      "expected_behavior": "report_conflict",
+      "category_basis": "Two same-time assertions disagree; neither source has priority.",
+      "corpus_id": "2wiki-dev-controlled-v1",
+      "expected_conflict_claims": [
+        {
+          "value": "amber",
+          "required_evidence_index": 0
+        },
+        {
+          "value": "violet",
+          "required_evidence_index": 1
+        }
+      ]
+    }
+  ],
+  "answer_quality_version": "answer-quality-v1"
+}

@@ -1,5 +1,15 @@
 # System architecture and project decisions
 
+**E41 evaluation milestone (2026-10-28):** The fixed 218-occurrence/197-Content evaluation corpus is indexed with real Gemini Embedding 2 vectors in a dedicated persistent PostgreSQL 18.4/pgvector database; all 218 occurrences are active and searchable. Paired 40-question semantic/hybrid measurements and container-recreation verification are recorded in the [Task 15 report](../validation/batched-gemini-evaluation-2026-10-28.md). The 125,760-occurrence dataset remains unembedded, and live answer-quality comparison is deferred because current generation quota was unavailable.
+
+**E30 verification (2026-10-28):** [One real two-source RAG/browser case](../validation/live-rag-2026-10-28.md) passed with authorized real gemini-embedding-2/768 and gemini-3.6-flash calls, seven requests total, and disposable PostgreSQL 18.4/pgvector 0.8.5. Actual source facts, citation mappings and UI excerpts were checked. No production code, schema, dependencies or settings changed; Cloud SQL was not contacted. This does not complete corpus-scale evaluation, production model selection, hybrid retrieval or multi-step investigation. Earlier milestone summaries below retain their historical verification limits.
+
+**E29 update (2026-10-28):** The [question interface](../decisions/single-step-rag.md#browser-interface-e29) is served at GET / with local HTML/CSS/vanilla-JavaScript assets. It calls unchanged POST /questions, preserves shared-only visibility, displays plain-text answers and mapped source disclosures, and separates loading/abstention/failure states. No domain/application-layer, schema, dependency or configuration changes were needed. All **441 Python tests (316 unit, 125 PostgreSQL)** and **24 JavaScript tests** pass; synthetic browser checks cover desktop/mobile and injection-shaped text. Previous milestone summaries below are historical.
+
+**E28 update (2026-10-27):** [Single-step RAG](../decisions/single-step-rag.md) composes existing SearchEvidence with a provider-independent AnswerGenerator. Gemini returns structured answer/abstention data; the application validates E identifiers and resolves trusted source evidence. FastAPI exposes health and shared-only questions through lifespan-owned resources. All **436 tests (311 unit, 125 PostgreSQL)** pass with fake AI/mocked SDK and disposable PostgreSQL. No live Gemini/Cloud SQL calls or schema/indexing changes occurred. Production generation model, semantic support evaluation, multi-step investigation, hybrid retrieval, authentication, UI and deployment remain open. The E27 summary below describes the preceding checkpoint.
+
+**E27 update (2026-10-27):** The [embedding storage ADR](../decisions/embedding-storage.md#exact-semantic-retrieval-e27) covers exact semantic retrieval after schema, generation and foreground indexing/activation. SearchEvidence composes query embeddings with one SQL search; trusted visibility, active version and complete selected-profile eligibility filter before top-K. Original intersecting source spans attribute each version/range independently. All 348 unit/integration tests pass with synthetic providers and disposable PostgreSQL 18/pgvector 0.8.5. Historical notes below do not imply additional implementation. Live Gemini, production provider/pinning, hybrid retrieval, background lifecycle and public authentication remain unresolved; no cloud migration has run.
+
 **Project:** Upgaming Applied AI — AI Investigation Engine  
 **Date:** 26 October 2026  
 **Status:** Agreed architecture with planned implementation choices
@@ -125,3 +135,7 @@ This design reflects useful production patterns: immutable derived artifacts, st
 - Google Cloud Document AI, `Document.text` / `TextAnchor`: https://docs.cloud.google.com/document-ai/docs/reference/rest/v1/Document
 - W3C PROV-O provenance vocabulary: https://www.w3.org/TR/prov-o/
 - Qdrant multi-tenant indexing/filtering concepts: https://qdrant.tech/documentation/manage-data/multitenancy/
+
+## Current retrieval checkpoint (E31)
+
+Semantic and hybrid retrieval are implemented through the existing SearchEvidence use case. Hybrid runs exact cosine and exact chunk-slice PostgreSQL FTS in one snapshot, with complete selected-profile visibility before channel limits, then application-owned RRF. Trusted configuration selects the mode; the public API remains question-only/shared-only. RAG, citations and browser assets are unchanged. See the [retrieval ADR](../decisions/pgvector-selection.md#hybrid-retrieval-e31) and [measured scale limitations](../validation/hybrid-retrieval-performance.md). Historical planned/unimplemented statements above describe earlier milestones.

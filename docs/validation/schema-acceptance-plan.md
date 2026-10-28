@@ -1,11 +1,11 @@
 # Document schema and provenance — validation plan
 
-**Status:** Planned tests and evidence to collect; **not yet executed**.  
+**Status:** Broader acceptance backlog; E22 adds a partial permanent suite for implemented behavior. See [current execution evidence](../decisions/testing-strategy.md).
 **Purpose:** Convert agreed conceptual architecture into falsifiable implementation requirements.
 
-Temporary authoritative-schema/registration and chunking checks have since been executed; scoped results are in the decision register and focused ADRs. This broader plan still includes unimplemented formats, retrieval, citations and lifecycle behavior. No complete gate or permanent automated suite is claimed. Historical disjoint/augmented-chunk scenarios below do not authorize them: E17/E18 select contiguous exact Content ranges, with future embedding augmentation kept separate.
+Temporary authoritative-schema/registration and chunking checks have since been executed; scoped results are in the decision register and focused ADRs. E22 now adds permanent unit, integration and opt-in corpus checks. This broader plan still includes unimplemented formats, retrieval, citations and lifecycle behavior, and is not a completed acceptance gate. Historical disjoint/augmented-chunk scenarios below do not authorize them: E17/E18 select contiguous exact Content ranges, with future embedding augmentation kept separate.
 
-**Cleanup review finding:** Direct calls to the in-memory repository currently accept a new registration with version_number other than 1 or a non-null current_version_id; the PostgreSQL repository explicitly rejects those inputs. The normal RegisterDocument use case always creates inactive version 1. Aligning direct-call validation changes observable behavior and is deferred for approval; cleanup does not silently alter that contract. Python 3.14 unittest discovery finds zero tests in the existing empty module and exits with status 5, so it is not evidence of passing coverage.
+**Cleanup review finding — resolved under E24:** Direct in-memory registration previously accepted a new version other than 1 or a non-null current_version_id. Both repositories now require inactive version 1 for new occurrences, consistent with RegisterDocument and delayed activation. Identical authorized retries are resolved before that guard and retain the stored active pointer. The two former expected failures are ordinary passing tests, with additional state-preservation and active-retry coverage. The [testing ADR](../decisions/testing-strategy.md) records actual results and the remaining PostgreSQL integration limitation; no broader acceptance gate is implied.
 
 ## 1. Functional contract tests
 

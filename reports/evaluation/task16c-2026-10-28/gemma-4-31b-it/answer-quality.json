@@ -1,0 +1,356 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T12:18:37.367913+00:00",
+  "question_ids": [
+    "2wiki:2207e9060bda11eba7f7acde48001122"
+  ],
+  "evaluated_case_count": 1,
+  "stopped_early": true,
+  "runs": [
+    {
+      "configuration": {
+        "name": "investigation-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemma-4-31b-it",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "max_turns": 6,
+          "max_generation_requests": 6,
+          "max_search_calls": 5,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 25,
+          "max_context_chars": 64000,
+          "max_embedding_requests": 5
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "provider_failure": 1
+        },
+        "answer_correctness_counts": {
+          "unavailable": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 1,
+        "strict_evidence_recall": null,
+        "partial_evidence_recall": null,
+        "strict_citation_recall": null,
+        "partial_citation_recall": null,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": null,
+        "mean_search_calls": null,
+        "mean_generation_requests": null,
+        "mean_follow_up_searches_with_new_required_evidence": null,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "two_hop": {
+          "outcome_counts": {
+            "provider_failure": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 1,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "question": "What nationality is the director of film World And Time Enough?",
+          "category": "two_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "United States",
+          "acceptable_answers": [
+            "United States"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "sentence_index": 1,
+              "start": 15,
+              "end": 171
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 146
+            }
+          ],
+          "status": "provider_error",
+          "outcome": "provider_failure",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "provider_failure",
+            "observation": "Execution raised GenerationProviderError; no completed result exposed its evidence or citations.",
+            "hypothesis": "The sanitized exception type does not identify the failing workflow stage or underlying provider/database cause."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": 1067.6571000003605,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemma-4-31b-it",
+          "error_type": "GenerationProviderError",
+          "provider_diagnostic": {
+            "operation": "generate_content",
+            "model_id": "gemma-4-31b-it",
+            "http_status": 500,
+            "category": "availability",
+            "retryable": true,
+            "rate_or_quota_limit": false,
+            "request_count": 1,
+            "provider_code": "INTERNAL",
+            "error_reason": "provider_rejection",
+            "investigation_step": 1
+          }
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used.",
+    "Execution failures without a completed application result have unobserved evidence metrics, not zero-recall scores."
+  ],
+  "total_elapsed_ms": 1283.2427000030293,
+  "execution": {
+    "kind": "persistent_local_frozen_sample",
+    "generation_model_requested": "gemma-4-31b-it",
+    "generation_budget_model_scope": "gemma-4-31b-it",
+    "generation_model_configuration_source": "explicit evaluation CLI configuration",
+    "max_output_tokens": 4096,
+    "generation_request_cap": 19,
+    "generation_requests_observed": 1,
+    "generation_requests_by_mode": {
+      "single_step": 0,
+      "multi_step": 1
+    },
+    "assumed_daily_rpd_limit": 20,
+    "remaining_rpd_independently_verified": false,
+    "prior_generation_requests_this_daily_window": 0,
+    "prior_single_step_requests_this_daily_window": 0,
+    "prior_multi_step_requests_this_daily_window": 0,
+    "prior_embedding_request_totals": "Historical requests are excluded; this invocation used the existing corpus and made zero query/document embedding requests.",
+    "reserved_daily_requests": 1,
+    "active_quota_not_independently_api_readable": true,
+    "generation_request_interval_seconds": 12.5,
+    "provider_retries": 0,
+    "embedding_model": "gemini-embedding-2",
+    "embedding_dimensions": 768,
+    "embedding_configuration": {
+      "provider": "gemini_developer_api",
+      "model_id": "gemini-embedding-2",
+      "dimensions": 768,
+      "document_format": "gemini_no_title_v1",
+      "normalization": "none"
+    },
+    "embedding_inputs_observed": 0,
+    "embedding_text_cap": 15,
+    "embedding_request_counts": {
+      "count_tokens": 0,
+      "embed_content": 0
+    },
+    "counted_embedding_tokens": 0,
+    "database": {
+      "documents": 218,
+      "document_versions": 218,
+      "contents": 197,
+      "version_chunk_plans": 218,
+      "chunk_memberships": 218,
+      "chunk_embeddings": 197,
+      "active_versions": 218,
+      "active_searchable_occurrences": 218,
+      "incomplete_planned_versions": 0,
+      "database_bytes": 10196671,
+      "migration": "0002_embedding_storage",
+      "postgres_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+      "vector_dimensions": 768
+    },
+    "verified_manifest_occurrences": 218,
+    "test_database": "persistent local PostgreSQL 18.4/pgvector evaluation database",
+    "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+    "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+    "selected_question_ids": [
+      "2wiki:2207e9060bda11eba7f7acde48001122"
+    ],
+    "task15_semantic_hybrid_metrics_equal": true,
+    "cloud_sql_contacted": false,
+    "budget_note": "One frozen investigation, max 6 generation attempts and 5 searches; no retries. The local daily ceiling of 20 is not a claimed Gemma provider limit. Prior Gemini 3.6 Flash usage remains separately recorded.",
+    "incomplete_reason": "Stopped after a provider failure; sanitized diagnostic is saved in the mode checkpoint.",
+    "generation_provider_requests": {
+      "quick_answer": 0,
+      "investigation": 1
+    },
+    "total_generation_attempts_including_prior": 1,
+    "generation_failures": [
+      {
+        "operation": "generate_content",
+        "model_id": "gemma-4-31b-it",
+        "http_status": 500,
+        "category": "availability",
+        "retryable": true,
+        "rate_or_quota_limit": false,
+        "request_count": 1,
+        "provider_code": "INTERNAL",
+        "error_reason": "provider_rejection",
+        "investigation_step": 1
+      }
+    ],
+    "configured_daily_ceiling_source": "Conservative local ceiling for the authorized Gemma alternative; actual model-specific RPD is not independently verified.",
+    "known_prior_gemini_3_6_flash_generation_attempts": 20,
+    "model_metadata_preflight": {
+      "name": "models/gemma-4-31b-it",
+      "version": "001",
+      "input_token_limit": 262144,
+      "output_token_limit": 32768,
+      "supported_actions": [
+        "generateContent",
+        "countTokens"
+      ]
+    }
+  }
+}

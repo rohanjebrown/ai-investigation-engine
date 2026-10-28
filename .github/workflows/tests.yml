@@ -1,0 +1,27 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "0.11.17"
+          python-version: "3.14.9"
+      - name: Install locked dependencies
+        run: uv sync --locked --group dev
+      - name: Unit tests
+        run: uv run --locked --no-env-file pytest tests/unit --cov --cov-report=term-missing
+      - name: PostgreSQL and pgvector integration tests
+        run: uv run --locked --no-env-file pytest tests/integration --cov --cov-append --cov-report=term-missing

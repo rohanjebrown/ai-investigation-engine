@@ -1,0 +1,78 @@
+{
+  "kind": "gemini_embedding_2_synchronous_batch_experiment",
+  "timestamp_utc": "2026-10-28T09:14:56.941311+00:00",
+  "model": "gemini-embedding-2",
+  "dimensions": 768,
+  "input_source": "distinct exact passages from the pinned evaluation corpus",
+  "planned_batch_sizes": [
+    1,
+    2,
+    5,
+    10,
+    25
+  ],
+  "completed": [
+    {
+      "inputs_submitted": 1,
+      "embeddings_returned": 1,
+      "dimensions": [
+        768
+      ],
+      "elapsed_seconds": 1.472,
+      "count_tokens_requests": 1,
+      "embedding_requests": 1,
+      "input_tokens": 73
+    },
+    {
+      "inputs_submitted": 2,
+      "embeddings_returned": 2,
+      "dimensions": [
+        768
+      ],
+      "elapsed_seconds": 0.874,
+      "count_tokens_requests": 2,
+      "embedding_requests": 1,
+      "input_tokens": 131
+    },
+    {
+      "inputs_submitted": 5,
+      "embeddings_returned": 5,
+      "dimensions": [
+        768
+      ],
+      "elapsed_seconds": 5.365,
+      "count_tokens_requests": 5,
+      "embedding_requests": 1,
+      "input_tokens": 270
+    },
+    {
+      "inputs_submitted": 10,
+      "embeddings_returned": 10,
+      "dimensions": [
+        768
+      ],
+      "elapsed_seconds": 2.549,
+      "count_tokens_requests": 10,
+      "embedding_requests": 1,
+      "input_tokens": 948
+    },
+    {
+      "inputs_submitted": 25,
+      "embeddings_returned": 25,
+      "dimensions": [
+        768
+      ],
+      "elapsed_seconds": 4.626,
+      "count_tokens_requests": 25,
+      "embedding_requests": 1,
+      "input_tokens": 2080
+    }
+  ],
+  "failed": null,
+  "request_counts": {
+    "count_tokens": 43,
+    "embed_content": 5
+  },
+  "total_counted_input_tokens": 3502,
+  "provider_quota_accounting": "Gemini response request/token counters; RPD input accounting is not exposed by the API response"
+}

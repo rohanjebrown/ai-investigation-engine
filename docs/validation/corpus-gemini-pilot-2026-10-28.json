@@ -1,0 +1,2384 @@
+{
+  "kind": "bounded-real-Gemini-retrieval-pilot",
+  "timestamp_utc": "2026-10-28T07:28:26.829099+00:00",
+  "source": "pinned real 2Wiki contexts only",
+  "generation_model_if_needed": "gemini-3.6-flash",
+  "generation_requests": 0,
+  "input_cap": 14,
+  "query_count": 2,
+  "source_occurrences_registered": 6,
+  "shared_active_occurrences": 4,
+  "private_active_duplicate_occurrences": 1,
+  "inactive_occurrences": 1,
+  "earlier_attempt_requests": {
+    "count_tokens": 4,
+    "embed_content": 4
+  },
+  "budget": "User-reported billing-disabled Free tier: 100 RPM/30k TPM/1k RPD. No provider retries/model substitution. At most 14 new inputs plus 4 earlier inputs = 18 total/36 API operations. This attempt caps counted tokens at 10k. Earlier task usage <=82 embedding-related operations.",
+  "selection_limitation": "Two gold-containing passages plus two unused distractors: a persistence/citation pilot, not an unbiased ranking benchmark.",
+  "results": [
+    {
+      "strategy": "whole_passage",
+      "mode": "semantic",
+      "question_id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 2,
+        "unique_hits": 4,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.08238070000516018,
+      "evidence": [
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.7990869524544509,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 642,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.7659892046515968,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.6329126667369086,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.5538205715509141,
+          "score_kind": "cosine_similarity"
+        }
+      ]
+    },
+    {
+      "strategy": "whole_passage",
+      "mode": "semantic",
+      "question_id": "simple:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 1,
+        "unique_hits": 4,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.04291940000257455,
+      "evidence": [
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 642,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.8381203798960972,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.7116501967594232,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.5900350984941455,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.5355465285015942,
+          "score_kind": "cosine_similarity"
+        }
+      ]
+    },
+    {
+      "strategy": "whole_passage",
+      "mode": "hybrid",
+      "question_id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 2,
+        "unique_hits": 4,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.07367900000099326,
+      "evidence": [
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.01639344262295082,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 642,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.016129032258064516,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.015873015873015872,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.015625,
+          "score_kind": "rrf"
+        }
+      ]
+    },
+    {
+      "strategy": "whole_passage",
+      "mode": "hybrid",
+      "question_id": "simple:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 1,
+        "unique_hits": 4,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.08380190000025323,
+      "evidence": [
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 642,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.01639344262295082,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.016129032258064516,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.015873015873015872,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.015625,
+          "score_kind": "rrf"
+        }
+      ]
+    },
+    {
+      "strategy": "fixed_tokens",
+      "mode": "semantic",
+      "question_id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 2,
+        "unique_hits": 5,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.05980160000035539,
+      "evidence": [
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.7990869524544509,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 434,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 201",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            }
+          ],
+          "score": 0.7635240490322096,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 381,
+          "end": 642,
+          "text": "9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.6829010451706471,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.6329126667369086,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.5538205715509141,
+          "score_kind": "cosine_similarity"
+        }
+      ]
+    },
+    {
+      "strategy": "fixed_tokens",
+      "mode": "semantic",
+      "question_id": "simple:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 1,
+        "unique_hits": 5,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.03370639999775449,
+      "evidence": [
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 434,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 201",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            }
+          ],
+          "score": 0.8369621232793244,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 381,
+          "end": 642,
+          "text": "9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.7585150557964335,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.7116501967594232,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.5900350984941455,
+          "score_kind": "cosine_similarity"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.5355465285015942,
+          "score_kind": "cosine_similarity"
+        }
+      ]
+    },
+    {
+      "strategy": "fixed_tokens",
+      "mode": "hybrid",
+      "question_id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 2,
+        "unique_hits": 5,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.039113900005759206,
+      "evidence": [
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.01639344262295082,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 434,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 201",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            }
+          ],
+          "score": 0.016129032258064516,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 381,
+          "end": 642,
+          "text": "9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.015873015873015872,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.015625,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.015384615384615385,
+          "score_kind": "rrf"
+        }
+      ]
+    },
+    {
+      "strategy": "fixed_tokens",
+      "mode": "hybrid",
+      "question_id": "simple:8813f87c0bdd11eba7f7acde48001122",
+      "metrics": {
+        "gold_count": 1,
+        "unique_hits": 5,
+        "mrr": 1.0,
+        "at_k": {
+          "5": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "10": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          },
+          "20": {
+            "recall": 1.0,
+            "evidence_fraction": 1.0,
+            "all_required": true
+          }
+        }
+      },
+      "latency_seconds": 0.03428509999503149,
+      "evidence": [
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 0,
+          "end": 434,
+          "text": "Xawery Żuławski (born 22 December 1971 in Warsaw) is a Polish film director. In 1995 he graduated National Film School in Łódź. He is the son of actress Małgorzata Braunek and director Andrzej Żuławski. His second feature \"Wojna polsko-ruska\" (2009), adapted from the controversial best-selling novel by Dorota Masłowska, won First Prize in the New Polish Films competition at the 9th Era New Horizons Film Festival in Wrocław. In 201",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 76,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 77,
+              "end": 127,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 128,
+              "end": 202,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            }
+          ],
+          "score": 0.01639344262295082,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19c7-723e-9667-95021e0d0450",
+          "version_id": "01a18169-19c7-723e-9667-950361ebd75d",
+          "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+          "start": 381,
+          "end": 642,
+          "text": "9th Era New Horizons Film Festival in Wrocław. In 2013, he stated he intends to direct a Polish novel \"Zły\" by Leopold Tyrmand. Żuławski and his wife Maria Strzelecka had 2 children together: son Kaj Żuławski (born 2002) and daughter Jagna Żuławska (born 2009).",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 7
+            },
+            "metadata": {},
+            "display_name": "Xawery Żuławski",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 203,
+              "end": 427,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            },
+            {
+              "start": 428,
+              "end": 508,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 4
+                }
+              ]
+            },
+            {
+              "start": 509,
+              "end": 572,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 5
+                }
+              ]
+            },
+            {
+              "start": 573,
+              "end": 642,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 6
+                }
+              ]
+            }
+          ],
+          "score": 0.016129032258064516,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-191f-7183-bc98-8bc8e05a24be",
+          "version_id": "01a18169-1920-71d6-aa9f-6ef22ecfa5aa",
+          "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+          "start": 0,
+          "end": 173,
+          "text": "Polish-Russian War (Wojna polsko-ruska) is a 2009 Polish film directed by Xawery Żuławski based on the novel Polish-Russian War under the white-red flag by Dorota Masłowska.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 4
+            },
+            "metadata": {},
+            "display_name": "Polish-Russian War (film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 18,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 19,
+              "end": 173,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            }
+          ],
+          "score": 0.015873015873015872,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-1a03-7333-9546-5f8988e5b162",
+          "version_id": "01a18169-1a03-7333-9546-5f8aad2efafb",
+          "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+          "start": 0,
+          "end": 372,
+          "text": "Liberty Lettice Lark Ross( born 23 September 1978) is an English model and actress. She has appeared in publications such as\" VogueHarper's Bazaari- D\", and\" Dazed& Confused\". She played the role of Queen Eleanor in the 2012 fantasy film\" Snow White and the Huntsman\", directed by her then- husband, Rupert Sanders. She is the sister of composers Atticus and Leopold Ross.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 9
+            },
+            "metadata": {},
+            "display_name": "Liberty Ross",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 83,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            },
+            {
+              "start": 84,
+              "end": 175,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 1
+                }
+              ]
+            },
+            {
+              "start": 176,
+              "end": 315,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 2
+                }
+              ]
+            },
+            {
+              "start": 316,
+              "end": 372,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 3
+                }
+              ]
+            }
+          ],
+          "score": 0.015625,
+          "score_kind": "rrf"
+        },
+        {
+          "document_id": "01a18169-19e6-7335-b4be-3ce412f5ca50",
+          "version_id": "01a18169-19e6-7335-b4be-3ce56d88768d",
+          "content_sha256": "deac1cca4fa6b17c408d7e797d643896bec4b7baf9d107b2b40d1d9540da28e9",
+          "start": 0,
+          "end": 160,
+          "text": "Snow White and the Seven Dwarfs( USA:\" Snow White\") is a 1955 German film, directed by Erich Kobler, based on the story of Schneewittchen by the Brothers Grimm.",
+          "source": {
+            "kind": "dataset",
+            "source_id": "xanhho/2WikiMultihopQA",
+            "record_locator": {
+              "split": "dev",
+              "example_id": "8813f87c0bdd11eba7f7acde48001122",
+              "context_position": 8
+            },
+            "metadata": {},
+            "display_name": "Snow White and the Seven Dwarfs (1955 film)",
+            "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+          },
+          "source_spans": [
+            {
+              "start": 0,
+              "end": 160,
+              "locators": [
+                {
+                  "kind": "sentence",
+                  "index": 0
+                }
+              ]
+            }
+          ],
+          "score": 0.015384615384615385,
+          "score_kind": "rrf"
+        }
+      ]
+    }
+  ],
+  "query_cache_sha256": "d2b9da13925e9d9f1db8b603c6ff52331c443891f5f65a74773bd193f615ad15",
+  "persisted_embeddings": 6,
+  "persisted_memberships": 13,
+  "activated_versions": 5,
+  "database_bytes": 8689343,
+  "stored_vector_dimensions": [
+    768
+  ],
+  "database_restart_preserved_results": true,
+  "shared_content_reuse_and_owner_filtering": true,
+  "inactive_version_excluded": true,
+  "api_requests": {
+    "count_tokens": 8,
+    "embed_content": 8
+  },
+  "embedding_inputs": 8,
+  "counted_formatted_tokens": 659,
+  "provider_wait_seconds": 5.741332900011912,
+  "duration_seconds": 19.777259300004516,
+  "peak_process_memory_bytes": 233668608,
+  "embedding_configuration": {
+    "provider": "gemini_developer_api",
+    "model_id": "gemini-embedding-2",
+    "model_revision": null,
+    "dimensions": 768,
+    "document_format": "gemini_no_title_v1",
+    "normalization": "none"
+  },
+  "chunking_configurations": [
+    {
+      "strategy": "whole_passage",
+      "tokenizer": {
+        "name": "MongoDB/voyage-4",
+        "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+        "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+        "runtime_version": "0.23.3"
+      },
+      "max_tokens": 32000,
+      "overlap": 0,
+      "algorithm_version": "1"
+    },
+    {
+      "strategy": "fixed_tokens",
+      "tokenizer": {
+        "name": "MongoDB/voyage-4",
+        "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+        "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+        "runtime_version": "0.23.3"
+      },
+      "max_tokens": 128,
+      "overlap": 16,
+      "algorithm_version": "1"
+    }
+  ],
+  "offline_source_verification": {
+    "checked_evidence_entries": 36,
+    "original_source_occurrences": 4,
+    "method": "Exact excerpts, hashes, source references and original spans compared with the pinned Parquet through the production adapter after the live run; no new API requests."
+  }
+}

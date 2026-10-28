@@ -1,0 +1,20 @@
+name: ai-investigation-evaluation
+services:
+  postgres:
+    image: pgvector/pgvector@sha256:9d2e61c7352b9e9f4798df5fd9a498f043f4cda1cdacc707de3d198650f4321e
+    environment:
+      POSTGRES_DB: ai_investigation_evaluation
+      POSTGRES_USER: evaluation_engine
+      POSTGRES_PASSWORD: ${EVALUATION_DB_PASSWORD:?Set EVALUATION_DB_PASSWORD in .env.evaluation}
+    ports:
+      - "127.0.0.1:55433:5432"
+    volumes:
+      - evaluation-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evaluation_engine -d ai_investigation_evaluation"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  evaluation-postgres-data:

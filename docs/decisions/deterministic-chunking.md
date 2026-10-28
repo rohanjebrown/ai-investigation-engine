@@ -1,5 +1,7 @@
 # ADR: Deterministic Content ranges and version-specific chunk plans
 
+**E21 update (2026-10-27):** The [embedding storage ADR](embedding-storage.md) now governs the approved and implemented five-table storage mappings/migration and experimental no-title Gemini 768/cosine baseline. Statements below deferring physical derived schema describe the earlier milestone. Persistence workflows, generation, retrieval, production provider and remaining U14 lifecycle stay unresolved; no cloud migration has run.
+
 **Date:** 2026-10-25  
 **Status:** CONFIRMED for the scoped chunking foundation; production embedding choices remain UNRESOLVED.  
 **Approval:** [E17](register.md#e17), with explicit refinements [E18](register.md#e18).  

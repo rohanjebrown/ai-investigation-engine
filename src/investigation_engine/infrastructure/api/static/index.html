@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Investigation Engine</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+  <script src="/static/admin.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#question">Skip to question</a>
+  <main class="page">
+    <header class="page-header">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">≡</span><span>AI Investigation Engine</span></div>
+      <p id="question-scope" class="scope">Shared documents only</p>
+      <h1>Ask a question.<br>Follow the evidence.</h1>
+      <p id="question-intro" class="intro">Get an answer from the shared documents, then inspect the source excerpts behind it.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="question-heading">
+      <h2 id="question-heading">Your question</h2>
+      <form id="question-form" method="post" action="/questions" novalidate>
+        <label for="question-mode">Answer mode</label>
+        <select id="question-mode" name="mode">
+          <option value="quick">Quick Answer</option>
+          <option value="investigation">Investigation</option>
+        </select>
+        <label for="question">What would you like to find out?</label>
+        <textarea id="question" name="question" rows="4" required aria-describedby="question-hint question-error" placeholder="Ask a specific question about the shared documents…"></textarea>
+        <div class="input-notes"><p id="question-hint">Up to 4,000 characters. A focused question helps find relevant evidence.</p><span id="character-count" aria-hidden="true">0 / 4,000</span></div>
+        <p id="question-error" class="error-text" role="alert" hidden></p>
+        <div class="form-actions">
+          <button id="submit-question" type="submit"><span id="loading-indicator" class="spinner" aria-hidden="true" hidden></span><span id="submit-label">Find an answer</span><span aria-hidden="true">→</span></button>
+          <p>Single-step answers with inspectable sources.</p>
+        </div>
+      </form>
+    </section>
+
+    <p id="request-status" class="request-status" role="status" aria-live="polite" aria-atomic="true">Ready when you are.</p>
+    <p id="request-error" class="request-error" role="alert" hidden></p>
+
+    <section id="result" class="panel result" aria-labelledby="answer-heading" hidden>
+      <div class="section-heading"><h2 id="answer-heading">Answer</h2><span id="answer-status" class="badge"></span></div>
+      <p id="submitted-question" class="submitted-question"></p>
+      <div id="answer-text" class="answer-text"></div>
+      <nav id="citation-links" class="citation-links" aria-label="Supporting citations"></nav>
+    </section>
+
+    <section id="sources" class="sources" aria-labelledby="sources-heading" hidden>
+      <div class="section-heading"><h2 id="sources-heading">Supporting sources</h2><span id="source-count" class="source-count"></span></div>
+      <p class="source-note">Citations identify retrieved sources. They do not prove that every claim in the answer is correct.</p>
+      <div id="source-list"></div>
+    </section>
+    <section id="investigation-steps" class="panel" aria-labelledby="steps-heading" hidden>
+      <h2 id="steps-heading">Investigation searches <span id="step-count"></span></h2>
+      <ol id="search-list"></ol>
+      <div id="conflict-list"></div>
+    </section>
+    <section class="panel admin-panel" aria-labelledby="admin-heading">
+      <h2 id="admin-heading">Administrator documents</h2>
+      <p>Authenticate to manage private documents. The token is held in this page's memory and is cleared when you refresh.</p>
+      <form id="admin-auth-form">
+        <label for="admin-token">Administrator bearer token</label>
+        <input id="admin-token" type="password" autocomplete="off" required>
+        <div class="form-actions"><button type="submit">Authenticate</button><button id="admin-logout" type="button" hidden>Sign out</button></div>
+      </form>
+      <p id="admin-status" role="status" aria-live="polite"></p>
+      <div id="admin-workspace" hidden>
+        <form id="upload-form">
+          <label for="document-file">Upload or replace TXT, PDF, or DOCX</label>
+          <input id="document-file" type="file" accept=".txt,.pdf,.docx" required>
+          <label for="replace-id">Document ID for replacement (leave blank for a new document)</label>
+          <input id="replace-id" type="text" maxlength="36" autocomplete="off">
+          <label for="replace-version">Expected active version ID for replacement</label>
+          <input id="replace-version" type="text" maxlength="36" autocomplete="off">
+          <button type="submit">Register document</button>
+        </form>
+        <button id="refresh-documents" type="button">Refresh document list</button>
+        <div id="document-list"></div>
+      </div>
+    </section>
+    <footer>Public questions use the shared corpus. Authenticated administrators can also search their own documents.</footer>
+    <noscript><p class="request-error">Enable JavaScript to submit a question and inspect answers.</p></noscript>
+  </main>
+</body>
+</html>

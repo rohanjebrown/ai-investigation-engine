@@ -54,6 +54,10 @@ async def run_migrations_online() -> None:
 
 if context.is_offline_mode():
     run_migrations_offline()
+elif (connection := config.attributes.get("connection")) is not None:
+    # Programmatic callers supply their own connection (e.g. disposable tests).
+    # This path never imports application settings or reads .env.
+    run_migrations(connection)
 else:
     # psycopg async I/O requires a selector loop on Windows. Python 3.14's
     # loop_factory avoids the deprecated global event-loop policy API.

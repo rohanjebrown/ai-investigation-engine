@@ -1,0 +1,136 @@
+{
+  "task": "16C",
+  "sdk_version": "google-genai 2.33.0",
+  "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+  "diagnosis": {
+    "confirmed_defects": [
+      "Evidence-only recovery synthesized model function-call parts without original thought signatures",
+      "Recovery replaced provider function-call IDs and omitted matching function-response IDs"
+    ],
+    "historical_http_status": 400,
+    "historical_category": "request_rejected",
+    "historical_exact_provider_reason": null,
+    "confidence_note": "Missing signatures are a documented cause and a confirmed serialized defect; the historical detailed error was discarded and cannot be recovered."
+  },
+  "offline_verification": {
+    "combined_command": "uv run pytest tests/unit tests/integration -q",
+    "combined_passed": 643,
+    "combined_skipped": 4,
+    "combined_duration_seconds": 209.25,
+    "combined_unit_passed": 482,
+    "postgresql_integration_passed": 161,
+    "skipped_reason": "Opt-in live service tests",
+    "final_unit_command": "uv run pytest tests/unit -q",
+    "final_unit_passed": 484,
+    "final_unit_duration_seconds": 6.84,
+    "final_unit_note": "Rerun after adding the user-authorized Gemma evaluation override and two protocol cases; production PostgreSQL code was unchanged.",
+    "protocol_cases_passed": 11,
+    "protocol_transport": "Real Google GenAI SDK over httpx.MockTransport; no generation network access",
+    "javascript_command": "node --test tests/frontend/test_web.cjs",
+    "javascript_passed": 26,
+    "compile_check": "passed",
+    "warnings": [
+      "Upstream google.genai.types _UnionGenericAlias deprecation"
+    ]
+  },
+  "live_verification": {
+    "question_id": "2wiki:2207e9060bda11eba7f7acde48001122",
+    "database": "ai_investigation_evaluation on 127.0.0.1:55433",
+    "searchable_occurrences": 218,
+    "persisted_document_embeddings": 197,
+    "new_document_embeddings": 0,
+    "new_query_embedding_requests": 3,
+    "model_metadata_requests": 3,
+    "new_generation_attempts": 6,
+    "automatic_retries": 0,
+    "actual_remaining_project_quota_independently_verified": false,
+    "budgets_per_attempt": {
+      "max_search_calls": 5,
+      "max_turns": 6,
+      "max_generation_requests": 6,
+      "max_results_per_search": 5,
+      "max_accumulated_evidence": 25,
+      "max_context_chars": 64000,
+      "max_embedding_requests": 5,
+      "max_output_tokens": 4096,
+      "generation_interval_seconds": 12.5
+    },
+    "gemini_3_6_flash": {
+      "known_prior_attempts_same_daily_window": 20,
+      "new_attempts": 0,
+      "status": "not_run_no_confirmed_remaining_allowance"
+    },
+    "gemma_4_31b_it": {
+      "new_attempts": 1,
+      "status": "provider_failure",
+      "http_status": 500,
+      "provider_code": "INTERNAL",
+      "investigation_step": 1,
+      "search_sequence": [],
+      "answer": null,
+      "citations": [],
+      "token_usage": null,
+      "report": "gemma-4-31b-it/answer-quality.json"
+    },
+    "gemma_4_26b_a4b_it": {
+      "new_attempts": 1,
+      "status": "insufficient_evidence",
+      "evaluator_outcome": "incorrect_abstention",
+      "search_sequence": [],
+      "answer": null,
+      "citations": [],
+      "token_usage": {
+        "prompt_tokens": 314,
+        "candidate_tokens": 24,
+        "thinking_tokens": 0
+      },
+      "report": "gemma-4-26b-a4b-it/answer-quality.json"
+    },
+    "acceptance_complete": true,
+    "remaining_requirement": null,
+    "new_query_token_count_requests": 3,
+    "gemini_3_5_flash_lite": {
+      "new_attempts": 4,
+      "status": "answered",
+      "evaluator_outcome": "incorrect_answer",
+      "answer": "American",
+      "citations": [
+        "E1",
+        "E6"
+      ],
+      "search_sequence": [
+        "World And Time Enough film director nationality",
+        "\"Eric Mueller\" director nationality",
+        "\"Eric Mueller\" director \"World and Time Enough\" american"
+      ],
+      "executed_searches": 3,
+      "native_signed_tool_calls_accepted": 3,
+      "latency_ms": 39182.25480000547,
+      "token_usage": {
+        "prompt_tokens": 18485,
+        "candidate_tokens": 117,
+        "thinking_tokens": 0
+      },
+      "strict_evidence_recall": 1.0,
+      "strict_citation_precision": 1.0,
+      "strict_citation_recall": 1.0,
+      "provider_errors": 0,
+      "automatic_retries": 0,
+      "assistant_evidence_review": {
+        "protocol_complete": true,
+        "citation_identifiers_valid": true,
+        "lexical_scoring_note": "American is a demonym corresponding to the gold answer United States, but the frozen acceptable-answer list contains only United States. The original automatic incorrect score is preserved.",
+        "entity_support_issue": "E1 identifies Eric Mueller as the film director. E6 describes Olympic rower Eric C. Mueller and does not link him to the film. The excerpts do not establish that these are the same person.",
+        "conclusion": "Structural citations and annotated coverage are complete; semantic support for the director-nationality claim remains unresolved."
+      },
+      "report": "gemini-3.5-flash-lite/answer-quality.json"
+    },
+    "acceptance_note": "User-authorized Gemini 3.5 Flash Lite completed three sequential searches and a final decision through the corrected real adapter. This establishes protocol completion, not answer correctness or general model quality.",
+    "remaining_limitations": [
+      "Historical exact HTTP 400 reason unavailable",
+      "Gemini 3.6 Flash was not rerun",
+      "Nationality alias is absent from the frozen answer list",
+      "Retrieved rower/director identity bridge is unresolved"
+    ]
+  }
+}

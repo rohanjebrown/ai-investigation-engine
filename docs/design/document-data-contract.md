@@ -1,5 +1,7 @@
 # Document and provenance logical data contract
 
+**E27 update (2026-10-27):** The [embedding storage ADR](../decisions/embedding-storage.md#exact-semantic-retrieval-e27) extends complete plans, profile-specific vectors and activation with exact semantic Evidence. Identity is (document_version_id, start, end); results retain document ID, Content digest, exact canonical slice, SourceReference and original intersecting SourceSpans, score and rank. Source locations stay version-specific even when Content/vectors are reused. SQL requires trusted visibility, a nondeleted active version and full selected-profile coverage before top-K. Missing locations remain empty; intersecting spans keep their original bounds rather than claiming full-span retrieval. All 348 tests pass in disposable/unit environments. Production provider/pinning, background lifecycle and public authentication remain open; no cloud migration has run.
+
 **Status:** Approved logical responsibilities and scoped deterministic chunking foundation; historical candidate fields below do not independently select new domain fields or storage.  
 **Depends on:** ADR-004.
 
@@ -112,7 +114,7 @@ E17 replaces the historical candidate chunk UUID/disjoint-range/effective-text r
 - Whole-passage and fixed-token ranges depend on Content and configuration. Sentence packing additionally uses this DocumentVersion's supplied sentence structure.
 - The same range may belong to several version/configuration plans. Range equality alone does not establish those memberships or source eligibility.
 - N08 defines zero-overlap fixed fallback for absent/incomplete sentence structure; invalid sentence ranges are rejected. N07 supplies the experimental pinned tokenizer; it does not choose a production provider.
-- Future embedding input is a separate representation. It may include title/task context without changing Chunk.text or offsets. Reuse requires equivalent effective inputs and provider/model/revision/encoding/format/dimension/normalization settings, across versions or strategies. No embedding cache, storage or inference is implemented.
+- Embedding input is a separate representation. E23 implements versioned no-title/task formatting without changing Chunk.text or offsets; title-aware input remains deferred. E26 reuses exact Content/range/full-profile vectors across versions/strategies, validates float32 and commits incrementally. Complete membership counts include whitespace-only ranges; E26 excludes those ranges from generation/activation requirements with one shared nonblank rule. Empty/blank versions return no_searchable_content and cannot activate. Upstream model aliases with unknown revision remain an explicit pinning limitation.
 
 See the [chunking ADR](../decisions/deterministic-chunking.md) for exact boundary, oversized-unit, fallback and Unicode rules.
 

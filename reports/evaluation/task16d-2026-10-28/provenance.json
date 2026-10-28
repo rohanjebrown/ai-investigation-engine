@@ -1,0 +1,16 @@
+{
+  "input_sha256": {
+    "reports\\evaluation\\task16c-2026-10-28\\gemini-3.5-flash-lite\\answer-quality.json": "2268c7697747b239e980d5fe875ce762599cb079b34b098244de0e97840ce2ae",
+    "data\\samples\\evaluation\\suite.json": "32850497caa70e209af6e080f7b3a8255f8e2529807a3ce9a424affd9e0b23a1",
+    "data\\samples\\evaluation\\corpus.json": "41a67ca0466eef6e87edf0639f083a09e95a860de1176a075cb404c1282310ea",
+    "reports\\evaluation\\task16c-2026-10-28\\gemini-3.5-flash-lite\\review.md": "7f9fe3238936a0bf67f81b4e0651dd44560529b90aa9924c4a19fdc09b9b1f9b"
+  },
+  "generation_model_configured": null,
+  "evaluation_fallback_model": "gemini-3.6-flash",
+  "successful_protocol_model": "gemini-3.5-flash-lite",
+  "unresolved_model_specific_history": "gemini-3.6-flash historical HTTP400 detailed reason unavailable; no new live test",
+  "new_investigation_guidance_version": "grounding-v2-entity-context",
+  "guidance_live_verified": false,
+  "new_generation_requests": 0,
+  "new_embedding_requests": 0
+}

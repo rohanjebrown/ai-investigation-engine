@@ -1,8 +1,30 @@
 # Architectural decision register
 
-**Reconciled:** 2026-10-25  
+**Reconciled:** 2026-10-28\
 **Owner of architectural decisions:** the user  
 **Scope:** approved baseline, unresolved decisions, approval evidence, and links to existing ADRs. This register does not authorize implementation of an unresolved choice.
+
+## Task 17 deployment implementation evidence
+
+On **2026-10-28**, the user explicitly authorized production Docker packaging
+and a GitHub `main` → Cloud Build → existing Cloud Run workflow in
+[Task 17](C:/Users/merli/.codex/attachments/9a92f89c-7630-4bce-bdea-038a3c44d44c/Pasted%20text.txt).
+This scopes U18 implementation to the existing Cloud Run/Cloud SQL/Artifact
+Registry resources, locked Python 3.14/uv image, non-root single-process runtime,
+bounded database pooling, managed SQL socket support, mandatory offline tests,
+commit/digest deployment, preserved settings and controlled manual migrations.
+It does not authorize Git staging/commit/push, model-default changes, database
+replacement/reset, schema/ranking changes, unrestricted public Gemini, billing
+changes or another deployment platform. The
+[deployment guide](../design/cloud-run-deployment.md) distinguishes implemented
+configuration and local evidence from the unverified first push/rollout.
+Missing runtime secrets/model/profile remain activation blockers. Existing
+runtime IAM is recorded, not silently replaced. This evidence does not broaden
+earlier unrelated decisions or claim a successful production deployment.
+
+The U18 trial/provisioning descriptions below are historical. The current Task
+17 inventory verifies an existing billed project, Cloud Run placeholder and
+Cloud SQL instance; trial eligibility and zero-cost operation remain unverified.
 
 ## Authority and status rules
 
@@ -21,7 +43,7 @@ The assignment defines mandatory outcomes; the checkout establishes implemented 
 
 ## Approval evidence
 
-These entries transcribe evidence from the current Codex chat. E01-E06 were recorded on **2026-10-26**; E07-E20 were recorded on **2026-10-25**. They are not claims that the complete older ChatGPT conversation was independently recovered.
+These entries transcribe evidence from the current Codex chat. E01-E06 were recorded on **2026-10-26**; E07-E20 were recorded on **2026-10-25**. E21-E28 were recorded on **2026-10-27**; E29-E40 on **2026-10-28**. They are not claims that the complete older ChatGPT conversation was independently recovered.
 
 ### E01
 
@@ -161,6 +183,205 @@ reusable imported settings instance. This supersedes E19's explicit factory and
 uv-only loading approach, preserving approved proxy transport and domain separation.
 Only currently needed fields and the python-dotenv dependency are approved.
 
+### E21
+
+On **2026-10-27**, the user [approved implementation of the revised five-table
+storage proposal](C:/Users/merli/.codex/attachments/b0ea1a47-de6e-430c-9169-3d3c2ae300ea/Pasted%20text.txt):
+chunking_configurations, embedding_configurations, version_chunk_plans,
+chunk_memberships and chunk_embeddings. Membership Content derives through its
+DocumentVersion; no additional version/Content key, chunk entity/copied text,
+title/context hashes or indexing-state table. Approve the proposal's keys,
+checks and essential indexes, maintained pgvector integration after Python 3.14
+verification, a new migration after unchanged 0001, isolated verification and
+focused documentation. The experimental profile is Gemini Developer API,
+gemini-embedding-2, 768 dimensions, cosine, documented no-title document and
+retrieval-query formats, VECTOR(768) and exact search. Production provider and
+remaining U14 lifecycle remain unresolved. No cloud migration, embedding/API
+calls, persistence workflows, retrieval, indexing, permanent tests, staging, commits or pushes
+are authorized.
+
+### E22
+
+On **2026-10-27**, the user [approved introducing the permanent test suite](C:/Users/merli/.codex/attachments/453b1531-cb26-41f7-a60c-e73f50a7284c/Pasted%20text.txt), [reaffirmed in the latest request](C:/Users/merli/.codex/attachments/a0acced8-7dc1-4e8c-aeb9-f96b6dc88452/Pasted%20text.txt):
+pytest, pytest-asyncio, pytest-cov, unit/integration/external categories,
+Testcontainers with real PostgreSQL/pgvector, real commits with disposable cleanup,
+deterministic ordinary-test fakes where an actual interface exists, optional
+pinned-corpus checks, explicit opt-in live smoke tests, statement/branch coverage
+without a global threshold, GitHub Actions and tests alongside future features.
+This ends A10's temporary deferral. The authorization excludes cloud migration,
+Gemini calls, unimplemented feature workflows and Git staging/commits/pushes.
+Production defects must be reported rather than silently changing behavior.
+
+### E23
+
+On **2026-10-27**, the user [approved implementing hosted Gemini embedding generation](C:/Users/merli/.codex/attachments/9ee7e592-6da1-465d-b32d-f630ec9137d0/Pasted%20text.txt).
+Use a minimal asynchronous application port with ordered immutable vectors and
+the maintained google-genai SDK after Python 3.14 compatibility verification.
+The initial profile is Gemini Developer API, gemini-embedding-2, 768 dimensions,
+no client normalization, gemini_no_title_v1 document formatting and the versioned
+retrieval-query envelope. Validate complete formatted inputs, model-specific
+limits and responses; preserve cancellation, manage clients and expose meaningful
+application errors. Investigate model-specific token counting without assuming
+Voyage counts apply. Do not truncate, split, fall back or add a retry framework.
+Add offline tests and an explicitly gated live smoke test, but do not execute
+live calls. Existing configuration supplies credentials. This approval excludes
+persistence, migrations, database/cloud access, another Docker download,
+indexing/retrieval/orchestration, U14 lifecycle resolution, registration parity
+fixes and Git staging/commits/pushes.
+
+### E24
+
+On **2026-10-27**, the user explicitly requested **"Align In-Memory and PostgreSQL
+Document Registration Behavior"** in this chat. New registrations must use version
+1 and have no active-version pointer. Preserve valid source retries, ownership,
+Content reuse and atomicity; resolve existing registrations before initial-state
+validation. Authorize the minimal correctness fix, conversion of the two xfails
+and focused regression tests. Exclude new dependencies, migrations, unrelated
+refactoring, external/cloud access, image downloads, infrastructure changes,
+Git staging/commits/pushes and subsequent persistence features.
+
+### E25
+
+On **2026-10-27**, the user [approved persistent chunk-plan storage](C:/Users/merli/.codex/attachments/c146a595-3745-45f7-acfb-79502cf70857/Pasted%20text.txt).
+Implement a focused application port and PostgreSQL persistence/reconstruction
+using the existing configuration, plan and ordered membership tables. Identical
+plans must be reused, conflicts rejected, partial writes rolled back and concurrent
+saves protected using existing database mechanisms. Validate canonical Content,
+version association, ranges and ordering without assuming non-overlap or modifying
+text. Investigate blank chunks while preserving complete-plan contracts. Add pure
+validation and real PostgreSQL tests; report unavailable-image verification limits
+without downloading. No new dependencies/tables, implicit schema changes, embedding
+persistence, activation, workers, retrieval, Gemini/Cloud SQL access, infrastructure
+changes or Git staging/commits/pushes are authorized.
+
+### E26
+
+On **2026-10-27**, the user [approved resumable embedding persistence and safe activation](C:/Users/merli/.codex/attachments/a3f7824e-a5fd-4f43-be42-c9ccfef3a66e/Pasted%20text.txt).
+Preserve complete plans but embed only nonblank ranges; empty/blank versions
+return an explicit non-searchable outcome and cannot activate. Reuse exact
+Content/range/configuration vectors, validate float32 storage and persist each
+successful result incrementally. Compose provider-independent application ports
+with short repository-owned transactions and no locks/sessions during external
+calls. Resume from stored progress, use simple configurable bounded transient
+retries, and transactionally verify complete selected-profile coverage before
+activation. Prevent deletion/stale-version races and preserve prior active state
+on failure. Reuse existing tables; a necessary schema change would require prior
+explanation. Use synthetic providers and run all unit/real-PostgreSQL tests.
+Exclude Gemini/Cloud SQL calls, cloud changes, semantic/hybrid retrieval, RAG,
+endpoints, a full update workflow, distributed workers and Git staging/commits/pushes.
+
+### E27
+
+On **2026-10-27**, the user [authorized exact semantic retrieval with source citations](C:/Users/merli/.codex/attachments/37ddcc19-a59e-4757-be18-27a4263175f0/Pasted%20text.txt).
+Use the existing query embedding port/format, one explicitly selected serving
+chunking/embedding configuration, exact pgvector cosine search, deterministic ties
+and bounded results. Ownership from trusted context, deletion, active version,
+selected configurations and complete eligible embedding coverage must all filter
+before top-K. Preserve independent source occurrences when vectors are shared;
+return exact canonical text/offsets and original intersecting locators without
+inventing source locations. Prefer the existing schema; explain any necessary
+schema correction first. Add focused unit and real PostgreSQL end-to-end tests,
+then run full suites using synthetic providers. No Gemini/Cloud SQL access,
+dependencies, ANN indexes, hybrid/RRF, LLM, endpoints, workers, cloud changes or
+Git staging/commits/pushes are authorized.
+
+### E28
+
+On **2026-10-27**, the user's typed request, **"Task: Implement Single-Step RAG
+with Gemini and FastAPI"**, explicitly authorizes a provider-independent single
+retrieval/generation workflow, structured Gemini output, configurable model,
+bounded context/timeouts/retries, strict citation mapping and explicit abstention.
+If no model is already approved, keep it configurable and report a proposed
+default; this does not approve a production model. Introduce minimal FastAPI and
+required dependencies, GET /health and POST /questions, validated request/response
+models, safe error mapping and lifespan-owned resources without import-time
+connections/clients. Unauthenticated requests must access only explicitly shared
+sources; never trust arbitrary client owner IDs. Test with fake AI providers,
+mocked SDK transport and real disposable PostgreSQL end to end, including no
+transaction during generation, then run full regressions. No live Gemini/Cloud
+SQL, schema changes, hybrid/RRF, multi-step investigation, uploads, UI, auth
+framework, workers, cloud changes, staging, commits or pushes are authorized.
+
+### E29
+
+On **2026-10-28**, the user [authorized the first functional web interface](C:/Users/merli/.codex/attachments/9ef47d66-1522-410a-a94a-5a260ad10508/Pasted%20text.txt).
+Use lightweight HTML/CSS/minimal vanilla JavaScript served by the existing
+FastAPI app, preferably GET /. Preserve health/questions contracts and shared-only
+visibility; reuse the existing RAG operation. Display answer/status, mapped
+citations and inspectable exact source excerpts/metadata, with explicit abstention
+and safe validation/loading/network/timeout/backend feedback. Prevent duplicate
+submissions, preserve or clearly replace prior results, support keyboard and
+mobile use, and render untrusted content safely without invented metadata, URLs
+or downloads. Add appropriate deterministic tests and run unit/integration checks,
+using real PostgreSQL where needed. No frontend framework/build tooling, business
+logic, schema/migration changes, management/uploads, auth, hybrid/RRF, multi-step
+investigation, live Gemini/Cloud SQL, deployment, cloud changes or Git operations
+are authorized. Dependencies may be added only if necessary; none were needed.
+
+### E30
+
+On **2026-10-28**, the user [requested controlled live verification](C:/Users/merli/.codex/attachments/9ae94eff-3ece-48b0-9456-fc4e34934e0d/Pasted%20text.txt),
+requiring explicit authorization before external inference. After offline review,
+the user confirmed Free tier without billing: embedding-2 100 RPM/30k TPM/1k RPD;
+3.6 Flash 5 RPM/250k TPM/20 RPD. The assistant proposed the exact pinned tokenizer
+download plus at most seven Gemini requests: three countTokens, three embeddings
+at 768 dimensions and one gemini-3.6-flash generation capped at 1,024 output tokens.
+One browser question covers retrieval/generation/UI; no retries, substitution or
+Cloud SQL, and stop on provider failure/additional chunks.
+
+The user replied **"I authorize but also gemini flash 3.8 is available with the
+same rate limiting"**. The authorized run retained 3.6 without substituting a
+model. Both sources yielded one whole-passage/128 chunk. All seven real requests
+succeeded, and the displayed answer was checked against both original sources.
+The [verification report](../validation/live-rag-2026-10-28.md) records actual models,
+usage, SQL persistence/ranking, factual support and cleanup. The budget is exhausted.
+No production generation default, persistent serving profile, database mode,
+architecture, dependency or application code change is selected by this approval.
+
+### E31
+
+On **2026-10-28**, the user authorized [hybrid retrieval and custom RRF](C:/Users/merli/.codex/attachments/1f0ec484-dcca-4f35-9cfc-4c4f7a0cae73/Pasted%20text.txt), then [completion of the interrupted implementation](C:/Users/merli/.codex/attachments/e69ef361-061e-4559-8dd6-eedf612aeb4b/Pasted%20text.txt). Scope: chunk-correct native PostgreSQL FTS, application-owned RRF (default k=60), independent bounded channels, occurrence identity, pre-limit eligibility, trusted semantic/hybrid configuration, regression tests and local scale measurements. Preserve RAG/UI and semantic mode. No Gemini, Cloud SQL, cloud changes, Git publication, new milestone, or unapproved schema migration. The [existing retrieval ADR](pgvector-selection.md#hybrid-retrieval-e31) records the implementation; the [benchmark](../validation/hybrid-retrieval-performance.md) records measured limitations. A persisted lexical index/maintenance design remains a recommendation requiring approval, not an authorized schema change.
+
+### E32
+
+On **2026-10-28**, the user authorized [automated retrieval evaluation](C:/Users/merli/.codex/attachments/d3d54da5-fbdc-4e28-a188-15ac656db798/Pasted%20text.txt): a reproducible 40-case 2Wiki/controlled suite, exact occurrence/sentence relevance, Recall@K/MRR/multihop coverage/latency, fixed-corpus semantic/hybrid comparison, inspectable reports and deterministic unit/real local PostgreSQL verification. Keep evaluation separate from production. Do not call external APIs, index the full corpus, change retrieval/schema/indexes/frontend, access Cloud SQL, deploy or publish Git changes. Answer-quality contracts may be prepared but unexecuted metrics must remain unavailable. See the [evaluation implementation/methodology](../validation/retrieval-evaluation.md). Controlled fake-vector results are not real-model quality evidence.
+
+### E33
+
+On **2026-10-28**, the user authorized [measured PostgreSQL retrieval optimization](C:/Users/merli/.codex/attachments/e7a1fd9b-8a4c-458d-968f-51b0b7f41c19/Pasted%20text.txt). Scope: reproduce 1k/10k/50k local baselines, measure medians/P95/plans/buffers/temp/CPU, investigate completeness/keyword/exact-vector costs, and implement focused schema-preserving changes with unchanged eligibility/ranking/provenance. Any new schema, migration, persistent derived representation or index requires separate approval. No real embeddings, Gemini, Cloud SQL, cloud changes, new feature or Git publication. The [performance checkpoint](../validation/hybrid-retrieval-performance.md#e33-schema-preserving-optimization-2026-10-28) records equivalent boundary-blankness and deferred candidate payload reconstruction, before/after evidence and remaining bottlenecks. Exact-range lexical storage remains a proposal, not a confirmed schema choice.
+
+### E34
+
+On **2026-10-28**, the user authorized [PDF and DOCX ingestion](C:/Users/merli/.codex/attachments/336aebe3-1e5d-48c4-a9be-ea2525fbc943/Pasted%20text.txt): select lightweight established Python libraries, extract readable PDF pages and DOCX main-body paragraphs/tables with metadata, Unicode and exact canonical offsets, reuse existing registration/chunking/indexing/citations, add realistic fixtures and real local PostgreSQL tests. No OCR, uploads, lifecycle operations, retrieval/RRF redesign, cloud access or Git publication. Selected pypdf/python-docx (plus transitive lxml), retaining domain-independent ExtractedDocument and adding only table/row/cell locator kinds. No schema change. The [format contract](../design/file-extraction.md) records parser versions, separators, page/structural coordinates, typed extraction failures, metadata and omissions. Broader parser/OCR, retention and upload security policies remain separate decisions.
+
+### E35
+
+On **2026-10-28**, the user authorized [application-level document updates, soft deletion and listing](C:/Users/merli/.codex/attachments/ca71479f-bae9-4d84-b847-3225bb629775/Pasted%20text.txt), including PostgreSQL/in-memory behavior, ownership checks, bounded pagination, immutable versions, lifecycle concurrency, activation safety and unit/integration tests. New versions require an explicit nonblank revision and retain the logical document's source kind, source ID, and record locator; they use an expected active-version ID. The repository locks the logical document row, allocates the next number, and permits only one pending version. A retry with the same source occurrence/revision and identical text/spans returns that version; changed text/spans conflict. Different revisions create new versions even for identical text, reusing Content. The prior active version remains searchable until activation. Soft deletion is owner-only, idempotent, preserves versions/Content/current pointer and excludes the document immediately; activation rejects deleted or superseded versions. Shared documents are readable but system-managed and cannot be changed by user actors. Listing filters shared plus actor-owned records in SQL and defaults to excluding deleted records. No schema change, HTTP routes, authentication framework, Gemini/Cloud SQL, frontend or Git publication. See the [lifecycle design](../design/document-lifecycle-and-indexing.md) and [test checkpoint](testing-strategy.md#e35-document-lifecycle-checkpoint).
+
+### E36
+
+On **2026-10-28**, the user authorized the [authenticated document-management milestone](C:/Users/merli/.codex/attachments/0f2991b7-7cda-4c6f-a76f-9364c0bcfa4d/Pasted%20text.txt): a single configured administrator, authenticated ownership-bound HTTP lifecycle routes, bounded temporary TXT/PDF/DOCX uploads, explicitly resumed bounded indexing, private-document RAG scope for that administrator, and a lightweight same-origin browser UI. Implementation reuses the existing application registration/update/delete/list/detail/indexing and retrieval use cases; it adds no schema or persistence models. Initial upload source IDs derive from the administrator's UUID `Idempotency-Key`; updates reuse source identity and use that key as explicit revision with `If-Match` concurrency. Browser bearer credentials are held in memory only. Original binary files are discarded after extraction. Indexing is request-bounded and keeps provider calls outside repository transactions. Public unauthenticated questions remain shared-only; valid administrator questions include shared plus that principal's documents. Shared documents remain readable/searchable but system-managed; this administrator cannot index, update or delete them. See [authenticated document management](../design/authenticated-document-management.md). Cloud SQL, live Gemini, migration execution, deployment and Git publication remain out of scope.
+
+### E37
+
+On **2026-10-28**, the user authorized a controlled [EXTERNAL-versus-PLAIN PostgreSQL embedding-storage benchmark](C:/Users/merli/.codex/attachments/a808c5df-4c04-4e64-9f69-1b1ec403f992/Pasted%20text.txt) on disposable local databases only. The [performance checkpoint](../validation/hybrid-retrieval-performance.md#e37-inline-embedding-storage-comparison-2026-10-28) records paired 50k semantic/keyword/hybrid results, exact result-signature matches, storage/TOAST sizes, plan counters, operational trade-offs, and limitations. The current optimized retrieval repository and existing migrations were used; the storage policy was applied before seeding each independent copy. No Cloud SQL, Gemini, production schema, or architectural decision status was changed. PLAIN is a promising candidate, but write/indexing and production rewrite costs remain unmeasured; the recommendation is further isolated validation before a separate migration approval.
+
+### E38
+
+On **2026-10-28**, the user authorized implementation and bounded live verification of a first multi-step investigation workflow. The application uses the existing SearchEvidence path through an application-owned `search_evidence` tool contract, bounded search/generation/evidence/context limits, and strict resolution of model citations to retrieved evidence. The Gemini adapter uses structured tool actions and structured final decisions; the HTTP endpoint and browser mode reuse the existing service lifecycle and source rendering. The [verification record](../validation/multi-step-investigation-2026-10-28.md) reports deterministic suite results, a live branching answer using real Gemini and disposable local PostgreSQL, an additional live response whose assertions completed but whose Unicode report printing failed, and a no-Gemini Edge replay. It is a smoke check, not broad answer-quality validation. No Cloud SQL, schema change, deployment, production model selection, or Git publication occurred.
+
+### E39
+
+On **2026-10-28**, the user authorized [Task 13: Automated Answer-Quality Evaluation](C:/Users/merli/.codex/attachments/cafc7b45-90ed-442d-8a43-8a4a5a0ab2ac/Pasted%20text.txt). This approves extending the existing 40-case evaluation to compare `AnswerQuestion` and `InvestigateQuestion`, conservatively score explicit answers, match citations to exact gold source occurrences/sentences with separate strict and partial policies, classify abstention/contradiction/incomplete/provider failures, record observable investigation behavior/usage, and produce reproducible UTF-8 JSON/Markdown without passing labels to providers. Semantic claim support remains human review; no LLM judge is the sole correctness source. The user separately confirmed the Free-tier quota values and billing-disabled status in chat; those account facts were user-reported, not independently queried. Live evaluation was authorized within a conservative budget and stop-on-error policy. The [validation report](../validation/answer-quality-evaluation.md) and [captured partial sample](../validation/answer-quality-live-2026-10-28.md) record one successful real single-step result, a provider error, and the resulting stop before multi-step calls. No Cloud SQL, deployment, model substitution, or Git publication occurred.
+
+### E40
+
+On **2026-10-28**, the user authorized [Task 14: Corpus-Scale Processing and Indexing](C:/Users/merli/.codex/attachments/32106be9-4cd6-4d14-a19b-d4ee95c0eef5/Pasted%20text.txt): deterministic pinned-source manifests, bounded incremental processing through existing services, durable progress/replay checks, disposable PostgreSQL scale validation, embedding feasibility, matched chunking comparisons, real-provider pilots within Free quotas, safe failure diagnostics, and tests/documentation. The user then explicitly instructed **“use gemini embedding 2 and gemini flash 3.6 or 3.8”**. The task uses the existing Gemini Embedding 2 profile and retains Flash 3.6 where generation is needed; no generation request is needed for the indexing pilot. It does not authorize paid Batch jobs, billing, Cloud SQL, public deployment, unapproved schema/storage/index changes, or Git publication. Full processing and actual semantic eligibility must be reported separately. The [validation record](../validation/corpus-scale-2026-10-28.md) preserves the manifest, CLI/checkpoint contract, measured limits, real Gemini pilot and unresolved full-indexing choices. U03's complete-development selection and exact-content counting policy remain unchanged.
+
+### E41
+
+On **2026-10-28**, the user authorized [Task 15: Gemini Embedding Batching and Complete Evaluation-Corpus Indexing](C:/Users/merli/.codex/attachments/03c50c82-ca8b-4c8b-80af-6a006afed948/Pasted%20text.txt). The scope permits synchronous real Gemini embeddings/generation, a separate persistent local PostgreSQL 18 evaluation database, existing application migrations/services, and evaluation of the fixed 40-question source-only corpus. It excludes the 125,760-occurrence corpus, billing changes, paid/async Batch API, Cloud SQL, public deployment, schema/ranking/vector-storage changes, and Git publication. The [Task 15 report](../validation/batched-gemini-evaluation-2026-10-28.md) records SDK behavior, measured batches, persistent indexing and restart verification, retrieval metrics, account-quota limits and tests. The 197 unique evaluation passages are indexed and searchable; full-corpus indexing and answer-generation evaluation remain incomplete.
+
 ## Confirmed decisions
 
 ### A01
@@ -256,12 +477,11 @@ Only currently needed fields and the python-dotenv dependency are approved.
 ### A10
 
 **Immediate test sequencing**  
-**Status:** CONFIRMED  
-**Approval evidence:** [E02](#e02); included in the implementation request [E04](#e04).
-- **Selected approach:** Defer automated software tests during the immediate development steps.
-- **Alternatives and reasoning:** Adding focused tests immediately would protect persistence changes; deferral favors the user's current functionality-first sequence but leaves regression coverage incomplete.
-- **Dependencies and consequences:** This is a temporary sequencing preference, not an assignment waiver. Automated tests and automated evaluation are required before submission; the return milestone is U17.
-- **Supporting records and implementation evidence:** [Validation backlog](../validation/schema-acceptance-plan.md), [assignment requirements](#assignment-requirements); [test placeholder](../../tests/domain/test_content.py) is empty in the reviewed baseline.
+**Status:** SUPERSEDED by [E22](#e22), which resumes permanent software tests.\
+**Approval evidence:** Original deferral [E02](#e02)/[E04](#e04); explicit replacement [E22](#e22).
+- **Historical approach and reasoning:** Defer software tests during immediate functionality work. This was a temporary sequencing preference, never an assignment waiver.
+- **Current approach:** Risk-based pytest unit/integration/opt-in external tests, Docker PostgreSQL/pgvector, real commits and cleanup, coverage without a global floor, and GitHub Actions. New features receive tests alongside implementation.
+- **Evidence and limits:** [Testing ADR](testing-strategy.md) distinguishes implemented cases, executed checks, historical xfails resolved by E24 and blocked integration execution. The old empty test placeholder is removed. Automated evaluation remains separately unresolved under U17.
 
 ### A11
 
@@ -287,7 +507,7 @@ U01, U02, and U04 are CONFIRMED by E06, N02-N05 by E07, U09-2W by E08, N06 by E0
 - **Alternatives and trade-offs:** Occurrence-level documents fit the existing source-per-version model but create more rows. Grouping passages needs occurrence associations and potentially multiple sentence mappings. Title-based identity conflates sources and does not establish revision history.
 - **Reasoning:** Preserve each occurrence's provenance without adding an entity; keep exact-content reuse separate from logical document identity.
 - **Dependencies and consequences:** Identify a source occurrence using dataset, pinned revision, split, question ID, and context position; UUIDv7 document/version IDs remain independent. This describes initial per-occurrence registration, not a one-version-forever limit or inferred article revision history. Reimports/retries and unchanged updates remain U08; cross-revision continuity must not be inferred. U03 still governs independent-record counting; 125,760 occurrences do not prove that many independent source records.
-- **Implementation state:** The [2Wiki adapter](../../src/investigation_engine/infrastructure/ingestion/twowiki_adapter.py) emits one ExtractedDocument per occurrence for the existing RegisterDocument service. Persistent identity mapping is now implemented for individual registrations under E16; batch orchestration remains unimplemented.
+- **Implementation state:** The [2Wiki adapter](../../src/investigation_engine/infrastructure/ingestion/twowiki_adapter.py) emits one ExtractedDocument per occurrence for the existing RegisterDocument service. E16 implements persistent registration, and E40 adds bounded operator batch orchestration through those same services, with independent source identities and unchanged exact-Content reuse.
 - **Supporting records:** [ADR-004](004-document-content-provenance.md), [data contract](../design/document-data-contract.md), [dataset audit](../validation/2wiki-dev-audit.md).
 
 ### U02
@@ -315,6 +535,7 @@ U01, U02, and U04 are CONFIRMED by E06, N02-N05 by E07, U09-2W by E08, N06 by E0
 - **Limitations:** Exact-content uniqueness is not proof of semantic independence. Text variants can describe the same source or subject, and some passages are incomplete. Meeting the numerical baseline does not certify retrieval quality, evaluation independence, durable ingestion, or complete assignment delivery.
 - **Dependencies and consequences:** Preserve revision, split, example ID, and context position under U04/N06. Question and answer labels stay outside the retrieval corpus; existing exclusion of gold supporting facts/evidences remains intact. Evaluation methodology and potential leakage remain U17. No new splits, arbitrary subsets, normalized/semantic merging, schema, retry policy, or runtime behavior is approved here. U08/U14 still govern future retries/recovery; U05-U07 govern persistence.
 - **Implementation evidence:** A full transient audit through the existing adapter measured the approved totals and checked equal hashes against exact text equality. The detailed method, duplicate distribution, snapshot fingerprint, and historical-count distinctions are in the existing dataset audit. No persistent audit runner, bulk ingestion service, or new tests are introduced by this documentation update.
+- **E40 verification:** The [reproducible manifest](../../data/samples/2wiki-dev-corpus-manifest.json) reproduces the approved counts. Actual application processing in disposable PostgreSQL persisted 125,760 Documents/versions, 56,680 Contents and 125,760 complete plans, with every occurrence's exact text, metadata and source mappings compared to the original. Interruption, restart and retry checks passed. This verifies the approved conservative processing baseline, while full-corpus semantic eligibility remains zero. See [measurements and boundaries](../validation/corpus-scale-2026-10-28.md).
 - **Supporting records:** [Dataset audit](../validation/2wiki-dev-audit.md#9-approved-u03-corpus-and-counting-policy), [assignment requirements](#assignment-requirements), [U01](#u01), [U02](#u02), [U04](#u04), [N06](#n06).
 
 ### U04
@@ -361,6 +582,7 @@ U01, U02, and U04 are CONFIRMED by E06, N02-N05 by E07, U09-2W by E08, N06 by E0
 **Status:** CONFIRMED for the approved three-table ORM/migration schema; application persistence and concurrency are outside this scope.  
 **Selected approach:** documents, document_versions, and contents. Binary SHA-256 Content PK and exact text; UUIDv7 document/version values; positive per-document version numbers; version Content/document FKs and composite active-version ownership FK. SourceReference columns belong on versions, with JSONB locator/metadata objects and ordered structure/source-span arrays. Global source-occurrence uniqueness uses NULLS NOT DISTINCT. documents.owner_id is nullable TEXT; deleted_at and current_version_id are retained.  
 **Approval evidence:** [E15](#e15), explicit implementation authorization and schema/index boundaries.
+- **Derived extension:** [E21](#e21) approves five derived tables in [the storage ADR](embedding-storage.md), without modifying these authoritative tables or 0001. Embedding/indexing workflows are outside that schema milestone.
 - **Context:** Existing domain/application contracts distinguish source identity, document/version identity, and exact Content identity. Three tables preserve those responsibilities without one table per dataclass. ORM mappings remain infrastructure representations; domain objects are unchanged.
 - **Alternatives and reasoning:** Digest versus surrogate Content keys; provenance table versus version fields; relational versus JSONB spans; trigger versus composite FK; scoped identity versus the approved global fields. The approved choices minimize extra identities/joins while enforcing relational uniqueness and ownership. A matching digest still requires text equality; different text is a collision error, not shared Content.
 - **Constraints and representation:** BYTEA digest length and built-in UTF-8 SHA-256 consistency checks; supported text SourceKind; positive number; object/array shape checks; unique document/number and document/version-ID pairs; global kind/source_id/revision/record_locator uniqueness with absent revisions treated equally. Identity scalar strings and owner references use C collation; JSONB numeric/object equality must retain U08 semantics. No nested-validation triggers or immutability permission scheme is added. PostgreSQL 15+ is required; PostgreSQL 17.2 was used for verification, not selected as the deployment major version.
@@ -392,12 +614,12 @@ U01, U02, and U04 are CONFIRMED by E06, N02-N05 by E07, U09-2W by E08, N06 by E0
 ### U09
 
 **Extraction and failure policy**  
-**Status:** UNRESOLVED for PDF/DOCX parsers, OCR, and other format-specific policies. The 2Wiki scope is CONFIRMED in [U09-2W](#u09-2w).  
-**Selected approach:** No universal extraction policy or parser selection. Apply only the approved 2Wiki behavior below.  
-**Approval evidence:** [E08](#e08) approves 2Wiki only.
+**Status:** CONFIRMED for the scoped E34 PDF/DOCX extraction and U09-2W; future OCR/other formats and upload-boundary policies remain UNRESOLVED.
+**Selected approach:** Keep format-specific adapters. E34 uses pypdf for readable PDF pages and python-docx for main-body paragraphs/tables; preserve parser text plus documented separators, page/structural provenance and metadata. Empty/no-text and malformed files have explicit ValueError-derived outcomes; no OCR or partial-success fallback. Apply the distinct approved 2Wiki behavior below.
+**Approval evidence:** [E08](#e08) approves 2Wiki only; [E34](#e34) authorizes PDF/DOCX library selection and the extraction milestone.
 - **Context:** Different source formats need explicit parsing, validation, and failure behavior without silently generalizing one adapter's policy.
-- **Alternatives and trade-offs:** Parser/OCR choices, retaining failure records, skipping/repairing invalid input, and fallback extraction have different coverage and operational costs. The user selected fail-fast validation for 2Wiki; those choices remain open for other formats.
-- **Dependencies and consequences:** 2Wiki extraction may proceed within U09-2W. PDF/DOCX/OCR and other format-specific behavior still require approval. Batch error handling, persistence, and retries are outside the adapter.
+- **Alternatives and trade-offs:** Parser/OCR choices, retaining failure records, skipping/repairing invalid input, and fallback extraction have different coverage and operational costs. 2Wiki retains its fail-fast policy. E34 adds strict PDF parsing and DOCX package parsing without substituting text or registering failures; there is no universal parser framework.
+- **Dependencies and consequences:** E34 implements PDF/DOCX adapters with pypdf 6.21.3, python-docx 1.2.0 and transitive lxml 6.1.3 verified on Python 3.14. PDF pages are one-based; DOCX hierarchical table/row/cell/paragraph positions are zero-based. Existing JSONB handles added locator kinds without migrations. Batch handling, source updates, ownership, original retention, uploads, OCR and other formats remain separate. See the [complete format contract and limitations](../design/file-extraction.md).
 - **Supporting records:** [TXT adapter](../../src/investigation_engine/infrastructure/ingestion/txt_adapter.py), [validation matrix](../validation/schema-acceptance-plan.md).
 
 ### U09-2W
@@ -417,57 +639,66 @@ U01, U02, and U04 are CONFIRMED by E06, N02-N05 by E07, U09-2W by E08, N06 by E0
 ### U10
 
 **Retention and access**  
-**Status:** CONFIRMED for initial ownership representation, soft-deletion scope, and deleted-registration retry semantics; trusted ownership propagation is implemented under E16; principal authentication, remaining access/retention, and operational policies remain UNRESOLVED.  
+**Status:** CONFIRMED for initial ownership representation, soft-deletion behavior, deleted-registration retries, and E35's application-level access/list/update operations; principal authentication, remaining access/retention, and operational policies remain UNRESOLVED.
 **Selected approach within approved scope:** Nullable documents.owner_id TEXT: NULL represents shared system-managed documents; non-NULL is a stable, unambiguous private principal. No users table or visibility column. Keep deleted_at and retain current_version_id on deletion, along with documents, versions, provenance, spans, and shared Content. Normal listings, semantic/keyword retrieval, and evidence exclude deleted/inaccessible documents. An authorized identical retry preserves existing IDs/deleted state and never restores; changed text/spans remain U08 conflicts.  
 **Approval evidence:** [E14](#e14) establishes initial soft deletion and intended shared/private access; [E15](#e15) approves the physical ownership representation, retained pointer, and deleted retry behavior; [E16](#e16) approves required trusted ownership propagation and registration enforcement.
 - **Trusted ownership requirement:** Shared documents are accessible to authorized users; private uploads only to their owner. A trusted workflow must assign ownership explicitly. Missing owner input from an untrusted upload must not create a shared document. Authorization must precede disclosure of another owner's registration or conflict details. No concrete authentication mechanism, principal source, user model, or permissions framework is selected.
 - **Context:** Content is shared independently of document eligibility. A nondeleted document is distinct from having an indexed active version under A09. Deleting one reference must not make other active eligible documents sharing Content unavailable. Global source identity is unchanged; independent uploads receive distinct stable source IDs.
-- **Remaining decisions:** Authentication and the actual principal source; authority to manage shared documents; historical/deleted citation access; original-byte retention; API response/error details; and deletion/activation/in-flight-query races. Ownership transfer and restoration remain excluded until separately designed. Physical deletion and Content garbage collection are not part of initial implementation.
-- **Implementation state:** U07 provides ownership/deletion storage. E16 adds required owner_id to Document/use-case execution, exact owner validation, and ownership-compatible retries in both async repositories. PostgreSQL retries include deleted registrations without restoration. This is a trusted internal boundary, not authentication: there is no public creation API, authenticated principal provider, listing/deletion endpoint, or eligibility-filtered retrieval.
+- **Remaining decisions:** Authentication and the actual principal source; authority/workflow for managing shared documents; historical/deleted citation access; original-byte retention; HTTP response/error details; and operational behavior for in-flight retrieval. Ownership transfer, restoration, physical deletion, and Content garbage collection remain excluded.
+- **E35 implementation state:** Application `DocumentActor` carries a principal from a trusted caller; it is not authentication. Owners may update/delete their private documents; all actors may inspect shared documents, which users cannot mutate. PostgreSQL performs visibility-filtered listing, owner checks before details, row-locked soft deletion and update; in-memory behavior mirrors these contracts sequentially. Public endpoints and authenticated principal providers remain unimplemented.
 - **Supporting records:** [Physical schema ADR](postgresql-physical-schema.md), [U07](#u07), [U08](#u08), [U14](#u14), [lifecycle design](../design/document-lifecycle-and-indexing.md).
 
 ### U11
 
 **Chunking and embeddings**  
-**Status:** CONFIRMED for deterministic chunking architecture, initial experimental configurations, conceptual memberships/reuse and hosted preference; remaining production choices are UNRESOLVED.  
-**Approval evidence:** [E17](#e17), with tokenizer/fallback/empty-input refinements [E18](#e18).
+**Status:** CONFIRMED for deterministic chunking, initial configurations, memberships/reuse, E21 storage/profile, E23 generation, E25 plans and E26 foreground embedding persistence; remaining production choices are UNRESOLVED.\
+**Approval evidence:** [E17](#e17), [E18](#e18), [E21](#e21), [E23](#e23), [E25](#e25), and persistence/activation approval [E26](#e26).
 - **Selected approach:** Whole-passage baseline for short 2Wiki passages; fixed-token windows initially 128 content tokens/16 overlap; supplied-sentence packing initially 128/0. Oversized inputs are split deterministically, without truncation, decoding token IDs, rewriting text, or combining independent passages. Sentence structure comes from the relevant DocumentVersion, not shared Content alone.
-- **Range and membership:** A range is (content_sha256, start, end), with exact half-open Python-character slices. No chunk UUID. Version/configuration membership is separate; multiple versions/configurations may produce the same range. Configuration records strategy, implementation version, exact tokenizer artifact/revision/runtime, budget and overlap. Boundary/fallback/oversized rules are fixed by implementation version; changing them requires a new version. No registry or derived tables are approved.
-- **Future embedding reuse:** Requires equivalent complete effective input, provider/model/revision, document/query encoding, formatting, dimensions and normalization/output-affecting settings. Title/context changes can prevent reuse over equal ranges; different chunking strategies can reuse equivalent inputs. No normalized/semantic deduplication, cache or storage is implemented.
-- **Hosted experimental direction:** Prefer hosted embedding APIs. Gemini Embedding 2, 768 dimensions, cosine and body/title input comparisons remain experimental. The eight-question pilot did not establish consistent gains from titles or smaller chunks. No production provider, SDK, embedding call, title default or physical vector schema is selected by this approval.
+- **Range and membership:** A range is (content_sha256, start, end), with exact half-open Python-character slices. No chunk UUID. Version/configuration membership is separate; multiple versions/configurations may produce the same range. Configuration records strategy, implementation version, exact tokenizer artifact/revision/runtime, budget and overlap. Boundary/fallback/oversized rules are fixed by implementation version; changing them requires a new version. E17 approved no physical storage; E21 now approves the five derived tables described in the [storage ADR](embedding-storage.md), with no separate chunk registry.
+- **Future embedding reuse:** Requires equivalent complete effective input, provider/model/revision, document/query encoding, formatting, dimensions and normalization/output-affecting settings. Title/context changes can prevent reuse over equal ranges; different chunking strategies can reuse equivalent inputs. No normalized/semantic deduplication or embedding cache workflow is implemented; E21 adds storage mappings and a migration only.
+- **Hosted experimental direction:** Prefer hosted embedding APIs. E21 approves Gemini Developer API, gemini-embedding-2, 768 dimensions, cosine and exact search for development, using gemini_no_title_v1 document formatting and the documented retrieval-query prefix; production provider remains unresolved. The eight-question pilot did not establish consistent gains from titles or smaller chunks. E23 implements generation through an SDK-independent async port and google-genai infrastructure adapter. E21 selects the no-title baseline and physical VECTOR(768) storage; title-aware persistence and retrieval remain deferred.
 - **Alternatives and trade-offs:** Whole passages preserve context with fewer units; fixed windows bound content-token size but can cut sentences and repeat characters; sentence packing preserves supplied structure where possible but can leave token capacity unused. 256-token experiments remain historical measurements, not selected final configurations. Local model serving remains an alternative, not the preferred initial direction.
 - **Implementation state:** Pure [application chunking](../../src/investigation_engine/application/chunking.py) returns immutable ChunkPlan/Chunk values; text is derived directly from immutable Content. One [tokenizer port](../../src/investigation_engine/application/ports/text_tokenizer.py) separates tokenization from selection. The [file-loading infrastructure adapter](../../src/investigation_engine/infrastructure/tokenization/huggingface_tokenizer.py) uses the approved experimental runtime. Registration, authoritative models/schema/migrations, source fields and source spans are unchanged. Verification is recorded in the focused ADR separately from approval.
-- **Remaining UNRESOLVED:** Production embedding provider/tokenizer; final chunking budgets/overlap/default; effective embedding-input formatting and title policy; derived-data schema/membership persistence; distance/ANN/retrieval configuration; indexing lifecycle, activation/recovery and evaluation. Complete effective embedding-input limits remain the future provider's responsibility. This does not resolve U14/U17/U18.
+- **Remaining UNRESOLVED:** Production embedding provider/tokenizer and upstream pinning; final chunking defaults; title-aware/new encodings; serving-profile selection; ANN/retrieval; background lifecycle and evaluation. E26 implements scoped foreground persistence/recovery/activation. E30 verifies real countTokens and embeddings for two passages and a query, without a local-token substitute; this does not establish universal modality support or future alias stability. U14/U17/U18 retain their remaining boundaries.
+- **E23 generation implementation:** [EmbeddingProvider](../../src/investigation_engine/application/ports/embedding_provider.py) exposes document/query operations returning immutable vectors. [Gemini adapter](../../src/investigation_engine/infrastructure/embeddings/gemini_provider.py) uses sequential one-entry SDK calls, validated 8192-token counts, explicit 768 dimensions and versioned formats. It rejects malformed/non-finite/zero/truncated responses, maps sanitized errors, propagates cancellation and closes both SDK transports. [Generation details](embedding-storage.md#generation-adapter-e23) record the token-count uncertainty, offline verification and remaining boundaries. No cloud/API calls or persistence changes are part of this implementation.
+- **E25 chunk-plan implementation:** [ChunkPlanRepository](../../src/investigation_engine/application/ports/chunk_plan_repository.py), pure [validation](../../src/investigation_engine/application/chunk_plan_validation.py), and [PostgreSQL storage](../../src/investigation_engine/infrastructure/persistence/postgresql_chunk_plan_repository.py) save/reconstruct complete immutable plans without copied chunk text. Configuration identity includes all definition fields; source versions anchor canonical Content. Empty/blank plans retain the current chunker contract. Twenty new unit cases pass; all 161 unit tests pass. The 18 database cases are collected but unexecuted because the pinned image is absent. [Detailed storage contract](embedding-storage.md#chunk-plan-persistence-e25) separates complete memberships from future embedding eligibility.
+- **E26 implementation and verification:** [EmbeddingConfig/eligibility/float32 values](../../src/investigation_engine/application/embeddings.py), [EmbeddingRepository](../../src/investigation_engine/application/ports/embedding_repository.py), [IndexDocumentVersion](../../src/investigation_engine/application/use_cases/index_document_version.py), and PostgreSQL adapters implement reuse and incremental progress. Provider configuration declarations prevent cross-profile labeling. Complete plans retain blank ranges but require vectors only for nonblank memberships. Current verification supersedes E25's unavailable-image boundary: 196 unit and 101 integration tests pass in fresh PostgreSQL 18/pgvector 0.8.5 containers, including all prior tests. See [E26 storage and limits](embedding-storage.md#resumable-indexing-and-activation-e26).
+- **E21 storage implementation:** [Five-table ADR](embedding-storage.md), infrastructure ORM mappings and 0002_embedding_storage implement configuration validation, immutable-plan representation, ordered version memberships and reusable range/configuration vectors. Only five PK indexes plus membership range uniqueness are added. No extra DocumentVersion key or membership Content column. pgvector 0.5.1 is verified under Python 3.14.9. The ADR records executed isolated migration/constraint checks and application-side validation still required.
 - **Supporting records:** [Deterministic chunking ADR](deterministic-chunking.md), [N07](#n07)-[N09](#n09), [ADR-004](004-document-content-provenance.md), [data contract](../design/document-data-contract.md).
 
 ### U12
 
 **Search storage and contracts**  
-**Status:** CONFIRMED for pgvector technology selection; search contracts and index/schema details remain unresolved.  
-**Selected approach:** PostgreSQL with pgvector for vector storage and semantic similarity; no separate vector database at this stage. Domain/application layers stay independent of pgvector, with concrete application retrieval interfaces designed when needed.  
-**Approval evidence:** [E13](#e13), explicit pgvector approval.
-- **Context:** U05 already selects PostgreSQL. The corpus has 125,760 occurrences, 56,680 distinct texts, and 400,892 sentence spans; final embedding count is unknown. Retrieval is not implemented.
+**Status:** CONFIRMED for pgvector, E21 VECTOR(768) storage and E27 scoped exact semantic retrieval; ANN, keyword indexes and evaluation targets remain unresolved.\
+**Selected approach:** PostgreSQL/pgvector with application-owned SearchEvidence, Evidence and EvidenceRepository contracts. One explicit chunking/embedding pair, exact cosine similarity (1 minus distance), strict limit 1-100, and deterministic distance/document/version/range ordering. No separate vector database.\
+**Approval evidence:** [E13](#e13), pgvector selection; [E21](#e21), storage/exact-search baseline; [E27](#e27), implementation scope.
+- **Context:** U05 selects PostgreSQL. The corpus has 125,760 occurrences, 56,680 distinct texts and 400,892 sentence spans; corpus embeddings and full-scale retrieval are not yet measured. E27 implements synthetic-tested semantic retrieval, not corpus ingestion/evaluation.
 - **Alternatives and trade-offs:** Qdrant provides specialized vector infrastructure, dense/sparse retrieval, payload filtering, and independently scalable search, at the cost of another service and synchronization responsibilities. Other dedicated engines remain possible future alternatives, not selections. Co-locating data reduces operational/consistency complexity but shares database resources with vector/full-text workloads.
 - **Reasoning:** Native relational joins and shared transaction possibilities align with source eligibility and shared Content. They do not implement activation, deletion, or indexing recovery automatically. No latency or throughput superiority over Qdrant is claimed.
-- **Dependencies and consequences:** U11 still owns chunking/model/dimensions/reuse. Vector schema, distance, ANN family/settings, filtering, candidate/result types, indexing methods, interface signatures, query parameters, and targets remain unresolved under U07/U12/U17. U14 owns concurrency/recovery. Revisit the engine if measured recall/latency, builds, contention, or independent scaling needs justify it. No schema, extension install, new port, or retrieval functionality is implemented now.
+- **E27 contracts and eligibility:** SearchEvidence.execute(question, limit=10, *, owner_id) receives a trusted principal or explicit None (shared-only); principals see shared plus their own private documents. Query embedding uses embed_query, checks provider compatibility and validates float32 storage before opening a repository transaction. One SQL statement restricts active owned versions of nondeleted visible documents, exact selected plans, complete manifests/range coverage and every nonblank selected-profile vector before cosine ordering/LIMIT. This supplies scoped internal visibility, not authentication. Malformed returned provenance raises RepositoryError rather than post-filtering hits.
+- **E27 evidence identity:** (document_version_id, start, end), retaining independent occurrences and overlapping ranges without semantic grouping. Shared Content/vectors can yield multiple attributable hits. Evidence holds the original intersecting source spans in original order; partial intersections do not imply that a complete page/sentence was retrieved. Scores are raw finite cosine similarities; no threshold/calibration is selected.
+- **Dependencies and consequences:** The active pointer does not persist a serving profile. E27 recomputes complete selected-profile eligibility on each query using existing tables and one statement snapshot. Background lifecycle, principal authentication, profile publication/version pinning, ANN/index settings, recall/latency targets and evaluation remain U10/U11/U14/U17. Revisit storage only when measurements justify it. No schema/migration or indexing implementation changes are needed. See [retrieval implementation and verification](embedding-storage.md#exact-semantic-retrieval-e27).
+- **E33 optimization:** Equivalent SQL boundary trimming for blankness and narrow pre-limit candidate projection with post-limit source payload joins; all eligibility remains before limits in one statement/snapshot. No schema/interface/scoring change. See measured before/after evidence in the performance checkpoint.
+- **E31 extension:** The focused HybridEvidenceRepository returns semantic/keyword lists from one statement snapshot; SearchEvidence fuses them in Python. Existing semantic contract and shared-only public scope are preserved. Explicit score kinds prevent RRF/keyword scores being represented as cosine. No schema or lifecycle change.
 - **Supporting records:** [pgvector selection ADR](pgvector-selection.md), [U13](#u13), [U18](#u18), [lifecycle design](../design/document-lifecycle-and-indexing.md).
 
 ### U13
 
 **Keyword retrieval and custom ranking**  
-**Status:** CONFIRMED for native full-text search and custom RRF; detailed ranking configuration remains unresolved.  
+**Status:** CONFIRMED for native full-text search and custom RRF, with the E31 experimental implementation below; production tuning/index design remains unresolved.
 **Selected approach:** PostgreSQL native full-text keyword search plus semantic pgvector results, fused by a custom application-owned Reciprocal Rank Fusion implementation. Ranked evidence must resolve to eligible source/document versions.  
-**Approval evidence:** [E13](#e13), explicit keyword and fusion selections.
+**Approval evidence:** [E13](#e13), explicit keyword and fusion selections; [E31](#e31), scoped implementation and verification.
 - **Context:** Assignment pages 2-3 require semantic search, hybrid retrieval, and a project-owned algorithmic search/ranking component. Selecting the approach is not evidence that these requirements are implemented.
 - **Alternatives and trade-offs:** BM25 was discussed but is not selected or equated with PostgreSQL built-in ranking. RRF combines ranks rather than uncalibrated raw scores; it still needs candidate identity, truncation, and tie policies. Other ranking algorithms were proposals, not previously approved choices eligible for SUPERSEDED status.
-- **Dependencies and consequences:** Full-text language/query configuration, ranking function, indexes, list sizes, fusion constant/weights, ties, missing candidates, diversity, and eligibility handling remain unresolved. U11/U12 define effective inputs and interfaces; U17 defines evidence and evaluation. No keyword indexes or RRF code are introduced by this task.
+- **E31 implementation:** Exact chunk-slice English to_tsvector/plainto_tsquery with ts_rank; one-statement independently limited channels; application RRF sum(1/(k+rank)), default k=60, equal weights, compact first-duplicate ranks, single-channel retention, stable document/version/range ties and final limiting. Identity is (document_version_id,start,end), never Content or embedding. Trusted settings retain semantic default and optional hybrid; candidate defaults are 20 per channel. Score kinds and channel scores/ranks are explicit. All existing eligibility restrictions apply before each channel limit.
+- **Dependencies and consequences:** No FTS/ANN index or migration is introduced. Production language/parameters, source diversity, evaluation and latency targets remain unresolved; measured runtime FTS and eligibility costs justify a separate index/maintenance design review. See the ADR and benchmark; no semantic quality improvement is claimed.
 - **Supporting records:** [pgvector and hybrid ADR](pgvector-selection.md), [assignment requirements](#assignment-requirements), [U12](#u12), [system overview](../architecture/system-overview.md).
 
 ### U14
 
 **Indexing recovery and concurrency**  
-**Status:** CONFIRMED for the eight registration-specific selections below; indexing, activation, recovery, and remaining lifecycle/concurrency decisions remain UNRESOLVED.  
-**Approval evidence:** [E16](#e16), explicit implementation authorization. A09 remains the independent activation rule.
+**Status:** CONFIRMED for E16 registration, E25 chunk-plan transactions, E26 foreground resumable indexing/activation, E35 lifecycle concurrency, and E40's operator-run corpus processing; background orchestration remains UNRESOLVED.\
+**Approval evidence:** [E16](#e16), [E25](#e25), [E26](#e26), [E35](#e35), [E40](#e40). A09 remains the independent activation principle.
 
 | Approved registration selection | Alternatives, reasoning, and consequences |
 | --- | --- |
@@ -483,43 +714,55 @@ U01, U02, and U04 are CONFIRMED by E06, N02-N05 by E07, U09-2W by E08, N06 by E0
 - **Implementation state:** [PostgreSQLDocumentRepository](../../src/investigation_engine/infrastructure/persistence/postgresql_document_repository.py) implements atomic registration and winner resolution. [Private mapping](../../src/investigation_engine/infrastructure/persistence/_document_mapping.py) snapshots inputs before the first await and reconstructs typed domain values. Existing async in-memory/application contracts propagate ownership; no schema/dependency changes or public entry point were added.
 - **Guarantee boundary:** Supported registration works across repository instances/processes against the same database and uses constraints under concurrent writers. It does not promise batch atomicity, automatic reconciliation, cross-revision continuity, or synchronization with future deletion/activation. Returned state is a transaction snapshot. Content reuse across sessions means a shared stored row, not Python object identity.
 - **Verification:** Actual PostgreSQL 17.2 verification passed 18 temporary groups: exact domain round trips, new-repository lookup, descriptions/copies, text and both mapping conflicts, ownership and deleted retries, JSONB/null/revision identity, coordinated independent-connection races (identical/different text, mapping conflict, shared/different Content, cross-owner and generated-ID conflicts), complete rollback/connection cleanup, input mutation during an await, CHECK/FK errors, and actual lock-wait cancellation. Unchanged TXT and ten context passages from the actual pinned 2Wiki dev record registered successfully. A forged digest was rejected by the real consistency CHECK; controlled INSERT-parameter fault injection exercised ContentHashCollision without changing schema. No genuine SHA-256 collision was generated. Further executed checks are listed in observed evidence; no permanent tests were added.
-- **Remaining UNRESOLVED:** Chunking/embedding execution, workers, indexing orchestration/readiness/recovery, activation, cross-revision updates, investigation execution, retrieval/deletion races, production timeouts/pool sizes, authentication/principal source, and operational deployment. No general lifecycle or access-control readiness is claimed. Determine those mechanisms from their failure scenarios rather than extending this registration transaction prematurely.
+- **E21 boundary:** version_chunk_plans describe immutable expected membership manifests, never indexing readiness. version_index_states, transitions, claims, recovery and activation are deferred; storage existence grants no readiness or activation. U14 is not fully resolved.
+- **E24 registration alignment:** The in-memory repository now enforces the existing new-occurrence contract: version 1 and no active pointer, checked only after identical source retry resolution and before any write. The PostgreSQL implementation/transactions are unchanged. The two former xfails now pass, with atomic rejection/corrected-candidate and active-retry regression coverage; 28 focused and 141 total unit tests pass. The [testing ADR](testing-strategy.md#registration-alignment-and-remaining-gaps) records the remaining unavailable-image integration boundary. No indexing/update/lifecycle policy is added.
+- **E25 scoped chunk-plan transactions:** Each save owns a READ COMMITTED transaction and locks the authoritative DocumentVersion before configuration/plan lookup and writes. This serializes cooperating saves for that version without a new constraint or global configuration registry. Manifest/configuration/memberships commit together; conflicting ranges never overwrite, and corrupt stored plans raise RepositoryError. Other versions may create equivalent configuration rows as E21 allows. This mechanism is confined to plan storage and does not select worker claims, embedding retries, readiness or activation. Real lock/rollback/concurrency execution remains unverified pending the required Docker image.
+- **E26 foreground boundaries:** The use case holds no DB session during inference/delay, commits per missing eligible vector, resumes from committed cache, and bounds transient provider retries. New profile creation uses a brief existing-table lock/recheck; vectors use existing PK ON CONFLICT DO NOTHING and exact full-profile lookup. Activation locks Document then target version, revalidates selected-plan/vector coverage and non-deletion, compares the captured current pointer and prohibits downgrades. Same-target retries remain idempotent after revalidation. The serving profile is not stored on the Document pointer, and concurrent inference can duplicate before commit. These choices do not alter E16 registration transactions or add schema/state tables.
+- **E27 retrieval boundary:** A single statement snapshot checks visible/nondeleted active versions and the complete explicitly selected profile before top-K; active pointers are never treated as universal configuration readiness. This does not persist profile publication, select a worker lifecycle or change activation/registration transactions.
+- **E35 lifecycle policy:** A caller supplies the expected current version. A new version must have a nonblank explicit revision and retain the current version's `kind`, `source_id`, and JSONB-equal `record_locator`; PostgreSQL locks the document row, resolves an identical source-revision retry first, rejects stale pointers and any distinct update while a newer version is pending, and allocates `max(version_number)+1` inside that short transaction. No update transaction spans extraction or embedding. Activation now rejects an older target when a higher version exists; deletion and activation serialize on the document row, and deleted documents cannot be reactivated. Repeated update requests require the same source identity/revision, exact text, and identical structure/source spans. Different revisions are distinct versions even when Content is equal. No durable job state/cancellation/discard operation exists; a permanently unindexable pending version blocks another update until separately resolved.
+- **E35 deletion and listing:** Soft deletion locks and marks the owned document without removing versions, Content, vectors, or active pointer. Existing SQL retrieval already filters `deleted_at IS NULL`; tests verify immediate exclusion and shared-content availability. Listing uses SQL visibility predicates (shared or exact owner), stable created/id order and bounded offset pagination; deleted rows are excluded unless explicitly requested by the application caller. Shared documents remain system-managed.
+- **E40 operator processing:** A bounded foreground CLI streams the pinned source columns through existing extraction/registration/chunking/plan services. Disjoint foreground processes have separate checkpoints bound to input, configuration, shared ownership, range start and actual cluster/database identity. Commit-before-checkpoint and immutable batch progress records permit replay of interrupted work; they are not a distributed scheduler, lease or batch transaction. No schema change or full-corpus activation follows from registration/plan persistence. See [recovery and verification boundaries](../validation/corpus-scale-2026-10-28.md).
+- **Remaining UNRESOLVED:** Background workers/claims/scheduling, distributed rate quotas, automatic recovery/discard of a permanently failed pending version, cross-revision continuity beyond the explicit update operation, persisted serving-profile publication, durable investigation jobs/recovery, production DB timeouts/pool sizing, public authentication/authorization and deployment. Physical connection loss at COMMIT remains an untested operational failure; callers can resolve uncertain outcomes with the same identities. No public access-control readiness is claimed.
 - **Supporting records:** [Python persistence stack](python-persistence-stack.md), [physical schema ADR](postgresql-physical-schema.md), [U08](#u08), [U10](#u10), [lifecycle design](../design/document-lifecycle-and-indexing.md), [schema acceptance plan](../validation/schema-acceptance-plan.md).
 
 ### U15
 
 **Investigation and LLM integration**  
-**Status:** UNRESOLVED  
-**Selected approach:** Unset.  
-**Approval evidence:** None for a selection; [E04](#e04) authorizes recording the open decision only.
+**Status:** CONFIRMED for E28 single-step RAG and E38's bounded multi-step workflow with configurable Gemini generation; production model selection and broader investigation policy/evaluation remain UNRESOLVED.\
+**Selected approach:** E28's AnswerQuestion composes existing SearchEvidence with one AnswerGenerator invocation. E38 adds an application-owned bounded tool loop over that same SearchEvidence path. Standard dataclasses carry bounded evidence, structured results and server-resolved citations; the Gemini SDK stays in infrastructure.\
+**Approval evidence:** [E28](#e28), [E38](#e38).
 - **Context:** The engine needs evidence-based multistep answers, contradictions, abstention, and structured tool invocation.
-- **Alternatives and trade-offs:** Direct provider SDK versus orchestration framework; bounded workflow versus dynamic planning. Provider/model, prompts, tool schemas, evidence checks, limits, and error policies remain open.
-- **Recommendation (not approved):** Begin the design comparison with a small bounded workflow; do not adopt it without approval.
-- **Dependencies and consequences:** Blocks LLM/framework dependencies, investigation contracts, provider failure handling, and cost controls; depends on U12/U13 and informs U16/U17/U18.
+- **E28 single-step implementation:** Direct existing SDK, strict structured JSON, whole-excerpt character/count limits, application-controlled E IDs, exact trusted citation mapping, no-evidence/model abstention, and separate sanitized failures. Duplicate/malformed/unknown citations fail without repair. No framework or memory. Prompt instructions do not guarantee factual support; validation guarantees structure only.
+- **Model:** No implicit generation default. HTTP startup requires GEMINI_GENERATION_MODEL; gemini-3.6-flash remains a proposed development default, not a confirmed production selection. E30 explicitly authorizes and verifies this model for one billing-disabled Free-tier run, with real structured output and checked factual support. Future access/quota, general semantic quality and upstream stability remain unverified. Embedding configuration is unchanged.
+- **E38 bounded workflow:** [InvestigateQuestion](../../src/investigation_engine/application/investigations.py) orchestrates explicit search calls and final decisions with bounded turns, searches, evidence and request budgets. The [Gemini investigation adapter](../../src/investigation_engine/infrastructure/generation/gemini_investigation_model.py) maps structured function calls/results and preserves provider continuation state. Evidence IDs are application-controlled and citation IDs are validated/resolved against actual search results. The `/investigations` HTTP route and UI mode are configurable and use the existing application lifecycle; the browser does not select an owner, model or embedding profile. Limits and smoke evidence are in the [E38 validation record](../validation/multi-step-investigation-2026-10-28.md).
+- **Dependencies and consequences:** This scoped workflow is not a general planner, durable job system, or proof of factual grounding. Broad planning behavior, semantic citation support, contradiction and abstention quality, production model/pinning, operational quota limits and answer-quality evaluation remain unresolved. See [single-step RAG ADR](single-step-rag.md) for its original boundaries and [E38 validation](../validation/multi-step-investigation-2026-10-28.md) for the extension. No hybrid-search or deployment decision follows from this implementation.
 - **Supporting records:** [ADR-005](005-application-architecture.md), [assignment requirements](#assignment-requirements).
 
 ### U16
 
 **API and UI**  
-**Status:** UNRESOLVED  
-**Selected approach:** Unset.  
-**Approval evidence:** None for a selection; [E04](#e04) authorizes recording the open decision only.
+**Status:** CONFIRMED for E28 minimal FastAPI question API and E29 shared-corpus question interface; authenticated/document-management APIs and deployment remain UNRESOLVED.\
+**Selected approach:** GET / browser UI with same-origin static HTML/CSS/vanilla JavaScript; unchanged GET /health and POST /questions, strict question-only input, validated output, server-fixed shared-only scope, error mapping and lifespan ownership.\
+**Approval evidence:** [E28](#e28), [E29](#e29).
 - **Context:** Users must manage documents, ask questions, and inspect sources.
 - **Alternatives and trade-offs:** Server-rendered UI versus separate frontend; backend frameworks and endpoint contracts offer different complexity and interaction trade-offs.
-- **Recommendation (not approved):** Select the complete presentation/API contract from required user journeys. E13 references a planned FastAPI backend in its async rationale; the persistence ADR does not implement or settle U16 endpoints, UI, authentication, or hosting.
-- **Dependencies and consequences:** Blocks presentation dependencies, API schemas/errors, authentication entry points, and frontend implementation; depends on U08-U10/U15.
+- **Implementation:** FastAPI/Uvicorn and explicit HTTP Pydantic dependency are uv-managed. No global import-time clients, engine or configuration loading. Startup selects one existing persisted chunking configuration by server settings and the existing Gemini embedding profile; no migrations or automatic indexing. Original provenance is serialized from validated retrieval, not model output.
+- **E29 interface:** Static presentation assets reside inside the API package, with a root FileResponse and static mount. JavaScript sends only the exact question; server citation entries drive [E1] source buttons and native disclosures. Plain-text rendering, fixed safe error messages, bounded question length and client timeout, duplicate suppression and mobile/keyboard states add no business logic. No new dependency/build step/CORS is needed. The wheel includes the assets automatically.
+- **Dependencies and consequences:** No client owner/profile/model/cost controls are accepted. Shared-only access is intentionally unauthenticated; authentication, rate/admission policy, upload/list/delete endpoints and hosting remain separate decisions. The Windows launch uses the standard selector event loop required by psycopg. See [implementation and limitations](single-step-rag.md#browser-interface-e29).
 - **Supporting records:** [ADR-005](005-application-architecture.md), [assignment requirements](#assignment-requirements).
 
 ### U17
 
 **Evaluation and test sequencing**  
-**Status:** UNRESOLVED  
-**Selected approach:** Unset.  
-**Approval evidence:** None for a selection; [E04](#e04) authorizes recording the open decision only.
-- **Context:** Automated evaluation and automated software tests are both required; A10 defers immediate software tests only.
-- **Alternatives and trade-offs:** Document/chunk/evidence-level metrics; deterministic versus model-assisted answer scoring; different return milestones and test tools. Metric names alone do not define scoring.
-- **Recommendation (not approved):** Define evidence coverage and citation correctness; explicitly agree when deferred tests return.
-- **Dependencies and consequences:** Blocks final metrics, datasets/splits, evaluator dependencies, configuration comparisons, and automated-test scheduling. Does not waive submission requirements; coordinate U03/U11/U13/U15.
+**Status:** CONFIRMED for E22 software testing and the scoped E32 retrieval / E39 answer-quality evaluations; held-out methodology and a complete real-model evaluation remain UNRESOLVED.\
+**Selected approach:** pytest/pytest-asyncio/pytest-cov, unit/integration/external categories, Testcontainers PostgreSQL/pgvector with real commits/cleanup, optional pinned-corpus checks, explicitly gated live smoke tests, no global coverage minimum, GitHub Actions, and tests alongside future features.\
+**Approval evidence:** [E22](#e22) supersedes A10's sequencing preference only; [E32](#e32) authorizes the scoped retrieval evaluation; [E39](#e39) authorizes the answer-quality evaluation extension and bounded live sample.
+- **Scope:** No speculative provider fake before an interface exists. No live embedding calls, cloud database access or deployment. The default suite needs neither Docker nor dataset/API credentials.
+- **Implementation and evidence:** [Testing ADR](testing-strategy.md), [tests](../../tests), [CI workflow](../../.github/workflows/tests.yml). Integration startup fails clearly rather than using an application database; the ADR records actual execution limitations and coverage.
+- **E32 implementation:** 40 cases (8 factual projections, 12 annotated two-relation, 8 branching bridge comparisons, 6 controlled unanswerable, 6 contradictory), fixed 218-occurrence/197-Content corpus with distractors. Strict occurrence/hash/full-sentence locator matching, Recall@5/10/20, truncated MRR, fractional/all-required coverage, latency, failures/unavailable cases and paired comparisons. Ordinary Python, existing dependencies, JSON/Markdown and offline query cache; no production search changes. See the methodology for partial-sentence and duplicate handling.
+- **E39 implementation:** The fixed suite carries evaluation-only explicit answer and conflict annotations; deterministic conservative answer matching, strict/partial source-sentence citation metrics, outcome/error categories, investigation usage/latency/search records, paired configuration checks, ASCII-safe console summaries, and inspectable JSON/Markdown. Real providers receive the question/evidence only, never answer/gold labels. Failures without a completed result produce unobserved evidence metrics rather than false zeroes. See [answer-quality methodology and live sample](../validation/answer-quality-evaluation.md).
+- **E40 scope:** Matched structural comparisons retain the same 218 source records and 40 questions across the existing chunkers; a separately sized bounded real-Gemini pilot tests compatible profiles, source/owner eligibility and restart persistence. Neither structural coverage nor tiny-pilot Recall@K proves full-corpus semantic quality. Safe provider diagnostics add status/category/operation/model/counter information without retaining SDK payloads.
+- **Remaining evaluation decisions:** Held-out sampling/leakage controls and broader real-model sample selection remain open. Semantic claim support beyond gold occurrence agreement requires human review; no judge score is inferred. The live sample is partial (one correct single-step answer, one provider failure, no multi-step pairs), not a completed 40-question evaluation. Controlled fake-vector retrieval measurements do not select a superior production retrieval mode. U03 remains unchanged.
 - **Supporting records:** [Schema acceptance plan](../validation/schema-acceptance-plan.md), [assignment requirements](#assignment-requirements).
 
 ### U18
@@ -668,11 +911,14 @@ Source: the supplied eight-page [English assignment](C:/Users/merli/Downloads/Ap
 | 7 | Modular Python, responsibility separation, error handling, automated software tests, integration, secure configuration, documentation, and performance/LLM-cost consideration. No mandatory framework or design pattern. Bonus features do not replace requirements. |
 | 8 | GitHub repository/history, live demo, README, evaluation report, and AI usage report; ability to explain and modify the code without AI during the practical interview. |
 
-**Test deferral boundary:** A10 is temporary. Both automated software tests (page 7) and automated evaluation (page 4) remain final delivery requirements. U17 must resolve the software-test return milestone; no date, framework, or scoring strategy is selected here.
+**Test sequencing:** E22 ends A10's temporary deferral and selects the permanent software-testing strategy under U17. Both automated software tests (page 7) and automated evaluation (page 4) remain final delivery requirements; the evaluation methodology is still unresolved.
 
 ## Observed evidence
 
-The following separates historical review observations from subsequent temporary implementation verification. It is not approval evidence or a committed automated test/audit suite:
+The following preserves historical review observations and temporary implementation verification. These are not approval evidence. E22's permanent suite and current execution results are recorded separately in the [testing ADR](testing-strategy.md).
+
+- **E40 complete corpus (2026-10-28):** The application processed all 125,760 real pinned development occurrences into 56,680 reusable Contents and complete whole-passage plans in disposable PostgreSQL 18.4/pgvector 0.8.5. Exact source comparisons, interrupted-batch recovery, actual database restart, completed-checkpoint no-op and explicit 1,000-occurrence repository replay passed. Validation took 1,262.41 seconds and measured 253,613,759 database bytes. Full-corpus vectors/activation/searchability were zero. A separate real-Gemini pilot verified six stored vectors, four shared searchable sources, one separately owned duplicate, one excluded inactive record and restart-stable semantic/hybrid results. Task 14 made 12 token-count plus 12 embedding attempts, no generation requests. Complete suite: 620 Python plus 26 JavaScript tests passed, 7 opt-in Python checks skipped. Details: [report](../validation/corpus-scale-2026-10-28.md).
+- **E41 evaluation corpus (2026-10-28):** Separate named-volume PostgreSQL 18.4/pgvector database, actual repository migrations, 218 exact-provenance source occurrences, 197 unique Contents/chunk embeddings, 218 active/searchable versions, and container-recreation search verification. Synchronous Gemini batches of 1/2/5/10/25 all returned one ordered 768-dimensional vector per input; 25 was the largest tested, not a provider maximum. Paired semantic/hybrid evaluation ran all 40 questions (34 evidence-scored) on persisted vectors. Full counts, retrieval/category metrics, requests, token-accounting caveat, tests and generation-evaluation deferral are in the [Task 15 validation report](../validation/batched-gemini-evaluation-2026-10-28.md). The 125,760-occurrence corpus remains untouched by embeddings.
 
 - **E17/E18 chunk verification (2026-10-25):** Temporary Unicode/TXT/configuration checks passed; complete pinned-dev analysis checked 125,760 occurrences, 56,680 Contents, 56,702 unique sentence layouts and 400,892 original sentence spans. Whole/fixed128/sentence128 generated 125,760/167,949/169,760 occurrence memberships and 56,680/83,473/84,637 distinct ranges, exactly matching preceding distinct-range measurements. All 22 shared-Content/multiple-layout cases were checked; Carlos F. Borcosque demonstrates different sentence plans over equal Content. Detailed denominators, distributions, repeatability checks and limits are in the [chunking ADR](deterministic-chunking.md#verification-and-measurements). No embeddings, PostgreSQL corpus registration, permanent tests or retrieval/citation quality claims. The tokenizer normalizes internally during encoding; original Content strings/hashes and source offsets remain unchanged.
 
@@ -705,7 +951,7 @@ The [engineering handoff](C:/Users/merli/Downloads/AI_Investigation_Engine_Engin
 | Data contract | U01/U02/U04 confirm occurrence identity, assembly, and the provenance field split. Old claims that these choices are wholly open predate E06. N02-N05 now confirm types/defaults/copying and validation boundaries; physical schema and unrelated additions remain U07/U09/U10/U11. |
 | Lifecycle design | A09 confirms delayed activation. U08 and E16 implement registration retries/transactions; indexing, activation, jobs, cleanup and remaining lifecycle races stay unresolved under U14. |
 | Historical audit | Its not-yet-run supporting-fact note is historical; see Observed evidence above. U03 approves the measured 56,680 exact Contents as the conservative count baseline; semantic independence is not established by exact uniqueness. |
-| Schema acceptance plan | Scenarios are planned validation, not passing tests. A10 defers immediate automated software tests; U17 defines their return and evaluation design. |
+| Schema acceptance plan | The broader scenarios remain an acceptance backlog. E22 ends A10's deferral and adds permanent tests for implemented behavior; the testing ADR records actual execution. Unimplemented lifecycle, formats, retrieval and evaluation remain separate work. |
 
 No SUPERSEDED entry is manufactured from an assistant suggestion or exploratory audit. If an earlier accepted decision is later shown to have been explicitly replaced, record its approval and replacement evidence before applying that status.
 
@@ -736,4 +982,4 @@ This demonstrates the existing interface, not a new ingestion runner or retry po
 
 U07 remains confirmed and unchanged. E16 implements the scoped U14 registration foundation: async port/use case/adapters, required trusted ownership, isolated repository-owned READ COMMITTED transactions, exact Content reuse, bounded winner resolution, and cleanup/error semantics. There is no public/authenticated application bootstrap yet; ordinary dependency injection supplies the session factory, and engine creation/disposal belongs to the eventual composition root. No pool sizes or numeric timeouts were selected.
 
-Remaining U14 work concerns indexing/readiness/recovery/activation, cross-revision updates, workers, investigation execution, and future lifecycle races. U11 must be resolved before retrieval tables; remaining U12/U13 contracts/configuration and U17 evaluation/tests remain separate. U10/U16 must select the authenticated principal source and public access boundaries before exposure to untrusted clients. No next lifecycle mechanism is selected merely by this registration implementation.
+E25/E26 implement complete plans, resumable foreground persistence and safe activation; E27 implements exact selected-profile semantic retrieval; E38 implements bounded foreground investigation. Remaining U14 work concerns background recovery/claims, cross-revision updates, profile publication, durable investigation jobs and future lifecycle races. Keyword/hybrid contracts, retrieval quality/corpus-scale measurement and U17 evaluation remain separate. U10/U16 must select the authenticated principal source and public access boundaries before exposure to untrusted clients. This milestone selects no next feature or background lifecycle mechanism.

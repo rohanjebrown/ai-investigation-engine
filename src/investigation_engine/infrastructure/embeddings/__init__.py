@@ -1,0 +1,1 @@
+"""Hosted embedding infrastructure adapters."""

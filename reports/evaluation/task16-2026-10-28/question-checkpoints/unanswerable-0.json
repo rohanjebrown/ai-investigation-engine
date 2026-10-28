@@ -1,0 +1,801 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T10:17:10.545655+00:00",
+  "question_ids": [
+    "unanswerable:0"
+  ],
+  "evaluated_case_count": 1,
+  "stopped_early": false,
+  "runs": [
+    {
+      "configuration": {
+        "name": "quick-answer-real-gemini",
+        "mode": "single_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": {
+          "max_evidence": 5,
+          "max_context_chars": 12000
+        },
+        "investigation_budgets": null
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "correct_abstention": 1
+        },
+        "answer_correctness_counts": {
+          "not_applicable": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 1,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 0,
+        "strict_evidence_recall": null,
+        "partial_evidence_recall": null,
+        "strict_citation_recall": null,
+        "partial_citation_recall": null,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 13230.211499998404,
+        "mean_search_calls": 1,
+        "mean_generation_requests": 1,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "unanswerable": {
+          "outcome_counts": {
+            "correct_abstention": 1
+          },
+          "answer_correctness_counts": {
+            "not_applicable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 1,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 13230.211499998404,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "unanswerable:0",
+          "question": "On what date was fictional station Unlisted-0 constructed?",
+          "category": "unanswerable",
+          "expected_behavior": "abstain",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [],
+          "status": "insufficient_evidence",
+          "outcome": "correct_abstention",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-7001-706b-b1be-eb64c43a9561",
+              "document_version_id": "01a181cd-7001-706b-b1be-eb653438806e",
+              "content_sha256": "800c7ae3d1675c92724326299df12e8e1cdb5d5d2e8c380262ede09da39d77b0",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-0 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-0",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-0"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-0",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.8607381235233706,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-701f-7055-83cb-a78080b7400c",
+              "document_version_id": "01a181cd-701f-7055-83cb-a7812f164e49",
+              "content_sha256": "0874238c5794ea7ab706021ed3ac87785d360dff640c4d7a3fb47c7f082c4f72",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-1 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-1",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-1"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-1",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.8445916308735836,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-709d-7603-a612-be3f77cf3fec",
+              "document_version_id": "01a181cd-709d-7603-a612-be407dfe9e85",
+              "content_sha256": "7b2199779d8a580c6164a46b219b476256dd44e1787eec004a6ce0ef57fddc9a",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-5 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-5",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-5"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-5",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.8315811157226621,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-7042-7591-a0b9-ace2c632d1ae",
+              "document_version_id": "01a181cd-7042-7591-a0b9-ace3b807fdea",
+              "content_sha256": "8ce10aff7e5104091d760e8ad58806cdefeae1c4b917be10ff4d4500f62ca5ba",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-2 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-2",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-2"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-2",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.8288612859762496,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-707e-770d-8991-40d854968a18",
+              "document_version_id": "01a181cd-707e-770d-8991-40d93a2fa5e9",
+              "content_sha256": "caf1392cc29249bc94b5aaa3d0bf330062e01e2d28a078a460da161751b560b2",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-4 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-4",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-4"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-4",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.8283719709584676,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "not_applicable",
+          "retrieval_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": null,
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 13230.211499998404,
+            "required_facts_retrieved": 0,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 373,
+            "candidate_tokens": 15,
+            "thinking_tokens": 301
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        }
+      ]
+    },
+    {
+      "configuration": {
+        "name": "investigation-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "per_question_generation_cap": 2,
+          "max_search_calls": 1,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 10,
+          "max_context_chars": 24000,
+          "max_embedding_requests_per_question": 1
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "incomplete": 1
+        },
+        "answer_correctness_counts": {
+          "not_applicable": 1
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 1,
+        "provider_failures": 0,
+        "strict_evidence_recall": null,
+        "partial_evidence_recall": null,
+        "strict_citation_recall": null,
+        "partial_citation_recall": null,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 39924.03029999696,
+        "mean_search_calls": 2,
+        "mean_generation_requests": 2,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 1
+      },
+      "by_category": {
+        "unanswerable": {
+          "outcome_counts": {
+            "incomplete": 1
+          },
+          "answer_correctness_counts": {
+            "not_applicable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 1,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 39924.03029999696,
+          "mean_search_calls": 2,
+          "mean_generation_requests": 2,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "unanswerable:0",
+          "question": "On what date was fictional station Unlisted-0 constructed?",
+          "category": "unanswerable",
+          "expected_behavior": "abstain",
+          "expected_answer": null,
+          "acceptable_answers": [],
+          "required_evidence": [],
+          "status": "incomplete",
+          "outcome": "incomplete",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": "Unlisted-0",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "duration_ms": 705.716600001324,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 2,
+              "query": "\"Unlisted-0\" \"constructed\"",
+              "evidence_ids": [],
+              "result_count": 0,
+              "duration_ms": 0.0,
+              "succeeded": false,
+              "disposition": "search_limit"
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-7001-706b-b1be-eb64c43a9561",
+              "document_version_id": "01a181cd-7001-706b-b1be-eb653438806e",
+              "content_sha256": "800c7ae3d1675c92724326299df12e8e1cdb5d5d2e8c380262ede09da39d77b0",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-0 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-0",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-0"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-0",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7583540946170999,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-701f-7055-83cb-a78080b7400c",
+              "document_version_id": "01a181cd-701f-7055-83cb-a7812f164e49",
+              "content_sha256": "0874238c5794ea7ab706021ed3ac87785d360dff640c4d7a3fb47c7f082c4f72",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-1 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-1",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-1"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-1",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.7396778750036087,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-7042-7591-a0b9-ace2c632d1ae",
+              "document_version_id": "01a181cd-7042-7591-a0b9-ace3b807fdea",
+              "content_sha256": "8ce10aff7e5104091d760e8ad58806cdefeae1c4b917be10ff4d4500f62ca5ba",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-2 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-2",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-2"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-2",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.7364456967776235,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-709d-7603-a612-be3f77cf3fec",
+              "document_version_id": "01a181cd-709d-7603-a612-be407dfe9e85",
+              "content_sha256": "7b2199779d8a580c6164a46b219b476256dd44e1787eec004a6ce0ef57fddc9a",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-5 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-5",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-5"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-5",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.7348570105689162,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-707e-770d-8991-40d854968a18",
+              "document_version_id": "01a181cd-707e-770d-8991-40d93a2fa5e9",
+              "content_sha256": "caf1392cc29249bc94b5aaa3d0bf330062e01e2d28a078a460da161751b560b2",
+              "start": 0,
+              "end": 87,
+              "text": "Fictional station Unlisted-4 records wind speed. Its construction date is not recorded.",
+              "title": "unanswerable-4",
+              "source": {
+                "kind": "dataset",
+                "source_id": "controlled-evaluation",
+                "record_locator": {
+                  "record": "unanswerable-4"
+                },
+                "metadata": {},
+                "display_name": "unanswerable-4",
+                "revision": "1"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 87,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.7327588796615809,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "not_applicable",
+          "retrieval_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 0,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "budget_exhaustion",
+            "observation": "The workflow returned incomplete or recorded a configured resource limit.",
+            "hypothesis": "The current per-run budgets ended the investigation before a final decision."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 2,
+            "generation_requests": 2,
+            "embedding_query_requests": 1,
+            "latency_ms": 39924.03029999696,
+            "required_facts_retrieved": 0,
+            "required_facts_cited": 0,
+            "budget_exhausted": true,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 2169,
+            "candidate_tokens": 43,
+            "thinking_tokens": 739
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [
+    {
+      "baseline": "quick-answer-real-gemini",
+      "other": "investigation-real-gemini",
+      "paired_cases": 1,
+      "paired_question_ids": [
+        "unanswerable:0"
+      ],
+      "outcome_changes": [
+        {
+          "id": "unanswerable:0",
+          "baseline": "correct_abstention",
+          "other": "incomplete"
+        }
+      ],
+      "answer_correctness_changes": [],
+      "strict_evidence_recall_delta": null,
+      "strict_citation_recall_delta": null,
+      "latency_delta_ms": 26693.818799998553,
+      "generation_request_delta": 1,
+      "interpretation": "Paired descriptive differences only; no statistical significance or superiority is inferred."
+    }
+  ],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used.",
+    "Execution failures without a completed application result have unobserved evidence metrics, not zero-recall scores."
+  ],
+  "total_elapsed_ms": 53164.781800005585
+}

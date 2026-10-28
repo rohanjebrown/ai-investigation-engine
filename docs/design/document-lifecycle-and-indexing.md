@@ -1,9 +1,9 @@
 # Document lifecycle, exact reuse, index retirement and recovery
 
-**Status:** Agreed behavior; transaction/index mechanism not yet chosen.  
+**Status:** Core application lifecycle implemented under E35; background orchestration, authentication and operational recovery remain open.
 **Applies to:** Document, DocumentVersion, Content, provenance mappings, derived chunks and vectors.
 
-**Later approval reconciliation (2026-10-25):** [U07](../decisions/register.md#u07) implements the physical schema foundation. [U10](../decisions/register.md#u10) approves nullable owner references, soft deletion retaining the active-version pointer/history/Content, and eligibility exclusions. [U08](../decisions/register.md#u08) specifies authorized deleted-registration retries without restoration. [E16/U14](../decisions/register.md#u14) now implements async PostgreSQL registration with required trusted ownership, repository-owned READ COMMITTED transactions, full rollback/bounded conflict resolution, and cancellation cleanup. Historical suggestions below do not replace these approvals. Authentication, deletion endpoints, activation, cross-revision updates, and indexing/lifecycle recovery remain unimplemented; their mechanisms remain open.
+**Approval reconciliation:** [U07](../decisions/register.md#u07) implements the physical schema foundation. [U10](../decisions/register.md#u10) approves nullable owner references, soft deletion retaining the active-version pointer/history/Content, and eligibility exclusions. [U08](../decisions/register.md#u08) specifies authorized deleted-registration retries without restoration. [E16/U14](../decisions/register.md#u14) implements async PostgreSQL registration; [E35](../decisions/register.md#e35) adds scoped application updates, deletion and listing. Authentication, public management endpoints, background orchestration and recovery beyond same-revision retries remain unimplemented. Historical proposals below are design context; the implemented behavior is summarized in section 11.
 
 ## 1. Governing principle
 
@@ -110,8 +110,36 @@ Version rows alone are not enough to reproduce old evaluations. Store/retain, as
 
 ## 10. Remaining decisions
 
-- Derived storage and indexing transaction design; whether to use background queue/outbox. PostgreSQL authority, authoritative schema and registration transactions are already approved/implemented.
-- Index readiness states and retry policy.
+- Durable background orchestration, worker claims/scheduling, and whether to use an outbox. PostgreSQL authority, schema, registration, foreground indexing and activation transactions are already implemented.
+- Persisted readiness/job states, cancellation/discard and automated recovery for an unindexable pending version. Current foreground indexing is resumable for a selected version/profile.
 - Reference tracking/cleanup policy and historical retention boundaries.
-- Authentication and cross-tenant content-sharing safety.
-- Format-specific document replacement, failed/empty extraction and unchanged-file reupload semantics.
+- Authentication/principal sourcing and cross-tenant content-sharing policy.
+- Upload lifecycle details: source identity generation, unchanged-file reupload, retention of original bytes, and format-specific replacement/failure behavior beyond the implemented extraction contracts.
+
+## 11. Implemented application lifecycle (E35)
+
+### Update and retry contract
+
+`UpdateDocument` receives a `DocumentActor` from a trusted caller, the target document, an `ExtractedDocument`, and the expected current version ID. The actor principal must match the document owner; a shared (`owner_id IS NULL`) document is system-managed and cannot be updated by a user actor. The expected ID provides optimistic stale-write protection.
+
+An update must preserve the current source `kind`, `source_id`, and `record_locator`, and must supply a new nonblank explicit `revision`. This keeps a logical source occurrence attached to one logical Document while making revision identity deliberate. A retry with the same source identity/revision returns the existing version only when canonical text, structural spans, and source spans match; otherwise it conflicts. Descriptive metadata is not rewritten. A different revision creates a new immutable version even when text is identical, allowing exact Content reuse without collapsing history.
+
+The PostgreSQL repository takes a short READ COMMITTED transaction and locks the Document row. It checks the actor/deleted state, resolves a source-revision retry, compares the expected active version, rejects a second distinct pending version, allocates the next version number, inserts/reuses exact Content, and commits the inactive version. Extraction, chunking, embedding calls, and indexing happen outside this transaction. The in-memory implementation mirrors behavior sequentially but has no durability or cross-process concurrency guarantee.
+
+### Pending version and activation policy
+
+Only one version newer than the active pointer may be pending. Repeating the same source revision is allowed and returns its stored version; a distinct update is rejected until indexing/activation succeeds. Version numbering is protected by the document-row lock. If no version is active, updates are rejected until initial indexing activates version 1.
+
+Activation still verifies selected chunk-plan/vector completeness and locks the same Document row. It rejects deleted documents and any target that is not the newest stored version. Thus deletion and activation serialize, and an older indexing operation cannot reactivate a superseded version. Failed indexing leaves the prior active pointer unchanged.
+
+There is no durable pending-job state, cancellation/discard operation, automatic retry scheduler, or automatic deletion of failed pending versions. If a version remains unindexable, another update to that Document is blocked; callers can retry its indexing, while a future recovery policy must decide how to abandon it safely.
+
+### Soft deletion and access
+
+`DeleteDocument` is idempotent for an owned private document. It locks the Document row, sets `deleted_at` once, and preserves versions, current pointer, provenance, Content, chunks, and embeddings. Existing semantic and hybrid retrieval filters exclude the deleted Document immediately; shared content remains eligible through other active documents. Activation checks deleted state after acquiring the same row lock and fails if deletion won the race.
+
+`DocumentActor` is an application trust-context value, not authentication. The caller must construct it only from trusted identity context. Reads permit shared documents and exact-owner private documents; updates and deletes require exact ownership and reject shared documents. Missing and unauthorized documents have distinct internal errors; an eventual HTTP layer must map them without leaking private-document existence.
+
+`ListDocuments` validates offset and a limit from 1 through 100. PostgreSQL applies `(owner_id IS NULL OR owner_id = actor)` and deletion predicates in its query, orders by creation time and UUID for stable pagination, and returns simple application read models rather than ORM rows. Deleted entries are omitted by default; an authorized caller may request them explicitly. `GetDocument` returns the document state and version history, including deletion state, only to an authorized reader.
+
+The public API and browser do not yet expose these operations. Authentication/principal sourcing, shared-document administrative operations, HTTP error policy, private citation retention, and pending-version cancellation/recovery remain separate decisions.

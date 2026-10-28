@@ -1,0 +1,294 @@
+{
+  "kind": "persistent_corpus_restart_search_verification",
+  "database": {
+    "documents": 218,
+    "document_versions": 218,
+    "contents": 197,
+    "version_chunk_plans": 218,
+    "chunk_memberships": 218,
+    "chunk_embeddings": 197,
+    "active_versions": 218,
+    "active_searchable_occurrences": 218,
+    "incomplete_planned_versions": 0,
+    "database_bytes": 10196671,
+    "migration": "0002_embedding_storage",
+    "postgres_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+    "vector_dimensions": 768
+  },
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "question_id": "2wiki:8813f87c0bdd11eba7f7acde48001122",
+  "question": "Who is the mother of the director of film Polish-Russian War (Film)?",
+  "query_embedding_requests": {
+    "count_tokens": 1,
+    "embed_content": 1
+  },
+  "query_embedding_counted_tokens": 23,
+  "search_latency_seconds": 1.225,
+  "results": {
+    "semantic": [
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 4
+        },
+        "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+        "start": 0,
+        "end": 173,
+        "score": 0.7990869524544509,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 7
+        },
+        "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+        "start": 0,
+        "end": 642,
+        "score": 0.7659892046515968,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "c05e16a40bdd11eba7f7acde48001122",
+          "context_position": 0
+        },
+        "content_sha256": "e1398bf49920fdfd9911a6eaae1b49b1f69f42e3259d00cf7d51980b9ddcafb3",
+        "start": 0,
+        "end": 12,
+        "score": 0.6764318890639055,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 9
+        },
+        "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+        "start": 0,
+        "end": 372,
+        "score": 0.6329126667369086,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+          "context_position": 9
+        },
+        "content_sha256": "947687691b583cec28b292fc0b8e6e09ac17b3babad04a5ff3e9a29798197a01",
+        "start": 0,
+        "end": 344,
+        "score": 0.6314492477541582,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 3
+        },
+        "content_sha256": "c6fcd32f52d3c2e5be3f623876c45c82e555ded1366abed9c33904645033b70f",
+        "start": 0,
+        "end": 38,
+        "score": 0.6262000643014569,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+          "context_position": 7
+        },
+        "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+        "start": 0,
+        "end": 1765,
+        "score": 0.6210654992745103,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "c05e16a40bdd11eba7f7acde48001122",
+          "context_position": 4
+        },
+        "content_sha256": "9b000d812e976de503d60da818d85ad36f1ee820f7e03a1af958709b5c405994",
+        "start": 0,
+        "end": 1612,
+        "score": 0.614295574594669,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+          "context_position": 3
+        },
+        "content_sha256": "095dc2ae66e8fdd087e46e630f7be259ba7a61b4fe03905821fa9552d5d3c206",
+        "start": 0,
+        "end": 167,
+        "score": 0.6141706892834021,
+        "score_kind": "cosine_similarity"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+          "context_position": 3
+        },
+        "content_sha256": "095dc2ae66e8fdd087e46e630f7be259ba7a61b4fe03905821fa9552d5d3c206",
+        "start": 0,
+        "end": 167,
+        "score": 0.6141706892834021,
+        "score_kind": "cosine_similarity"
+      }
+    ],
+    "hybrid": [
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 4
+        },
+        "content_sha256": "cea58e48bd1f3f6ef08c4681c99c10ae132bd76b1221ab20cf1e55d5a3b44063",
+        "start": 0,
+        "end": 173,
+        "score": 0.01639344262295082,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 7
+        },
+        "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+        "start": 0,
+        "end": 642,
+        "score": 0.016129032258064516,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "c05e16a40bdd11eba7f7acde48001122",
+          "context_position": 0
+        },
+        "content_sha256": "e1398bf49920fdfd9911a6eaae1b49b1f69f42e3259d00cf7d51980b9ddcafb3",
+        "start": 0,
+        "end": 12,
+        "score": 0.015873015873015872,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 9
+        },
+        "content_sha256": "124144e957ecafc29ec504c46ea5259640a6e99e4333127a889576f0ba5eab78",
+        "start": 0,
+        "end": 372,
+        "score": 0.015625,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+          "context_position": 9
+        },
+        "content_sha256": "947687691b583cec28b292fc0b8e6e09ac17b3babad04a5ff3e9a29798197a01",
+        "start": 0,
+        "end": 344,
+        "score": 0.015384615384615385,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "8813f87c0bdd11eba7f7acde48001122",
+          "context_position": 3
+        },
+        "content_sha256": "c6fcd32f52d3c2e5be3f623876c45c82e555ded1366abed9c33904645033b70f",
+        "start": 0,
+        "end": 38,
+        "score": 0.015151515151515152,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "298f23b8088a11ebbd6eac1f6bf848b6",
+          "context_position": 7
+        },
+        "content_sha256": "343d9233a9916817993a46bfaa8b926939368e820b5b964efc5b14e6dbc450d7",
+        "start": 0,
+        "end": 1765,
+        "score": 0.014925373134328358,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "c05e16a40bdd11eba7f7acde48001122",
+          "context_position": 4
+        },
+        "content_sha256": "9b000d812e976de503d60da818d85ad36f1ee820f7e03a1af958709b5c405994",
+        "start": 0,
+        "end": 1612,
+        "score": 0.014705882352941176,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+          "context_position": 3
+        },
+        "content_sha256": "095dc2ae66e8fdd087e46e630f7be259ba7a61b4fe03905821fa9552d5d3c206",
+        "start": 0,
+        "end": 167,
+        "score": 0.014492753623188406,
+        "score_kind": "rrf"
+      },
+      {
+        "source_id": "xanhho/2WikiMultihopQA",
+        "record_locator": {
+          "split": "dev",
+          "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+          "context_position": 3
+        },
+        "content_sha256": "095dc2ae66e8fdd087e46e630f7be259ba7a61b4fe03905821fa9552d5d3c206",
+        "start": 0,
+        "end": 167,
+        "score": 0.014285714285714285,
+        "score_kind": "rrf"
+      }
+    ]
+  },
+  "verified_manifest_occurrences": 218
+}

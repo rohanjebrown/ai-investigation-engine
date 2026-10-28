@@ -6,12 +6,21 @@ readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
     "alembic>=1.17,<2",
+    "fastapi>=0.135,<1",
+    "google-genai>=2.33,<3",
+    "httpx>=0.28.1,<1",
     "huggingface-hub>=2.3.0",
+    "pgvector>=0.5.1",
     "psycopg[binary]>=3.2.10,<4",
     "pyarrow>=26.0.0",
+    "pydantic>=2.12,<3",
+    "pypdf>=6.21,<7",
+    "python-docx>=1.2,<2",
     "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.20,<1",
     "sqlalchemy[asyncio]>=2.0.44,<3",
     "tokenizers==0.23.3",
+    "uvicorn>=0.41,<1",
 ]
 
 [build-system]
@@ -29,4 +38,34 @@ source-include = [
     "docs/**",
     "migrations/**",
     "uv.lock",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+addopts = "--strict-markers --import-mode=importlib"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_default_test_loop_scope = "function"
+markers = [
+    "unit: deterministic tests without external services",
+    "integration: disposable Docker PostgreSQL/pgvector tests",
+    "external: explicit opt-in live service smoke tests",
+    "dataset: explicit opt-in checks of an already downloaded pinned corpus",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["investigation_engine"]
+omit = ["*/__init__.py", "*/ingestion/audit_contexts.py", "*/ingestion/inspect_dataset.py", "*/ingestion/inspect_parquet.py", "*/ingestion/download_dataset.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.1",
+    "pytest-cov>=7.1.0",
+    "testcontainers[postgres]>=4.15.0",
 ]

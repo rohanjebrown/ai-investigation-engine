@@ -1,0 +1,2262 @@
+{
+  "evaluation_version": "answer-quality-v1",
+  "suite_version": "retrieval-v1",
+  "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+  "dataset_revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f",
+  "corpus_id": "2wiki-dev-controlled-v1",
+  "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "annotation_corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+  "owner_scope": "shared",
+  "timestamp_utc": "2026-10-28T10:53:31.991937+00:00",
+  "question_ids": [
+    "simple:8813f87c0bdd11eba7f7acde48001122",
+    "2wiki:2207e9060bda11eba7f7acde48001122",
+    "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+    "unanswerable:0",
+    "contradictory:0"
+  ],
+  "evaluated_case_count": 5,
+  "stopped_early": true,
+  "runs": [
+    {
+      "configuration": {
+        "name": "quick-answer-real-gemini",
+        "mode": "single_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": {
+          "max_evidence": 5,
+          "max_context_chars": 12000
+        },
+        "investigation_budgets": null
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "incorrect_abstention": 1,
+          "not_run": 3,
+          "unavailable": 1
+        },
+        "answer_correctness_counts": {
+          "no_answer": 1,
+          "unavailable": 4
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 1,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 0,
+        "provider_failures": 0,
+        "strict_evidence_recall": 0.5,
+        "partial_evidence_recall": 0.5,
+        "strict_citation_recall": 0.0,
+        "partial_citation_recall": 0.0,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 0,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 10246.097700000973,
+        "mean_search_calls": 1,
+        "mean_generation_requests": 1,
+        "mean_follow_up_searches_with_new_required_evidence": 0,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 5
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "simple_factual": {
+          "outcome_counts": {
+            "unavailable": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "three_plus_hop": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "two_hop": {
+          "outcome_counts": {
+            "incorrect_abstention": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 1,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": 0.5,
+          "partial_evidence_recall": 0.5,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 10246.097700000973,
+          "mean_search_calls": 1,
+          "mean_generation_requests": 1,
+          "mean_follow_up_searches_with_new_required_evidence": 0,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "unanswerable": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "simple:8813f87c0bdd11eba7f7acde48001122",
+          "question": "What is Xawery Żuławski's mother?",
+          "category": "simple_factual",
+          "expected_behavior": "answer",
+          "expected_answer": "Małgorzata Braunek",
+          "acceptable_answers": [
+            "Małgorzata Braunek"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "sentence_index": 2,
+              "start": 128,
+              "end": 202
+            }
+          ],
+          "status": "unavailable",
+          "outcome": "unavailable",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "result_persistence_failure",
+            "observation": "The Task 16 application calls completed, but a local report aggregator raised before their result rows were written.",
+            "hypothesis": "Exact answers and evidence are unavailable. Calls were not repeated to avoid regenerating successful responses."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": null,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemini-3.6-flash",
+          "error_type": "LocalReportSerializationError",
+          "provider_diagnostic": null
+        },
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "question": "What nationality is the director of film World And Time Enough?",
+          "category": "two_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "United States",
+          "acceptable_answers": [
+            "United States"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "sentence_index": 1,
+              "start": 15,
+              "end": 171
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 146
+            }
+          ],
+          "status": "insufficient_evidence",
+          "outcome": "incorrect_abstention",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": null,
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "succeeded": true
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-6cde-71e1-8ecc-0678a8ef54d5",
+              "document_version_id": "01a181cd-6cde-71e1-8ecc-0679d8e2cea0",
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "start": 0,
+              "end": 234,
+              "text": "World and Time Enough is a 1994 independent gay-themed romantic comedy-drama written and directed by Eric Mueller and starring Gregory Giles, Matt Guidry and Kraig Swartz. It was filmed on location in Edina and Minneapolis, Minnesota.",
+              "title": "World and Time Enough",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 14,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 15,
+                  "end": 171,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 172,
+                  "end": 234,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7713913917541997,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-6981-75d9-848d-1131cd8959e6",
+              "document_version_id": "01a181cd-6981-75d9-848d-1132ab3643c2",
+              "content_sha256": "fd235f69a3e528162bd767adacf7f840f6e405cbd979b2fc325e2fcf874460eb",
+              "start": 0,
+              "end": 716,
+              "text": "Kenneth Lauren Burns (born 1953) is an American filmmaker, known for his style of using archival footage and photographs in documentary films. His widely known documentary series include \"The Civil War\" (1990), \"Baseball\" (1994), \"Jazz\" (2001), \"The War\" (2007),  (2009), \"Prohibition\" (2011), \"The Roosevelts\" (2014), \"The Vietnam War\" (2017), and \"Country Music\" (2019). He was also executive producer of both \"The West\" (1996, directed by Stephen Ives), and \"Cancer: The Emperor of All Maladies\" (2015, directed by Barak Goodman). Burns' documentaries have earned two Academy Award nominations (for 1981's \"Brooklyn Bridge\" and 1985's \"The Statue of Liberty\") and have won several Emmy Awards, among other honors.",
+              "title": "Ken Burns",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "464cfa460bd911eba7f7acde48001122",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Ken Burns",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 142,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 143,
+                  "end": 372,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 373,
+                  "end": 533,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 534,
+                  "end": 716,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.6480943836772045,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-6e2a-7524-9a26-621bf09f64b3",
+              "document_version_id": "01a181cd-6e2a-7524-9a26-621cf1972be0",
+              "content_sha256": "947687691b583cec28b292fc0b8e6e09ac17b3babad04a5ff3e9a29798197a01",
+              "start": 0,
+              "end": 344,
+              "text": "Roberto Gastone Zeffiro Rossellini( 8 May 1906 – 3 June 1977) was an Italian film director, screenwriter, and producer. Rossellini was one of the directors of the Italian neorealist cinema, contributing to the movement with films such as\" Rome, Open City\"( 1945),\" Paisan\"( 1946),\" Germany, Year Zero\"( 1948), and\" General Della Rovere\"( 1959).",
+              "title": "Roberto Rossellini",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "7abc1e3008d511ebbd98ac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Roberto Rossellini",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 119,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 120,
+                  "end": 344,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6474292381487506,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-66f6-708b-bd07-48d856a86c8e",
+              "document_version_id": "01a181cd-66f6-708b-bd07-48d9e28f1ea5",
+              "content_sha256": "80d973ef3bf00f439f108eb2f64e37329d8b27fc60481138f781efc66307a0fd",
+              "start": 0,
+              "end": 92,
+              "text": "Jason Moore( born October 22, 1970) is an American director of film, theatre and television.",
+              "title": "Jason Moore (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 0
+                },
+                "metadata": {},
+                "display_name": "Jason Moore (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 92,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6467343989927476,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6943-735f-9ce4-db4e2ef40c1e",
+              "document_version_id": "01a181cd-6943-735f-9ce4-db4f4dde9386",
+              "content_sha256": "73c88391a514a49b16cb7b3af63330f6b0cdb3b74aba1900d25dcbcff4d2a5b9",
+              "start": 0,
+              "end": 782,
+              "text": "Robert Bresson( 25 September 1901 – 18 December 1999) was a French film director. Known for his ascetic approach, Bresson contributed notably to the art of cinema; his non-professional actors, ellipses, and sparse use of scoring have led his works to be regarded as preeminent examples of minimalist film. Bresson is among the most highly regarded French filmmakers of all time. His works\" A Man Escaped\"( 1956),\" Pickpocket\"( 1959) and\" Au hasard Balthazar\"( 1966) were ranked among the 100 greatest films ever made in the 2012\" Sight& Sound\" critics' poll. Other films of his, such as\" Mouchette\"( 1967) and\" L' Argent\"( 1983), also received many votes. Jean- Luc Godard once wrote,\" He is the French cinema, as Dostoevsky is the Russian novel and Mozart is German[\" sic\"] music.\"",
+              "title": "Robert Bresson",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "5bec3cd408a711ebbd7fac1f6bf848b6",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Robert Bresson",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 81,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 82,
+                  "end": 305,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 306,
+                  "end": 378,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 379,
+                  "end": 558,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 559,
+                  "end": 655,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 656,
+                  "end": 782,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6441331546068614,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 5,
+            "strict_fact_count": 1,
+            "strict_recall": 0.5,
+            "all_required_strict": false,
+            "strict_precision": 0.2,
+            "partial_fact_count": 1,
+            "partial_recall": 0.5,
+            "partial_precision": 0.2,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "search_planning_or_retrieval_failure",
+            "observation": "Strictly retrieved 1 of 2 required facts.",
+            "hypothesis": "Search logs identify query order and returned evidence, but do not establish whether planning or ranking caused the gap."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 1,
+            "generation_requests": 1,
+            "embedding_query_requests": 1,
+            "latency_ms": 10246.097700000973,
+            "required_facts_retrieved": 1,
+            "required_facts_cited": 0,
+            "budget_exhausted": false,
+            "evidence_gap_at_stop": true,
+            "follow_up_searches_with_new_required_evidence": 0
+          },
+          "usage": {
+            "prompt_tokens": 914,
+            "candidate_tokens": 27,
+            "thinking_tokens": 250
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "category": "three_plus_hop",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        },
+        {
+          "id": "unanswerable:0",
+          "category": "unanswerable",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        },
+        {
+          "id": "contradictory:0",
+          "category": "contradictory",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        }
+      ]
+    },
+    {
+      "configuration": {
+        "name": "investigation-real-gemini",
+        "mode": "multi_step",
+        "retrieval_mode": "semantic",
+        "chunking": {
+          "strategy": "whole_passage",
+          "tokenizer": {
+            "name": "MongoDB/voyage-4",
+            "revision": "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9",
+            "artifact_sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+            "runtime_version": "0.23.3"
+          },
+          "max_tokens": 32000,
+          "overlap": 0,
+          "algorithm_version": "1"
+        },
+        "embedding": {
+          "provider": "gemini_developer_api",
+          "model_id": "gemini-embedding-2",
+          "model_revision": null,
+          "dimensions": 768,
+          "document_format": "gemini_no_title_v1",
+          "normalization": "none"
+        },
+        "generation_model": "gemini-3.6-flash",
+        "answering_budgets": null,
+        "investigation_budgets": {
+          "max_turns": 3,
+          "max_generation_requests": 3,
+          "max_search_calls": 2,
+          "max_results_per_search": 5,
+          "max_accumulated_evidence": 10,
+          "max_context_chars": 24000,
+          "max_embedding_requests": 2
+        }
+      },
+      "aggregate": {
+        "outcome_counts": {
+          "incomplete": 1,
+          "not_run": 3,
+          "unavailable": 1
+        },
+        "answer_correctness_counts": {
+          "no_answer": 1,
+          "unavailable": 4
+        },
+        "determinately_scored_answer_count": 0,
+        "deterministic_answer_accuracy": null,
+        "correct_abstentions": 0,
+        "incorrect_abstentions": 0,
+        "unsupported_answers": 0,
+        "correct_conflicts": 0,
+        "missed_contradictions": 0,
+        "false_conflicts": 0,
+        "incomplete_or_budget_limited": 1,
+        "provider_failures": 0,
+        "strict_evidence_recall": 1.0,
+        "partial_evidence_recall": 1.0,
+        "strict_citation_recall": 0.0,
+        "partial_citation_recall": 0.0,
+        "strict_citation_precision": null,
+        "partial_citation_precision": null,
+        "all_gold_facts_strictly_retrieved": 1,
+        "all_gold_facts_strictly_cited": 0,
+        "mean_latency_ms": 48595.566700001655,
+        "mean_search_calls": 3,
+        "mean_generation_requests": 3,
+        "mean_follow_up_searches_with_new_required_evidence": 1,
+        "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+        "evaluated_cases": 5
+      },
+      "by_category": {
+        "contradictory": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "simple_factual": {
+          "outcome_counts": {
+            "unavailable": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "three_plus_hop": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "two_hop": {
+          "outcome_counts": {
+            "incomplete": 1
+          },
+          "answer_correctness_counts": {
+            "no_answer": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 1,
+          "provider_failures": 0,
+          "strict_evidence_recall": 1.0,
+          "partial_evidence_recall": 1.0,
+          "strict_citation_recall": 0.0,
+          "partial_citation_recall": 0.0,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 1,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": 48595.566700001655,
+          "mean_search_calls": 3,
+          "mean_generation_requests": 3,
+          "mean_follow_up_searches_with_new_required_evidence": 1,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        },
+        "unanswerable": {
+          "outcome_counts": {
+            "not_run": 1
+          },
+          "answer_correctness_counts": {
+            "unavailable": 1
+          },
+          "determinately_scored_answer_count": 0,
+          "deterministic_answer_accuracy": null,
+          "correct_abstentions": 0,
+          "incorrect_abstentions": 0,
+          "unsupported_answers": 0,
+          "correct_conflicts": 0,
+          "missed_contradictions": 0,
+          "false_conflicts": 0,
+          "incomplete_or_budget_limited": 0,
+          "provider_failures": 0,
+          "strict_evidence_recall": null,
+          "partial_evidence_recall": null,
+          "strict_citation_recall": null,
+          "partial_citation_recall": null,
+          "strict_citation_precision": null,
+          "partial_citation_precision": null,
+          "all_gold_facts_strictly_retrieved": 0,
+          "all_gold_facts_strictly_cited": 0,
+          "mean_latency_ms": null,
+          "mean_search_calls": null,
+          "mean_generation_requests": null,
+          "mean_follow_up_searches_with_new_required_evidence": null,
+          "semantic_claim_support": "human_review_required; no automatic semantic claim judge",
+          "evaluated_cases": 1
+        }
+      },
+      "questions": [
+        {
+          "id": "simple:8813f87c0bdd11eba7f7acde48001122",
+          "question": "What is Xawery Żuławski's mother?",
+          "category": "simple_factual",
+          "expected_behavior": "answer",
+          "expected_answer": "Małgorzata Braunek",
+          "acceptable_answers": [
+            "Małgorzata Braunek"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "8813f87c0bdd11eba7f7acde48001122",
+                  "context_position": 7
+                },
+                "metadata": {},
+                "display_name": "Xawery Żuławski",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "29b833c8203c42c97560b6fc4fb3575c15b91f0e906e5c40cbc7bdbb83ceb29c",
+              "sentence_index": 2,
+              "start": 128,
+              "end": 202
+            }
+          ],
+          "status": "unavailable",
+          "outcome": "unavailable",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": null,
+          "retrieved_evidence": null,
+          "citation_evidence": null,
+          "answer_correctness": "unavailable",
+          "retrieval_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "citation_coverage": {
+            "gold_fact_count": 1,
+            "unique_evidence_count": null,
+            "strict_fact_count": null,
+            "strict_recall": null,
+            "all_required_strict": null,
+            "strict_precision": null,
+            "partial_fact_count": null,
+            "partial_recall": null,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            },
+            "observation": "No completed application result exposed evidence for scoring."
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "result_persistence_failure",
+            "observation": "The Task 16 application calls completed, but a local report aggregator raised before their result rows were written.",
+            "hypothesis": "Exact answers and evidence are unavailable. Calls were not repeated to avoid regenerating successful responses."
+          },
+          "semantic_claim_support": {
+            "status": "not_assessed",
+            "supported_claims": null,
+            "unsupported_claims": null
+          },
+          "investigation_behavior": {
+            "search_count": null,
+            "generation_requests": null,
+            "embedding_query_requests": null,
+            "latency_ms": null,
+            "required_facts_retrieved": null,
+            "required_facts_cited": null,
+            "budget_exhausted": null,
+            "evidence_gap_at_stop": null,
+            "follow_up_searches_with_new_required_evidence": null
+          },
+          "usage": null,
+          "model_version": "gemini-3.6-flash",
+          "error_type": "LocalReportSerializationError",
+          "provider_diagnostic": null
+        },
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "question": "What nationality is the director of film World And Time Enough?",
+          "category": "two_hop",
+          "expected_behavior": "answer",
+          "expected_answer": "United States",
+          "acceptable_answers": [
+            "United States"
+          ],
+          "required_evidence": [
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "sentence_index": 1,
+              "start": 15,
+              "end": 171
+            },
+            {
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "sentence_index": 0,
+              "start": 0,
+              "end": 146
+            }
+          ],
+          "status": "incomplete",
+          "outcome": "incomplete",
+          "answer": null,
+          "citations": [],
+          "conflicts": [],
+          "searches": [
+            {
+              "sequence": 1,
+              "query": "World And Time Enough director nationality",
+              "evidence_ids": [
+                "E1",
+                "E2",
+                "E3",
+                "E4",
+                "E5"
+              ],
+              "result_count": 5,
+              "duration_ms": 785.6307999973069,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 2,
+              "query": "Eric Mueller",
+              "evidence_ids": [
+                "E6",
+                "E1",
+                "E7",
+                "E8",
+                "E9"
+              ],
+              "result_count": 5,
+              "duration_ms": 709.7321000037482,
+              "succeeded": true,
+              "disposition": "succeeded"
+            },
+            {
+              "sequence": 3,
+              "query": "\"Eric Mueller\" director OR filmmaker OR American",
+              "evidence_ids": [],
+              "result_count": 0,
+              "duration_ms": 0.0,
+              "succeeded": false,
+              "disposition": "search_limit"
+            }
+          ],
+          "retrieved_evidence": [
+            {
+              "evidence_id": "E1",
+              "document_id": "01a181cd-6cde-71e1-8ecc-0678a8ef54d5",
+              "document_version_id": "01a181cd-6cde-71e1-8ecc-0679d8e2cea0",
+              "content_sha256": "07bb14be647a8d72dd9fb6070efe4f50049df4338df9f4ec53fe9adb24d3d6ce",
+              "start": 0,
+              "end": 234,
+              "text": "World and Time Enough is a 1994 independent gay-themed romantic comedy-drama written and directed by Eric Mueller and starring Gregory Giles, Matt Guidry and Kraig Swartz. It was filmed on location in Edina and Minneapolis, Minnesota.",
+              "title": "World and Time Enough",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 1
+                },
+                "metadata": {},
+                "display_name": "World and Time Enough",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 14,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 15,
+                  "end": 171,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 172,
+                  "end": 234,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.7473774552345753,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E2",
+              "document_id": "01a181cd-66f6-708b-bd07-48d856a86c8e",
+              "document_version_id": "01a181cd-66f6-708b-bd07-48d9e28f1ea5",
+              "content_sha256": "80d973ef3bf00f439f108eb2f64e37329d8b27fc60481138f781efc66307a0fd",
+              "start": 0,
+              "end": 92,
+              "text": "Jason Moore( born October 22, 1970) is an American director of film, theatre and television.",
+              "title": "Jason Moore (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 0
+                },
+                "metadata": {},
+                "display_name": "Jason Moore (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 92,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 2,
+              "score": 0.6589201499319085,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E3",
+              "document_id": "01a181cd-66bf-7461-b228-74068debaa0d",
+              "document_version_id": "01a181cd-66bf-7461-b228-7407de4d05eb",
+              "content_sha256": "0b3613923e8fa791b627787889ed6eac8d1652eceff0247c8b6191abcb8cebd1",
+              "start": 0,
+              "end": 51,
+              "text": "Ian Barry is an Australian director of film and TV.",
+              "title": "Ian Barry (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+                  "context_position": 4
+                },
+                "metadata": {},
+                "display_name": "Ian Barry (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 51,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6518064737320363,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E4",
+              "document_id": "01a181cd-6746-7784-8f8c-e902934516af",
+              "document_version_id": "01a181cd-6746-7784-8f8c-e903c79dd26c",
+              "content_sha256": "0b3613923e8fa791b627787889ed6eac8d1652eceff0247c8b6191abcb8cebd1",
+              "start": 0,
+              "end": 51,
+              "text": "Ian Barry is an Australian director of film and TV.",
+              "title": "Ian Barry (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 8
+                },
+                "metadata": {},
+                "display_name": "Ian Barry (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 51,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6518064737320363,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E5",
+              "document_id": "01a181cd-6b56-7336-9f9c-1abfdb2a7b47",
+              "document_version_id": "01a181cd-6b56-7336-9f9c-1ac0341a1a3b",
+              "content_sha256": "0b3613923e8fa791b627787889ed6eac8d1652eceff0247c8b6191abcb8cebd1",
+              "start": 0,
+              "end": 51,
+              "text": "Ian Barry is an Australian director of film and TV.",
+              "title": "Ian Barry (director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2935f1640bda11eba7f7acde48001122",
+                  "context_position": 8
+                },
+                "metadata": {},
+                "display_name": "Ian Barry (director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 51,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6518064737320363,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E6",
+              "document_id": "01a181cd-6cf7-724d-bf69-3a60a597ccd1",
+              "document_version_id": "01a181cd-6cf7-724d-bf69-3a61e2e12a53",
+              "content_sha256": "807045bc10baae8ca3f7ef5f8660e1c9ce204dbd55a9f085c2ed26654f2f4a12",
+              "start": 0,
+              "end": 1937,
+              "text": "Eric C. Mueller (born November 6, 1970) is a former Olympic and National team rower, representing the United States at the 1996 and 2000 Olympics. He was born in Kansas City, Missouri. Mueller, one of the most successful men's rowers in Wisconsin history, begins his third season as the Badgers' freshmen coach. Mueller returns to Madison for the second time as an assistant coach. He spent 1998–99 as the assistant varsity coach, before leaving to train for the 2000 Olympic Summer Games in Sydney, Australia. During his previous stint, he was responsible for the Badgers' small boats and led them to four gold medals and one silver medal at the Intercollegiate Rowing Association national championships. The result helped Wisconsin begin a four-year run as winners of the Ten Eyck Trophy as national team points champion. Since his return, the UW freshmen have improved from a bottom six national finish in the year before his joining the program to a return to the national grand finals. As a rower, Mueller secured three letters at Wisconsin while a member of the varsity eight from 1991–93. At national championships during his career, the boat placed sixth, once, and ninth, twice. A Cedarburg, native , Mueller earned a bachelor's degree in mechanical engineering from Wisconsin in 1994. Following his Badger career, Mueller went on to win an Olympic silver medal in the men's quadruple sculls in 1996 in Atlanta. He also placed fifth at the 2000 Olympics with the men's four. U.S. national team member in 1995, ‘96, ‘00, ‘01 and ‘02 , he was part of the men's eight champion at the 2002 World Cup in Lucerne, Switzerland, and finished third at the 2002 World Championships in Seville, Spain. His men's four took fourth at the 2001 World Championships, while his men's eight was a bronze medalist at the 2000 World Cup, again in Lucerne. He also won a bronze medal with the men's quadruple sculls in Lucerne at the 1996 World Cup.",
+              "title": "Eric Mueller",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2207e9060bda11eba7f7acde48001122",
+                  "context_position": 3
+                },
+                "metadata": {},
+                "display_name": "Eric Mueller",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 146,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 147,
+                  "end": 184,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 185,
+                  "end": 311,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 312,
+                  "end": 381,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 382,
+                  "end": 510,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 511,
+                  "end": 705,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 706,
+                  "end": 823,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                },
+                {
+                  "start": 824,
+                  "end": 990,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 7
+                    }
+                  ]
+                },
+                {
+                  "start": 991,
+                  "end": 1095,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 8
+                    }
+                  ]
+                },
+                {
+                  "start": 1096,
+                  "end": 1187,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 9
+                    }
+                  ]
+                },
+                {
+                  "start": 1188,
+                  "end": 1207,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 10
+                    }
+                  ]
+                },
+                {
+                  "start": 1208,
+                  "end": 1294,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 11
+                    }
+                  ]
+                },
+                {
+                  "start": 1295,
+                  "end": 1420,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 12
+                    }
+                  ]
+                },
+                {
+                  "start": 1421,
+                  "end": 1483,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 13
+                    }
+                  ]
+                },
+                {
+                  "start": 1484,
+                  "end": 1540,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 14
+                    }
+                  ]
+                },
+                {
+                  "start": 1541,
+                  "end": 1699,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 15
+                    }
+                  ]
+                },
+                {
+                  "start": 1700,
+                  "end": 1844,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 16
+                    }
+                  ]
+                },
+                {
+                  "start": 1845,
+                  "end": 1937,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 17
+                    }
+                  ]
+                }
+              ],
+              "rank": 1,
+              "score": 0.8023466114425689,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E7",
+              "document_id": "01a181cd-670b-7021-ad83-88063c7a85e2",
+              "document_version_id": "01a181cd-670b-7021-ad83-8807eb9e3f8c",
+              "content_sha256": "f320a4ef3068751e5cc39a07de5366a71ba0b0e80a4ebc9773ae1d766a9b9a6a",
+              "start": 0,
+              "end": 433,
+              "text": "Brian Patrick Kennedy( born 5 November 1961) is an Irish- born art museum director who has worked in Ireland and Australia, and now lives and works in the United States. He is currently the director of the Peabody Essex Museum. He was the director of the Toledo Museum of Art in Ohio from 2010 to 2019. He was the director of the Hood Museum of Art from 2005 to 2010, and the National Gallery of Australia( Canberra) from 1997- 2004.",
+              "title": "Brian Kennedy (gallery director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "f9dcb4a60bda11eba7f7acde48001122",
+                  "context_position": 2
+                },
+                "metadata": {},
+                "display_name": "Brian Kennedy (gallery director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 169,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 170,
+                  "end": 227,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 228,
+                  "end": 302,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 303,
+                  "end": 433,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 3,
+              "score": 0.6158071941525494,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E8",
+              "document_id": "01a181cd-6b6c-71e9-9658-e609938a6b45",
+              "document_version_id": "01a181cd-6b6c-71e9-9658-e60acc9367b0",
+              "content_sha256": "f320a4ef3068751e5cc39a07de5366a71ba0b0e80a4ebc9773ae1d766a9b9a6a",
+              "start": 0,
+              "end": 433,
+              "text": "Brian Patrick Kennedy( born 5 November 1961) is an Irish- born art museum director who has worked in Ireland and Australia, and now lives and works in the United States. He is currently the director of the Peabody Essex Museum. He was the director of the Toledo Museum of Art in Ohio from 2010 to 2019. He was the director of the Hood Museum of Art from 2005 to 2010, and the National Gallery of Australia( Canberra) from 1997- 2004.",
+              "title": "Brian Kennedy (gallery director)",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "2935f1640bda11eba7f7acde48001122",
+                  "context_position": 9
+                },
+                "metadata": {},
+                "display_name": "Brian Kennedy (gallery director)",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 169,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 170,
+                  "end": 227,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 228,
+                  "end": 302,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 303,
+                  "end": 433,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                }
+              ],
+              "rank": 4,
+              "score": 0.6158071941525494,
+              "score_kind": "cosine_similarity"
+            },
+            {
+              "evidence_id": "E9",
+              "document_id": "01a181cd-66e1-701d-8449-b8a01e06caa5",
+              "document_version_id": "01a181cd-66e1-701d-8449-b8a1cdf6fcf0",
+              "content_sha256": "5d116c914970b7790dc0e232aac89c2024b028719afe5319a2f84bafd61e6056",
+              "start": 0,
+              "end": 1576,
+              "text": "Etan Boritzer( born 1950) is an American writer of children ’s literature who is best known for his book\" What is God?\" first published in 1989. His best selling\" What is?\" illustrated children's book series on character education and difficult subjects for children is a popular teaching guide for parents, teachers and child- life professionals. Boritzer gained national critical acclaim after\" What is God?\" was published in 1989 although the book has caused controversy from religious fundamentalists for its universalist views. The other current books in the\" What is?\" series include What is Love?, What is Death?, What is Beautiful?, What is Funny?, What is Right?, What is Peace?, What is Money?, What is Dreaming?, What is a Friend?, What is True?, What is a Family?, What is a Feeling?\" The series is now also translated into 15 languages. Boritzer was first published in 1963 at the age of 13 when he wrote an essay in his English class at Wade Junior High School in the Bronx, New York on the assassination of John F. Kennedy. His essay was included in a special anthology by New York City public school children compiled and published by the New York City Department of Education. Boritzer now lives in Venice, California and maintains his publishing office there also. He has helped numerous other authors to get published through\" How to Get Your Book Published!\" programs. Boritzer is also a yoga teacher who teaches regular classes locally and guest- teaches nationally. He is also recognized nationally as an erudite speaker on\" The Teachings of the Buddha.\"",
+              "title": "Etan Boritzer",
+              "source": {
+                "kind": "dataset",
+                "source_id": "xanhho/2WikiMultihopQA",
+                "record_locator": {
+                  "split": "dev",
+                  "example_id": "0cd3bdea0bde11eba7f7acde48001122",
+                  "context_position": 8
+                },
+                "metadata": {},
+                "display_name": "Etan Boritzer",
+                "revision": "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
+              },
+              "source_spans": [
+                {
+                  "start": 0,
+                  "end": 144,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 0
+                    }
+                  ]
+                },
+                {
+                  "start": 145,
+                  "end": 347,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 1
+                    }
+                  ]
+                },
+                {
+                  "start": 348,
+                  "end": 532,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 2
+                    }
+                  ]
+                },
+                {
+                  "start": 533,
+                  "end": 589,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 3
+                    }
+                  ]
+                },
+                {
+                  "start": 590,
+                  "end": 604,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 4
+                    }
+                  ]
+                },
+                {
+                  "start": 605,
+                  "end": 620,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 5
+                    }
+                  ]
+                },
+                {
+                  "start": 621,
+                  "end": 640,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 6
+                    }
+                  ]
+                },
+                {
+                  "start": 641,
+                  "end": 656,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 7
+                    }
+                  ]
+                },
+                {
+                  "start": 657,
+                  "end": 672,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 8
+                    }
+                  ]
+                },
+                {
+                  "start": 673,
+                  "end": 688,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 9
+                    }
+                  ]
+                },
+                {
+                  "start": 689,
+                  "end": 704,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 10
+                    }
+                  ]
+                },
+                {
+                  "start": 705,
+                  "end": 723,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 11
+                    }
+                  ]
+                },
+                {
+                  "start": 724,
+                  "end": 742,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 12
+                    }
+                  ]
+                },
+                {
+                  "start": 743,
+                  "end": 757,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 13
+                    }
+                  ]
+                },
+                {
+                  "start": 758,
+                  "end": 776,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 14
+                    }
+                  ]
+                },
+                {
+                  "start": 777,
+                  "end": 796,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 15
+                    }
+                  ]
+                },
+                {
+                  "start": 797,
+                  "end": 849,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 16
+                    }
+                  ]
+                },
+                {
+                  "start": 850,
+                  "end": 1038,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 17
+                    }
+                  ]
+                },
+                {
+                  "start": 1039,
+                  "end": 1193,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 18
+                    }
+                  ]
+                },
+                {
+                  "start": 1194,
+                  "end": 1282,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 19
+                    }
+                  ]
+                },
+                {
+                  "start": 1283,
+                  "end": 1388,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 20
+                    }
+                  ]
+                },
+                {
+                  "start": 1389,
+                  "end": 1487,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 21
+                    }
+                  ]
+                },
+                {
+                  "start": 1488,
+                  "end": 1576,
+                  "locators": [
+                    {
+                      "kind": "sentence",
+                      "index": 22
+                    }
+                  ]
+                }
+              ],
+              "rank": 5,
+              "score": 0.6096717221131919,
+              "score_kind": "cosine_similarity"
+            }
+          ],
+          "citation_evidence": [],
+          "answer_correctness": "no_answer",
+          "retrieval_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 9,
+            "strict_fact_count": 2,
+            "strict_recall": 1.0,
+            "all_required_strict": true,
+            "strict_precision": 0.2222222222222222,
+            "partial_fact_count": 2,
+            "partial_recall": 1.0,
+            "partial_precision": 0.2222222222222222,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "citation_coverage": {
+            "gold_fact_count": 2,
+            "unique_evidence_count": 0,
+            "strict_fact_count": 0,
+            "strict_recall": 0.0,
+            "all_required_strict": false,
+            "strict_precision": null,
+            "partial_fact_count": 0,
+            "partial_recall": 0.0,
+            "partial_precision": null,
+            "policy": {
+              "strict": "Same source occurrence and Content hash; cited range fully contains the complete annotated sentence and preserves its exact sentence locator/bounds.",
+              "partial": "Same source occurrence/hash and exact sentence locator/bounds; cited range overlaps at least one character of that sentence. Partial overlap is reported separately and does not count as strict support.",
+              "duplicates": "Evidence references with identical document-version/range identity count once."
+            }
+          },
+          "conflict_supports_both_labeled_claims": null,
+          "failure_analysis": {
+            "classification": "budget_exhaustion",
+            "observation": "The workflow returned incomplete or recorded a configured resource limit.",
+            "hypothesis": "The current per-run budgets ended the investigation before a final decision."
+          },
+          "semantic_claim_support": {
+            "status": "not_applicable",
+            "supported_claims": null,
+            "unsupported_claims": null,
+            "reason": "Exact gold occurrence matching does not prove that generated claims logically follow from cited text."
+          },
+          "investigation_behavior": {
+            "search_count": 3,
+            "generation_requests": 3,
+            "embedding_query_requests": 2,
+            "latency_ms": 48595.566700001655,
+            "required_facts_retrieved": 2,
+            "required_facts_cited": 0,
+            "budget_exhausted": true,
+            "evidence_gap_at_stop": false,
+            "follow_up_searches_with_new_required_evidence": 1
+          },
+          "usage": {
+            "prompt_tokens": 8910,
+            "candidate_tokens": 62,
+            "thinking_tokens": 204
+          },
+          "model_version": "gemini-3.6-flash",
+          "error_type": null
+        },
+        {
+          "id": "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+          "category": "three_plus_hop",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        },
+        {
+          "id": "unanswerable:0",
+          "category": "unanswerable",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        },
+        {
+          "id": "contradictory:0",
+          "category": "contradictory",
+          "status": "not_run",
+          "outcome": "not_run",
+          "answer_correctness": "unavailable",
+          "reason": "stopped_after_provider_failure"
+        }
+      ]
+    }
+  ],
+  "paired_comparisons": [
+    {
+      "baseline": "quick-answer-real-gemini",
+      "other": "investigation-real-gemini",
+      "paired_cases": 1,
+      "paired_question_ids": [
+        "2wiki:2207e9060bda11eba7f7acde48001122"
+      ],
+      "outcome_changes": [
+        {
+          "id": "2wiki:2207e9060bda11eba7f7acde48001122",
+          "baseline": "incorrect_abstention",
+          "other": "incomplete"
+        }
+      ],
+      "answer_correctness_changes": [],
+      "strict_evidence_recall_delta": 0.5,
+      "strict_citation_recall_delta": 0.0,
+      "latency_delta_ms": 38349.46900000068,
+      "generation_request_delta": 2,
+      "interpretation": "Paired descriptive differences only; no statistical significance or superiority is inferred."
+    }
+  ],
+  "notes": [
+    "Expected answers and gold annotations are recorded in the report but were not passed to production use cases or provider prompts.",
+    "Gold source-occurrence matching measures annotated evidence agreement, not semantic support of each generated claim.",
+    "Paraphrases that do not contain an explicitly accepted value require human review; no LLM judge is used.",
+    "Execution failures without a completed application result have unobserved evidence metrics, not zero-recall scores."
+  ],
+  "total_elapsed_ms": 59298.44659999799,
+  "execution": {
+    "kind": "persistent_task16b_live_paired_sample",
+    "generation_model_requested": "gemini-3.6-flash",
+    "generation_model_configuration_source": "prior live evaluation model; GEMINI_GENERATION_MODEL has no local override",
+    "generation_request_cap": 20,
+    "generation_requests_observed": 20,
+    "generation_requests_by_mode": {
+      "single_step": 6,
+      "multi_step": 14
+    },
+    "assumed_daily_rpd_limit": 20,
+    "remaining_rpd_independently_verified": false,
+    "prior_generation_requests_this_daily_window": 19,
+    "prior_single_step_requests_this_daily_window": 6,
+    "prior_multi_step_requests_this_daily_window": 13,
+    "prior_embedding_request_totals": "unknown: the first paired response was lost before its local ledger was written",
+    "reserved_daily_requests": 0,
+    "active_quota_not_independently_api_readable": true,
+    "generation_request_interval_seconds": 12.5,
+    "provider_retries": 0,
+    "embedding_model": "gemini-embedding-2",
+    "embedding_dimensions": 768,
+    "embedding_configuration": {
+      "provider": "gemini_developer_api",
+      "model_id": "gemini-embedding-2",
+      "dimensions": 768,
+      "document_format": "gemini_no_title_v1",
+      "normalization": "none"
+    },
+    "embedding_inputs_observed": 4,
+    "embedding_text_cap": 15,
+    "embedding_request_counts": {
+      "count_tokens": 4,
+      "embed_content": 4
+    },
+    "counted_embedding_tokens": 41,
+    "database": {
+      "documents": 218,
+      "document_versions": 218,
+      "contents": 197,
+      "version_chunk_plans": 218,
+      "chunk_memberships": 218,
+      "chunk_embeddings": 197,
+      "active_versions": 218,
+      "active_searchable_occurrences": 218,
+      "incomplete_planned_versions": 0,
+      "database_bytes": 10196671,
+      "migration": "0002_embedding_storage",
+      "postgres_version": "18.4 (Debian 18.4-1.pgdg13+1)",
+      "vector_dimensions": 768
+    },
+    "verified_manifest_occurrences": 218,
+    "test_database": "persistent local PostgreSQL 18.4/pgvector evaluation database",
+    "corpus_fingerprint": "93c5ccb10f7fea8dcfbebdf52adc6e3c493f2df71eddb9452383982b4e78cc4e",
+    "suite_fingerprint": "3506da0cccb341fbde307fad8a57b8ae0d97cb42495998681759a96fe132bda0",
+    "selected_question_ids": [
+      "simple:8813f87c0bdd11eba7f7acde48001122",
+      "2wiki:2207e9060bda11eba7f7acde48001122",
+      "2wiki:298f23b8088a11ebbd6eac1f6bf848b6",
+      "unanswerable:0",
+      "contradictory:0"
+    ],
+    "task15_semantic_hybrid_metrics_equal": true,
+    "cloud_sql_contacted": false,
+    "budget_note": "Daily cap is the prior user-reported allowance minus a reserved request. Previously known same-window requests are charged before new calls. Investigation limits are independently configurable and must allow one final-decision turn after searches.",
+    "incomplete_reason": "The pending search executed, but the final continuation request was rejected with HTTP 400; no retry was made. The Investigation therefore remains incomplete.",
+    "generation_provider_requests": {
+      "quick_answer": 6,
+      "investigation": 14
+    },
+    "total_generation_attempts_including_prior": 20,
+    "generation_failures": [
+      {
+        "operation": "generate_content",
+        "model_id": "gemini-3.6-flash",
+        "http_status": 400,
+        "category": "request_rejected",
+        "retryable": false,
+        "rate_or_quota_limit": false,
+        "request_count": 1
+      }
+    ],
+    "continuation_provider_error": {
+      "operation": "generate_content",
+      "model_id": "gemini-3.6-flash",
+      "http_status": 400,
+      "category": "request_rejected",
+      "retryable": false,
+      "rate_or_quota_limit": false,
+      "request_count": 1
+    },
+    "continuation_search": {
+      "query": "\"Eric Mueller\" director OR filmmaker OR American",
+      "executed": true,
+      "result_count": null,
+      "evidence_persisted": false,
+      "note": "The search completed in memory before the following final-generation request failed. Its result evidence was not checkpointed by this continuation code path; the prior two search exchanges remain fully saved."
+    },
+    "continuation_search_embedding_usage": "Not persisted; one pending-query embedding was requested during the continuation.",
+    "timestamp_utc": "2026-10-28T11:05:52+00:00",
+    "counted_embedding_tokens_complete": false,
+    "continuation_counted_embedding_tokens": null
+  }
+}
