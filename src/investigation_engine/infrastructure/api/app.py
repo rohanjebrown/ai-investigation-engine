@@ -33,7 +33,9 @@ from investigation_engine.infrastructure.api.bootstrap import application_servic
 from investigation_engine.infrastructure.api.uploads import extract_upload
 from investigation_engine.infrastructure.ingestion.extraction_errors import DocumentExtractionError
 from investigation_engine.domain.provenance import SourceReference
+import logging
 
+logger = logging.getLogger(__name__)
 
 class QuestionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -211,7 +213,11 @@ def create_app(*, service_factory=application_service) -> FastAPI:
             status, code = 503, "retrieval_unavailable"
         except GenerationProviderError:
             status, code = 503, "generation_unavailable"
-        except (GenerationResponseError, EmbeddingResponseError, EmbeddingInputError):
+        except (GenerationResponseError, EmbeddingResponseError, EmbeddingInputError) as error:
+            logger.error(
+                "Question answering failed: %s",
+                type(error).__name__,
+            )
             status, code = 502, "invalid_provider_response"
         except EvidenceContextLimitError:
             status, code = 503, "evidence_context_limit"
