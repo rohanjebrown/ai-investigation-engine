@@ -11,7 +11,7 @@ async def test_nested_stage_timings_share_trace_without_request_data(caplog):
         with stage_timing("query_embedding"):
             return secret
 
-    with caplog.at_level(logging.INFO, logger="investigation_engine.application.timing"):
+    with caplog.at_level(logging.DEBUG, logger="investigation_engine.application.timing"):
         assert await operation("private-question-and-key") == "private-question-and-key"
     assert len(caplog.records) == 2
     assert caplog.records[0].args[0] == caplog.records[1].args[0]

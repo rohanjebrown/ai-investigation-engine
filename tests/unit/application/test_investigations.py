@@ -385,3 +385,36 @@ async def test_independent_compound_fact_search_targets_unresolved_clause(regist
     )
     assert result.status == InvestigationStatus.ANSWERED and len(search.calls) == 2
     assert model.turns[-1].final_only and result.citations == ("E1", "E2")
+
+
+async def test_investigation_events_report_limit_and_evidence_without_question_text(registration, caplog):
+    import logging
+
+    hit = make_hit(registration, source_id="private-source", body="private-document")
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="private-query", call_id="1"),
+            InvestigationDecision(status=InvestigationStatus.INSUFFICIENT_EVIDENCE, answer=None, citations=()),
+        ]
+    )
+    with caplog.at_level(logging.INFO, logger="investigation_engine.application.timing"):
+        result = await InvestigateQuestion(
+            QuerySearch({"private-query": (hit,)}), model, max_accumulated_evidence=1
+        ).execute("private-question", owner_id=None)
+    assert result.status == InvestigationStatus.INSUFFICIENT_EVIDENCE
+    events = [record for record in caplog.records if hasattr(record, "event")]
+    search = next(record for record in events if record.event == "investigation.search_completed")
+    final_turn = [record for record in events if record.event == "investigation.turn_started"][-1]
+    completed = next(record for record in events if record.event == "investigation.completed")
+    limit = next(record for record in events if record.event == "investigation.limit_reached")
+    turns = [record for record in events if record.event == "investigation.turn_completed"]
+    assert search.new_evidence_count == 1 and search.reused_evidence_count == 0
+    assert final_turn.final_only is True and completed.status == "insufficient_evidence"
+    assert limit.reason == "evidence_limit"
+    assert [record.turn_number for record in turns] == [1, 2]
+    assert all(record.duration_ms >= 0 and record.prompt_tokens == 0 for record in turns)
+    assert len({record.request_id for record in events}) == 1
+    assert all(
+        value not in caplog.text
+        for value in ("private-source", "private-document", "private-query", "private-question")
+    )

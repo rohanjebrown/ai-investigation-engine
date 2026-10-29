@@ -6,7 +6,7 @@ from itertools import zip_longest
 from investigation_engine.application import answers as answer_types
 from investigation_engine.application.ports.answer_generator import AnswerGenerator
 from investigation_engine.application.ports.generation_errors import EvidenceContextLimitError, GenerationResponseError
-from investigation_engine.application.timing import stage_timing, timed
+from investigation_engine.application.timing import log_event, stage_timing, timed
 from investigation_engine.application.use_cases.search_evidence import SearchEvidence
 
 logger = logging.getLogger(__name__)
@@ -131,6 +131,11 @@ class AnswerQuestion:
             channels.append(await self._search.execute(query, self._max_evidence, owner_id=owner_id))
         evidence = _balanced_evidence(channels)
         embedding_requests = len(queries)
+        log_event(
+            "answer.evidence_deduplicated",
+            result_count=len(evidence),
+            duplicate_count=sum(len(channel) for channel in channels) - len(evidence),
+        )
 
         logger.info(
             "Question evidence retrieval completed: retrieved=%d",
@@ -139,6 +144,7 @@ class AnswerQuestion:
 
         if not evidence:
             logger.info("Question answering abstained: no evidence retrieved")
+            log_event("answer.abstained", reason="no_evidence", status="insufficient_evidence")
             return self._abstain(embedding_requests=embedding_requests)
 
         with stage_timing("evidence_selection"):
@@ -148,6 +154,13 @@ class AnswerQuestion:
                 self._max_evidence,
                 self._max_context_chars,
             )
+        log_event(
+            "answer.evidence_selected",
+            result_count=len(request.evidence),
+            evidence_count=len(evidence),
+            context_chars=len(request.context_json()),
+            context_limit=self._max_context_chars,
+        )
 
         logger.info(
             "Question evidence selection completed: retrieved=%d selected=%d",
@@ -157,6 +170,7 @@ class AnswerQuestion:
 
         if not request.evidence:
             logger.warning("Question answering failed: no evidence fits context budget")
+            log_event("answer.context_exhausted", succeeded=False, reason="context_limit")
             raise EvidenceContextLimitError("No intact evidence fits the configured context budget")
 
         with stage_timing("answer_generation"):

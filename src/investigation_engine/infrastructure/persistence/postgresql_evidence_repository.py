@@ -132,9 +132,9 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
     )
     m = members.c
     before = func.coalesce(m.covered_before, 0)
+    # The validated ck_chunk_memberships_range constraint already enforces
+    # nonnegative start and end > start for every stored membership.
     geometry = and_(
-        m.start >= 0,
-        m.end > m.start,
         m.end <= m.content_length,
         m.start > func.coalesce(m.previous_start, -1),
         m.start <= before,
@@ -172,7 +172,6 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
         v.ordinal == 0,
         v.start == 0,
         v.end == v.content_length,
-        v.end > 0,
         v.eligible,
         v.embedding_id.is_not(None),
         ~extra_membership,
@@ -232,17 +231,32 @@ def _chunk_text(content_text, start, end):
 
 
 def _semantic_statement(members, vector, limit):
-    m = members.c
-    distance = ChunkEmbeddingRow.embedding.cosine_distance(list(vector))
+    member_columns = members.c
+    # Materialize only narrow identity/score rows, not vector payloads. Score
+    # each compatible stored vector once and join to eligible representatives.
+    # No LIMIT is applied before visibility/completeness have been established.
+    scores = (
+        select(
+            ChunkEmbeddingRow.embedding_configuration_id,
+            ChunkEmbeddingRow.content_sha256,
+            ChunkEmbeddingRow.start,
+            ChunkEmbeddingRow.end,
+            ChunkEmbeddingRow.embedding.cosine_distance(list(vector)).label("distance"),
+        )
+        .where(ChunkEmbeddingRow.embedding_configuration_id.in_(select(member_columns.embedding_id).distinct()))
+        .cte("semantic_scores")
+        .prefix_with("MATERIALIZED")
+    )
+    distance = scores.c.distance
     return (
         _candidate_statement(members, 1.0 - distance, distance, "cosine_similarity")
         .join(
-            ChunkEmbeddingRow,
+            scores,
             and_(
-                ChunkEmbeddingRow.embedding_configuration_id == m.embedding_id,
-                ChunkEmbeddingRow.content_sha256 == m.content_sha256,
-                ChunkEmbeddingRow.start == m.start,
-                ChunkEmbeddingRow.end == m.end,
+                scores.c.embedding_configuration_id == member_columns.embedding_id,
+                scores.c.content_sha256 == member_columns.content_sha256,
+                scores.c.start == member_columns.start,
+                scores.c.end == member_columns.end,
             ),
         )
         .limit(limit)
@@ -254,14 +268,40 @@ def _keyword_statement(members, question, limit):
     # English question/corpus baseline: built-in stemming and stop words apply
     # only to the derived lexical representation, never canonical Content.
     configuration = literal_column("'pg_catalog.english'::regconfig")
-    chunk_text = _chunk_text(ContentRow.text, m.start, m.end)
+    chunk_text = _chunk_text(ContentRow.text, ChunkEmbeddingRow.start, ChunkEmbeddingRow.end)
     vector = func.to_tsvector(configuration, chunk_text)
     query = func.plainto_tsquery(configuration, question)
     score = func.ts_rank(vector, query)
+    # Compute each matching canonical range once before joining its authorized
+    # occurrence. The matching set has no pre-eligibility result limit.
+    matches = (
+        select(
+            ChunkEmbeddingRow.embedding_configuration_id,
+            ChunkEmbeddingRow.content_sha256,
+            ChunkEmbeddingRow.start,
+            ChunkEmbeddingRow.end,
+            score.label("score"),
+        )
+        .join(ContentRow, ContentRow.sha256 == ChunkEmbeddingRow.content_sha256)
+        .where(
+            ChunkEmbeddingRow.embedding_configuration_id.in_(select(m.embedding_id).distinct()),
+            vector.op("@@")(query),
+        )
+        .cte("lexical_matches")
+        .prefix_with("MATERIALIZED")
+    )
+    match_score = matches.c.score
     return (
-        _candidate_statement(members, score, -score, "keyword_rank")
-        .where(vector.op("@@")(query))
-        .join(ContentRow, ContentRow.sha256 == m.content_sha256)
+        _candidate_statement(members, match_score, -match_score, "keyword_rank")
+        .join(
+            matches,
+            and_(
+                matches.c.embedding_configuration_id == m.embedding_id,
+                matches.c.content_sha256 == m.content_sha256,
+                matches.c.start == m.start,
+                matches.c.end == m.end,
+            ),
+        )
         .limit(limit)
     )
 

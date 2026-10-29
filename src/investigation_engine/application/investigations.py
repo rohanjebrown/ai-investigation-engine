@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, replace
 from time import perf_counter
 from typing import TYPE_CHECKING
@@ -12,7 +13,7 @@ from investigation_engine.application import investigation_values as _investigat
 from investigation_engine.application.answers import MAX_QUESTION_CHARS
 from investigation_engine.application.ports.generation_errors import GenerationResponseError
 from investigation_engine.application.retrieval import Evidence, validate_search_question
-from investigation_engine.application.timing import stage_timing, timed
+from investigation_engine.application.timing import log_event, stage_timing, timed
 
 NO_SEARCH_DURATION_MS = 0.0  # noqa: WPS358 - float duration for unperformed searches
 MAX_CITATIONS = _decisions.MAX_CITATIONS
@@ -62,6 +63,23 @@ def _incomplete_result(
     usage: TokenUsage,
     message: str,
 ) -> InvestigationResult:
+    reasons = {
+        "Investigation stopped at the generation-request limit.": "generation_limit",
+        "Investigation stopped at the evidence-context limit.": "context_limit",
+        "Investigation stopped at the turn limit without a final conclusion.": "turn_limit",
+        "Investigation stopped at the search-call limit.": "search_limit",
+        "Investigation stopped at the embedding-request limit.": "embedding_limit",
+        "Investigation stopped because the model repeated an identical search.": "repeated_query",
+        "Investigation could not finalize with the admitted evidence; further searches are disabled.": "final_only_search",
+    }
+    log_event(
+        "investigation.completed",
+        status="incomplete",
+        reason=reasons.get(message, "unknown"),
+        evidence_count=len(registry),
+        generation_requests=generation_requests,
+        embedding_requests=embedding_requests,
+    )
     return InvestigationResult(
         status=InvestigationStatus.INCOMPLETE,
         answer=None,
@@ -86,6 +104,16 @@ def _decision_result(
     model_version: str | None,
     usage: TokenUsage,
 ) -> InvestigationResult:
+    log_event(
+        "investigation.completed",
+        status=decision.status.value,
+        evidence_count=len(registry),
+        generation_requests=generation_requests,
+        embedding_requests=embedding_requests,
+        prompt_tokens=usage.prompt_tokens,
+        candidate_tokens=usage.candidate_tokens,
+        thinking_tokens=usage.thinking_tokens,
+    )
     return InvestigationResult(
         status=decision.status,
         answer=decision.answer,
@@ -215,6 +243,7 @@ class InvestigateQuestion:
         if len(question) > MAX_QUESTION_CHARS:
             raise ValueError("Question must contain no more than 4000 characters")
         state = _InvestigationState()
+        log_event("investigation.started", evidence_count=0)
 
         for _ in range(self._max_turns):
             if state.generation_requests >= self._max_generations:
@@ -236,6 +265,19 @@ class InvestigateQuestion:
                     or state.embedding_requests >= self._max_embeddings
                 ),
             )
+            log_event(
+                "investigation.turn_started",
+                turn_number=state.generation_requests + 1,
+                final_only=turn.final_only,
+                evidence_count=len(state.registry),
+                context_chars=len(turn.context_json()),
+                context_limit=self._max_context,
+            )
+            if turn.final_only:
+                reason = "evidence_limit"
+                if len(state.registry) < self._max_evidence:
+                    reason = "search_limit" if len(state.records) >= self._max_searches else "embedding_limit"
+                log_event("investigation.limit_reached", reason=reason, evidence_count=len(state.registry))
             if len(turn.context_json()) > self._max_context:
                 return _incomplete_result(
                     state.registry,
@@ -249,8 +291,17 @@ class InvestigateQuestion:
             state.generation_requests += 1
             action = await self._request_action(turn, state)  # noqa: WPS476 - each turn needs the prior transcript
             if isinstance(action, InvestigationDecision):
-                with stage_timing("citation_validation"):
-                    _validate_decision_citations(action, state.registry)
+                try:
+                    with stage_timing("citation_validation"):
+                        _validate_decision_citations(action, state.registry)
+                except GenerationResponseError:
+                    log_event(
+                        "investigation.citation_rejected",
+                        level=logging.WARNING,
+                        succeeded=False,
+                        error_category="invalid_citation",
+                    )
+                    raise
                 return _decision_result(
                     action,
                     state.registry,
@@ -294,12 +345,22 @@ class InvestigateQuestion:
         turn: InvestigationTurn,
         state: _InvestigationState,
     ) -> InvestigationDecision | SearchEvidenceCall:
+        started = perf_counter()
         with stage_timing("investigation.model_turn"):
             action = await self._model.next_action(turn)
         if not isinstance(action, (InvestigationDecision, SearchEvidenceCall)):
             raise GenerationResponseError("Investigation model returned an unknown action")
         if isinstance(action.usage, TokenUsage):
             state.total_usage = _sum_usage(state.total_usage, action.usage)
+            log_event(
+                "investigation.turn_completed",
+                turn_number=state.generation_requests,
+                duration_ms=(perf_counter() - started) * 1000,
+                final_only=turn.final_only,
+                prompt_tokens=action.usage.prompt_tokens,
+                candidate_tokens=action.usage.candidate_tokens,
+                thinking_tokens=action.usage.thinking_tokens,
+            )
         state.model_version = action.model_version or state.model_version
         return action
 
@@ -330,6 +391,7 @@ class InvestigateQuestion:
             )
 
         state.embedding_requests += 1
+        before_count = len(state.registry)
         hits, elapsed = await self._search_with_record(
             action.query,
             self._max_results,
@@ -347,6 +409,18 @@ class InvestigateQuestion:
         )
         state.exchanges.append(exchange)
         turn_context = InvestigationTurn(question=question, exchanges=tuple(state.exchanges)).context_json()
+        log_event(
+            "investigation.search_completed",
+            search_number=len(state.records),
+            duration_ms=elapsed,
+            result_count=len(hits),
+            new_evidence_count=len(state.registry) - before_count,
+            reused_evidence_count=len(exchange.evidence) - (len(state.registry) - before_count),
+            evidence_count=len(state.registry),
+            context_chars=len(turn_context),
+            context_limit=self._max_context,
+            status=state.records[-1].disposition.value,
+        )
         if len(turn_context) > self._max_context:
             return _incomplete_result(
                 state.registry,

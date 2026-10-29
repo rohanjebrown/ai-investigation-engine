@@ -333,7 +333,7 @@ async def benchmark(engine, url, args, container):
                     # Enable this collector explicitly, then restore caller state.
                     stage_logger.disabled = False
                     stage_logger.addHandler(stage_samples)
-                    stage_logger.setLevel(logging.INFO)
+                    stage_logger.setLevel(logging.DEBUG)
                     try:
                         for _ in range(args.samples):
                             begin = perf_counter()

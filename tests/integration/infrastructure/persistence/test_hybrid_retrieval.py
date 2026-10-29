@@ -418,3 +418,25 @@ async def test_compound_quick_answer_uses_both_facts_when_whole_question_lexical
     assert result.embedding_requests == 2 and result.generation_requests == 1
     assert [citation.evidence.document_version_id for citation in result.citations] == [a.version.id, b.version.id]
     assert [item.text for item in generator.generate.await_args.args[0].evidence] == [first, second]
+
+
+async def test_prescored_private_and_inactive_matches_cannot_crowd_authorized_top_k(hybrid):
+    await hybrid.create("quasar secret one quasar quasar", owner_id="other")
+    await hybrid.create("quasar inactive quasar quasar", active=False, store=True)
+    first = await hybrid.create("quasar shared first")
+    second = await hybrid.create("quasar shared second")
+    semantic, lexical = await hybrid.evidence.search_channels(
+        vector(),
+        "quasar",
+        hybrid.config,
+        hybrid.provider.configuration,
+        owner_id=None,
+        semantic_limit=2,
+        keyword_limit=2,
+    )
+    assert {hit.document_id for hit in semantic} == {first.document.id, second.document.id}
+    assert {hit.document_id for hit in lexical} == {first.document.id, second.document.id}
+    sources = {hit.document_id: hit.source for hit in lexical}
+    expected_sources = {first.document.id: first.version.source}
+    expected_sources[second.document.id] = second.version.source
+    assert sources == expected_sources

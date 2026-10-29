@@ -45,9 +45,12 @@ def main():
         "formatter": "timing_json",
         "stream": "ext://sys.stdout",
     }
+    timing_level = os.environ.get("ENGINE_LOG_LEVEL", "INFO").upper()
+    if timing_level not in ("DEBUG", "INFO"):
+        timing_level = "INFO"
     log_config["loggers"]["investigation_engine.application.timing"] = {
         "handlers": ["timing_json"],
-        "level": "INFO",
+        "level": timing_level,
         "propagate": False,
     }
     uvicorn.run(
