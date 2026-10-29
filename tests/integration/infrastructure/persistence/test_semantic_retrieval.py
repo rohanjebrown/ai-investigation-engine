@@ -176,11 +176,9 @@ async def test_shared_vector_retains_independent_source_occurrences_and_exact_pr
     )
     b = await r.create("identical source content", source=source)
     hits = await r.search().execute("q", owner_id=None)
-    assert {hit.identity for hit in hits} == {(a.version.id, 0, 24), (b.version.id, 0, 24)}
-    by_version = {hit.document_version_id: hit for hit in hits}
-    assert by_version[a.version.id].source == a.version.source
-    assert by_version[b.version.id].source == source
-    assert by_version[a.version.id].content_sha256 == by_version[b.version.id].content_sha256
+    representative = min((a, b), key=lambda item: item.document.id)
+    assert len(hits) == 1 and hits[0].identity == (representative.version.id, 0, 24)
+    assert hits[0].source == representative.version.source
     with db_engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 1
     hits[0].source.metadata["modified"] = True

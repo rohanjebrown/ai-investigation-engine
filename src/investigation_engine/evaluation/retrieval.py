@@ -165,7 +165,7 @@ async def evaluate(
     if not runs or len({cfg.name for cfg, _ in runs}) != len(runs):
         raise ValueError("Distinct named retrieval runs are required")
     for cfg, _ in runs:
-        if cfg.mode not in ("semantic", "hybrid"):
+        if cfg.mode not in ("semantic", "keyword", "hybrid"):
             raise ValueError("Unsupported retrieval mode")
         if cfg.chunking != runs[0][0].chunking or cfg.embedding != runs[0][0].embedding:
             raise ValueError("Paired comparison requires identical chunking and embedding")
@@ -209,7 +209,8 @@ async def evaluate(
             else:
                 begin = perf_counter()
                 try:
-                    hits = await service.execute(case["question"], max(ks), owner_id=owner_id)
+                    search = service.execute_keywords if cfg.mode == "keyword" else service.execute
+                    hits = await search(case["question"], max(ks), owner_id=owner_id)
                     row["latency_ms"] = (perf_counter() - begin) * 1000
                     row.update(
                         status="ok",

@@ -48,6 +48,20 @@ async def test_exact_query_and_trusted_scope_pass_to_selected_profile(search):
     )
 
 
+async def test_explicit_lexical_route_does_not_embed_or_semantically_search(search):
+    search.repository.search_keywords = AsyncMock(return_value=())
+    await search.use_case.execute_keywords("exact entity", 3, owner_id="principal:alice")
+    search.provider.embed_query.assert_not_called()
+    search.repository.search.assert_not_called()
+    search.repository.search_keywords.assert_awaited_once_with(
+        "exact entity",
+        search.config,
+        search.profile,
+        owner_id="principal:alice",
+        limit=3,
+    )
+
+
 @pytest.mark.parametrize("question", ["", " \t\u0085", None, 17, "\ud800"])
 async def test_invalid_question_fails_before_provider_or_repository(search, question):
     with pytest.raises(ValueError):

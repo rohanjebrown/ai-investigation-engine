@@ -125,9 +125,16 @@ async def test_fixed_40_question_suite_compares_real_postgresql_modes_with_fake_
     runs = [
         (
             RetrievalRun(name=mode, mode=mode, chunking=asdict(config), embedding=asdict(provider.configuration)),
-            SearchEvidence(evidence, provider, config, provider.configuration, mode=mode, hybrid_repository=evidence),
+            SearchEvidence(
+                evidence,
+                provider,
+                config,
+                provider.configuration,
+                mode="semantic" if mode == "keyword" else mode,
+                hybrid_repository=evidence,
+            ),
         )
-        for mode in ("semantic", "hybrid")
+        for mode in ("semantic", "keyword", "hybrid")
     ]
     report = await evaluate(suite, corpus, runs, indexed_corpus_fingerprint=fingerprint(corpus))
     assert provider.query_count == 80

@@ -1,3 +1,5 @@
+from time import perf_counter
+
 from investigation_engine.application.chunking import ChunkingConfig
 from investigation_engine.application.embeddings import EmbeddingConfig, storage_vector
 from investigation_engine.application.ports.embedding_errors import EmbeddingInputError, EmbeddingResponseError
@@ -5,6 +7,7 @@ from investigation_engine.application.ports.embedding_provider import EmbeddingP
 from investigation_engine.application.ports.evidence_repository import EvidenceRepository, HybridEvidenceRepository
 from investigation_engine.application.retrieval import Evidence, validate_search_question, validate_search_scope
 from investigation_engine.application.rrf import reciprocal_rank_fusion, validate_rrf_k
+from investigation_engine.application.timing import retrieval_completed, stage_timing, timed
 
 
 class SearchEvidence:
@@ -45,6 +48,24 @@ class SearchEvidence:
         self._keyword_candidates = keyword_candidates
         self._rrf_k = rrf_k
 
+    @timed("retrieval.lexical_total")
+    async def execute_keywords(self, question: str, limit: int = 10, *, owner_id: str | None) -> tuple[Evidence, ...]:
+        """Explicit exact-term route: no query embedding or semantic ranking.
+
+        Does not automatically substitute lexical retrieval for semantic/hybrid.
+        The selected stored embedding profile still governs serving completeness.
+        """
+        validate_search_scope(owner_id, limit)
+        validate_search_question(question)
+        return await self._repository.search_keywords(
+            question,
+            self._chunking,
+            self._embedding,
+            owner_id=owner_id,
+            limit=limit,
+        )
+
+    @timed("retrieval.total")
     async def execute(
         self,
         question: str,
@@ -56,7 +77,9 @@ class SearchEvidence:
         validate_search_question(question)
         if self._provider.configuration != self._embedding:
             raise EmbeddingInputError("Serving embedding configuration does not match the query provider")
-        vector = await self._provider.embed_query(question)
+        started = perf_counter()
+        with stage_timing("query_embedding"):
+            vector = await self._provider.embed_query(question)
         if self._provider.configuration != self._embedding:
             raise EmbeddingInputError("Provider configuration changed during query embedding")
         try:
@@ -73,11 +96,16 @@ class SearchEvidence:
                 semantic_limit=self._semantic_candidates,
                 keyword_limit=self._keyword_candidates,
             )
-            return reciprocal_rank_fusion(semantic, keyword, limit=limit, k=self._rrf_k)
-        return await self._repository.search(
+            with stage_timing("hybrid_fusion"):
+                result = reciprocal_rank_fusion(semantic, keyword, limit=limit, k=self._rrf_k)
+            retrieval_completed("hybrid", len(result), len(semantic), len(keyword), (perf_counter() - started) * 1000)
+            return result
+        result = await self._repository.search(
             vector,
             self._chunking,
             self._embedding,
             owner_id=owner_id,
             limit=limit,
         )
+        retrieval_completed("semantic", len(result), len(result), 0, (perf_counter() - started) * 1000)
+        return result

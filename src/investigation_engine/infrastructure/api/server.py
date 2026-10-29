@@ -3,6 +3,7 @@
 import argparse
 import os
 from contextlib import asynccontextmanager
+from copy import deepcopy
 from types import SimpleNamespace
 
 import uvicorn
@@ -35,6 +36,20 @@ def main():
     if not 1 <= port <= 65535:
         raise SystemExit("PORT must be an integer between 1 and 65535")
     app = create_app(service_factory=smoke_services) if args.smoke else create_app()
+    log_config = deepcopy(uvicorn.config.LOGGING_CONFIG)
+    log_config["formatters"]["timing_json"] = {
+        "()": "investigation_engine.infrastructure.structured_logging.TimingJsonFormatter",
+    }
+    log_config["handlers"]["timing_json"] = {
+        "class": "logging.StreamHandler",
+        "formatter": "timing_json",
+        "stream": "ext://sys.stdout",
+    }
+    log_config["loggers"]["investigation_engine.application.timing"] = {
+        "handlers": ["timing_json"],
+        "level": "INFO",
+        "propagate": False,
+    }
     uvicorn.run(
         app,
         host="0.0.0.0",
@@ -46,6 +61,7 @@ def main():
         proxy_headers=True,
         forwarded_allow_ips=os.environ.get("FORWARDED_ALLOW_IPS", "127.0.0.1"),
         access_log=True,
+        log_config=log_config,
     )
 
 

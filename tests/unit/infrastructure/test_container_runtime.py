@@ -28,6 +28,11 @@ def test_entrypoint_reads_port_and_uses_one_worker(monkeypatch):
     assert run.call_args.kwargs["host"] == "0.0.0.0"
     assert run.call_args.kwargs["workers"] == 1
     assert run.call_args.kwargs["timeout_graceful_shutdown"] < 10
+    assert run.call_args.kwargs["log_config"]["loggers"]["investigation_engine.application.timing"] == {
+        "handlers": ["timing_json"],
+        "level": "INFO",
+        "propagate": False,
+    }
 
 
 @pytest.mark.parametrize("port", ["invalid", "0", "65536"])

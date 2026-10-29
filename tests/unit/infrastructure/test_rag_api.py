@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -78,6 +79,16 @@ async def test_answer_serialization_health_and_safe_lifecycle(api):
     assert citation["evidence"]["text"] == api.hit.text
     assert citation["evidence"]["start"] == 0 and citation["evidence"]["source_spans"] == []
     assert api.events == ["startup", "shutdown"] and not hasattr(api.app.state, "questions")
+
+
+async def test_http_total_and_nested_answer_stages_share_trace_without_question_text(api, caplog):
+    with caplog.at_level(logging.INFO, logger="investigation_engine.application.timing"):
+        response = await post(api, {"question": "private-question-sentinel"})
+    assert response.status_code == 200
+    records = [record for record in caplog.records if hasattr(record, "stage")]
+    assert {record.stage for record in records} >= {"http.request", "answer.total", "answer_generation"}
+    assert len({record.args[0] for record in records}) == 1
+    assert "private-question-sentinel" not in caplog.text
 
 
 @pytest.mark.parametrize(

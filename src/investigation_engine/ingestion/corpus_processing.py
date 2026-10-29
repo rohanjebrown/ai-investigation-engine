@@ -28,6 +28,7 @@ from investigation_engine.application.use_cases.register_document import Registe
 from investigation_engine.domain.content import Content
 from investigation_engine.domain.document_version import DocumentVersion
 from investigation_engine.infrastructure.ingestion.twowiki_adapter import DATASET_ID, extract_2wiki
+from investigation_engine.infrastructure.persistence.diagnostics import repository_diagnostic
 from investigation_engine.infrastructure.tokenization.huggingface_tokenizer import (
     VOYAGE_REFERENCE_NAME,
     VOYAGE_REFERENCE_REVISION,
@@ -351,6 +352,7 @@ async def process_corpus(
     }
     attempted = succeeded = 0
     failure = None
+    failure_diagnostics = {}
     semaphore = asyncio.Semaphore(concurrency)
     register = RegisterDocument(repository)
 
@@ -358,15 +360,22 @@ async def process_corpus(
         nonlocal succeeded, attempted
         async with semaphore:
             attempted += 1
-            begin = perf_counter()
-            document, version = await register.execute(extracted, owner_id=None)
-            timings["registration_worker_seconds"] += perf_counter() - begin
-            begin = perf_counter()
-            plan = chunk_document(version, config=config, tokenizer=tokenizer)
-            timings["chunking_worker_seconds"] += perf_counter() - begin
-            begin = perf_counter()
-            await plans.save(plan)
-            timings["plan_persistence_worker_seconds"] += perf_counter() - begin
+            operation = "register_document"
+            try:
+                begin = perf_counter()
+                document, version = await register.execute(extracted, owner_id=None)
+                timings["registration_worker_seconds"] += perf_counter() - begin
+                operation = "build_chunk_plan"
+                begin = perf_counter()
+                plan = chunk_document(version, config=config, tokenizer=tokenizer)
+                timings["chunking_worker_seconds"] += perf_counter() - begin
+                operation = "save_chunk_plan"
+                begin = perf_counter()
+                await plans.save(plan)
+                timings["plan_persistence_worker_seconds"] += perf_counter() - begin
+            except Exception as error:
+                failure_diagnostics[id(extracted)] = repository_diagnostic(error, operation)
+                raise
             succeeded += 1
 
     async def flush(batch):
@@ -392,6 +401,7 @@ async def process_corpus(
             failure = {
                 "category": "batch_failure",
                 "error_type": type(error).__name__,
+                **failure_diagnostics.get(id(item), {}),
                 "record_locator": item.source.record_locator,
                 "failed_operations": len(errors),
             }

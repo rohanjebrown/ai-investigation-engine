@@ -49,6 +49,9 @@ is resolved by the server. If using inline citation markers, use [E1] syntax and
 include those identifiers in the citations array. Each citation must occur once
 in that array. Indicate uncertainty in the answer when supported; do not force
 conflicting or uncertain evidence into a certain conclusion.
+For a compound question, establish EVERY requested fact using the supplied evidence;
+combine separate passages when needed. If any required part remains unsupported,
+abstain instead of presenting a partial answer as a complete answer.
 If the supplied sources cannot establish an answer, return status
 insufficient_evidence, answer null and citations []. Otherwise return status
 answered, a concise nonempty answer and at least one supporting evidence ID.

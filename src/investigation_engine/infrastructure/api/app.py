@@ -44,6 +44,7 @@ from investigation_engine.application.ports.repository_errors import (
     RegistrationConflict,
     RepositoryError,
 )
+from investigation_engine.application.timing import stage_timing
 from investigation_engine.application.use_cases.answer_question import AnswerQuestion
 from investigation_engine.domain.provenance import SourceReference
 from investigation_engine.infrastructure.api.bootstrap import application_service
@@ -224,6 +225,14 @@ def create_app(*, service_factory=application_service) -> FastAPI:
     # Absolute cap is the highest configurable file limit plus multipart overhead.
     # The smaller per-file cap is applied after parsing from the active Settings.
     app.add_middleware(UploadBodyLimitMiddleware, max_bytes=MAX_UPLOAD_FILE_BYTES)
+
+    @app.middleware("http")
+    async def measure_request(request, call_next):
+        if request.url.path in ("/questions", "/investigations"):
+            with stage_timing("http.request"):
+                return await call_next(request)
+        return await call_next(request)
+
     web_root = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=web_root), name="static")
 

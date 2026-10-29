@@ -1,10 +1,12 @@
 import logging
 import re
 from dataclasses import replace
+from itertools import zip_longest
 
 from investigation_engine.application import answers as answer_types
 from investigation_engine.application.ports.answer_generator import AnswerGenerator
 from investigation_engine.application.ports.generation_errors import EvidenceContextLimitError, GenerationResponseError
+from investigation_engine.application.timing import stage_timing, timed
 from investigation_engine.application.use_cases.search_evidence import SearchEvidence
 
 logger = logging.getLogger(__name__)
@@ -12,6 +14,34 @@ logger = logging.getLogger(__name__)
 MIN_CONTEXT_CHARS = 256
 MAX_CONTEXT_CHARS = 64_000
 CONTEXT_BUDGET_ERROR = "Context budget must be an integer between {} and {} characters"
+
+
+def _independent_queries(question):
+    """Split only two explicit interrogative clauses; leave dependent references intact.
+
+    This is bounded query decomposition, not a general natural-language planner.
+    Questions needing a discovered entity remain the investigation workflow's job.
+    """
+    clauses = re.split(r",?\s+and\s+(?=(?:who|what|which|where|when|how)\b)", question, flags=re.IGNORECASE)
+    if len(clauses) != 2 or re.search(
+        r"\b(?:he|she|it|they|his|its|their|that|this|those)\b", clauses[1], re.IGNORECASE
+    ):
+        return (question,)
+    return tuple(clauses)
+
+
+def _balanced_evidence(channels):
+    seen = set()
+    selected = []
+    for row in zip_longest(*channels):
+        for hit in row:
+            if hit is None:
+                continue
+            identity = (hit.content_sha256, hit.start, hit.end)
+            if identity not in seen:
+                selected.append(hit)
+                seen.add(identity)
+    return tuple(selected)
 
 
 def _select_generation_evidence(question, evidence, max_evidence, max_context_chars):
@@ -91,10 +121,16 @@ class AnswerQuestion:
         self._max_evidence = max_evidence
         self._max_context_chars = max_context_chars
 
+    @timed("answer.total")
     async def execute(self, question: str, *, owner_id: str | None) -> answer_types.AnswerResult:
         answer_types.validate_question(question)
 
-        evidence = await self._search.execute(question, self._max_evidence, owner_id=owner_id)
+        queries = _independent_queries(question)
+        channels = []
+        for query in queries:
+            channels.append(await self._search.execute(query, self._max_evidence, owner_id=owner_id))
+        evidence = _balanced_evidence(channels)
+        embedding_requests = len(queries)
 
         logger.info(
             "Question evidence retrieval completed: retrieved=%d",
@@ -103,14 +139,15 @@ class AnswerQuestion:
 
         if not evidence:
             logger.info("Question answering abstained: no evidence retrieved")
-            return self._abstain(embedding_requests=1)
+            return self._abstain(embedding_requests=embedding_requests)
 
-        request, selected = _select_generation_evidence(
-            question,
-            evidence,
-            self._max_evidence,
-            self._max_context_chars,
-        )
+        with stage_timing("evidence_selection"):
+            request, selected = _select_generation_evidence(
+                question,
+                evidence,
+                self._max_evidence,
+                self._max_context_chars,
+            )
 
         logger.info(
             "Question evidence selection completed: retrieved=%d selected=%d",
@@ -122,7 +159,8 @@ class AnswerQuestion:
             logger.warning("Question answering failed: no evidence fits context budget")
             raise EvidenceContextLimitError("No intact evidence fits the configured context budget")
 
-        generated = _validate_generated_result(await self._generator.generate(request))
+        with stage_timing("answer_generation"):
+            generated = _validate_generated_result(await self._generator.generate(request))
 
         logger.info(
             "Question generation completed: status=%s citations=%d provider_requests=%d",
@@ -139,12 +177,13 @@ class AnswerQuestion:
             return self._abstain(
                 retrieved_evidence=resolved,
                 generation_requests=generated.provider_requests,
-                embedding_requests=1,
+                embedding_requests=embedding_requests,
                 usage=generated.usage,
                 model_version=generated.model_version,
             )
 
-        _validate_citation_references(generated, selected)
+        with stage_timing("citation_validation"):
+            _validate_citation_references(generated, selected)
 
         logger.info(
             "Question answering succeeded: citations=%d",
@@ -157,7 +196,7 @@ class AnswerQuestion:
             citations=_resolve_citations(generated.citations, selected),
             retrieved_evidence=resolved,
             generation_requests=generated.provider_requests,
-            embedding_requests=1,
+            embedding_requests=embedding_requests,
             usage=generated.usage,
             model_version=generated.model_version,
         )

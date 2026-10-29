@@ -147,23 +147,22 @@ async def test_independent_search_branches_are_combined_in_final_answer(registra
     assert all(len(turn.exchanges) == index for index, turn in enumerate(model.turns))
 
 
-async def test_same_occurrence_reuses_evidence_id_but_same_content_other_occurrence_does_not(registration):
+async def test_same_content_reuses_evidence_slot_and_preserves_first_occurrence_citation(registration):
     first = make_hit(registration, source_id="one", body="Same shared passage")
     second = make_hit(registration, source_id="two", body="Same shared passage")
     model = ScriptedModel(
         [
             SearchEvidenceCall(query="first", call_id="1"),
             SearchEvidenceCall(query="second", call_id="2"),
-            InvestigationDecision(
-                status=InvestigationStatus.ANSWERED, answer="Supported [E1] [E2]", citations=("E1", "E2")
-            ),
+            InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Supported [E1]", citations=("E1",)),
         ]
     )
     search = QuerySearch({"first": (first, first), "second": (first, second)})
     result = await InvestigateQuestion(search, model).execute("Compare sources", owner_id=None)
-    assert [item.evidence_id for item in result.evidence] == ["E1", "E2"]
+    assert [item.evidence_id for item in result.evidence] == ["E1"]
+    assert result.evidence[0].evidence.source.source_id == first.source.source_id
     assert result.searches[0].evidence_ids == ("E1",)
-    assert result.searches[1].evidence_ids == ("E1", "E2")
+    assert result.searches[1].evidence_ids == ("E1",)
 
 
 async def test_empty_retrieval_abstention_and_conflicts_are_distinct():
@@ -262,8 +261,8 @@ async def test_resource_exhaustion_is_incomplete_and_does_not_rewrite_prior_sear
     ).execute("Question", owner_id=None)
     assert result.status == InvestigationStatus.INCOMPLETE
     assert result.searches[0].disposition == SearchDisposition.SUCCEEDED
-    assert result.searches[1].disposition == SearchDisposition.SEARCH_LIMIT
-    assert not result.searches[1].succeeded
+    assert len(result.searches) == 1
+    assert result.embedding_requests == 1
 
 
 async def test_repeated_query_stops_without_embedding_again():
@@ -280,3 +279,109 @@ async def test_repeated_query_stops_without_embedding_again():
     assert len(search.calls) == 1
     assert result.status == InvestigationStatus.INCOMPLETE
     assert result.searches[-1].disposition == SearchDisposition.REPEATED_QUERY
+
+
+@pytest.mark.parametrize("count", [2, 3])
+@pytest.mark.parametrize("abstain", [False, True])
+async def test_full_or_overflow_evidence_has_one_final_only_opportunity(registration, count, abstain):
+    hits = tuple(make_hit(registration, source_id=str(index), body=f"Fact {index}") for index in range(count))
+    final = InvestigationDecision(
+        status=InvestigationStatus.INSUFFICIENT_EVIDENCE if abstain else InvestigationStatus.ANSWERED,
+        answer=None if abstain else "Both established [E1] [E2]",
+        citations=() if abstain else ("E1", "E2"),
+    )
+    model = ScriptedModel([SearchEvidenceCall(query="facts", call_id="1"), final])
+    search = QuerySearch({"facts": hits})
+    result = await InvestigateQuestion(search, model, max_accumulated_evidence=2).execute("Question", owner_id=None)
+    assert result.status == final.status
+    assert len(result.evidence) == 2 and len(search.calls) == 1
+    assert model.turns[-1].final_only
+    assert [ref.evidence_id for ref in model.turns[-1].exchanges[-1].evidence] == ["E1", "E2"]
+    expected = SearchDisposition.EVIDENCE_LIMIT if count == 3 else SearchDisposition.SUCCEEDED
+    assert result.searches[0].disposition == expected
+
+
+@pytest.mark.parametrize("limits", [{"max_turns": 1}, {"max_generation_requests": 1}])
+async def test_no_final_budget_is_incomplete_not_abstention(registration, limits):
+    hit = make_hit(registration, source_id="one", body="Known fact")
+    model = ScriptedModel([SearchEvidenceCall(query="q", call_id="1")])
+    result = await InvestigateQuestion(QuerySearch({"q": (hit,)}), model, max_accumulated_evidence=1, **limits).execute(
+        "Question", owner_id=None
+    )
+    assert result.status == InvestigationStatus.INCOMPLETE
+    assert len(result.evidence) == 1 and len(model.turns) == 1
+
+
+async def test_final_only_tool_request_does_not_execute_search(registration):
+    hit = make_hit(registration, source_id="one", body="Known fact")
+    search = QuerySearch({"q": (hit,)})
+    model = ScriptedModel([SearchEvidenceCall(query="q", call_id="1"), SearchEvidenceCall(query="more", call_id="2")])
+    result = await InvestigateQuestion(search, model, max_accumulated_evidence=1).execute("Question", owner_id=None)
+    assert result.status == InvestigationStatus.INCOMPLETE and len(search.calls) == 1
+    assert result.generation_requests == 2
+
+
+async def test_final_only_cannot_cite_dropped_evidence(registration):
+    hits = tuple(make_hit(registration, source_id=str(index), body=f"Fact {index}") for index in range(2))
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="q", call_id="1"),
+            InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Dropped [E2]", citations=("E2",)),
+        ]
+    )
+    with pytest.raises(GenerationResponseError):
+        await InvestigateQuestion(QuerySearch({"q": hits}), model, max_accumulated_evidence=1).execute(
+            "Question", owner_id=None
+        )
+
+
+@pytest.mark.parametrize("second_count", [5, 6])
+async def test_fifteen_evidence_trace_finalizes_without_losing_last_tool_response(registration, second_count):
+    hits = tuple(make_hit(registration, source_id=str(index), body=f"Unique fact {index}") for index in range(16))
+    search = QuerySearch({"first": hits[:10], "second": hits[10 : 10 + second_count]})
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="first", call_id="1"),
+            SearchEvidenceCall(query="second", call_id="2"),
+            InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Established [E15]", citations=("E15",)),
+        ]
+    )
+    result = await InvestigateQuestion(search, model, max_results_per_search=10).execute("Question", owner_id=None)
+    assert result.status == InvestigationStatus.ANSWERED and len(result.evidence) == 15
+    assert result.embedding_requests == 2 and result.generation_requests == 3
+    assert model.turns[-1].final_only and len(model.turns[-1].exchanges[-1].evidence) == 5
+    assert result.evidence[-1].evidence.text == hits[14].text
+
+
+async def test_independent_compound_fact_search_targets_unresolved_clause(registration):
+    first = make_hit(
+        registration, source_id="embroidery", body="Maheen Khan worked on embroidery for Snow White and the Huntsman."
+    )
+    second = make_hit(
+        registration, source_id="actress", body="Alice Washburn appeared in Snow White as her only known feature film."
+    )
+
+    def unresolved(turn):
+        assert "Maheen Khan" in turn.exchanges[0].evidence[0].evidence.text
+        return SearchEvidenceCall(query="Snow White actress only known feature film", call_id="2")
+
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="Snow White and the Huntsman embroidery", call_id="1"),
+            unresolved,
+            InvestigationDecision(
+                status=InvestigationStatus.ANSWERED,
+                answer="Maheen Khan [E1]; Alice Washburn [E2].",
+                citations=("E1", "E2"),
+            ),
+        ]
+    )
+    search = QuerySearch(
+        {"Snow White and the Huntsman embroidery": (first,), "Snow White actress only known feature film": (second,)}
+    )
+    result = await InvestigateQuestion(search, model, max_search_calls=2).execute(
+        "Who worked on embroidery for Snow White and the Huntsman, and which actress appeared in Snow White as her only known feature film?",
+        owner_id=None,
+    )
+    assert result.status == InvestigationStatus.ANSWERED and len(search.calls) == 2
+    assert model.turns[-1].final_only and result.citations == ("E1", "E2")

@@ -12,6 +12,7 @@ from investigation_engine.application import investigation_values as _investigat
 from investigation_engine.application.answers import MAX_QUESTION_CHARS
 from investigation_engine.application.ports.generation_errors import GenerationResponseError
 from investigation_engine.application.retrieval import Evidence, validate_search_question
+from investigation_engine.application.timing import stage_timing, timed
 
 NO_SEARCH_DURATION_MS = 0.0  # noqa: WPS358 - float duration for unperformed searches
 MAX_CITATIONS = _decisions.MAX_CITATIONS
@@ -146,7 +147,7 @@ def _record_search_results(
     max_evidence: int,
     records: list[SearchRecord],
     query_results: dict[str, tuple[str, ...]],
-) -> tuple[SearchExchange, bool]:
+) -> SearchExchange:
     new_references, overflow = _collect_evidence_references(registry, hits, max_evidence)
     evidence_ids = tuple(dict.fromkeys(reference.evidence_id for reference in new_references))
     if overflow:
@@ -168,7 +169,7 @@ def _record_search_results(
         )
     )
     query_results[action.query] = evidence_ids
-    return SearchExchange(query=action.query, call_id=action.call_id, evidence=new_references), overflow
+    return SearchExchange(query=action.query, call_id=action.call_id, evidence=new_references)
 
 
 class InvestigateQuestion:
@@ -208,6 +209,7 @@ class InvestigateQuestion:
         self._max_generations = max_generation_requests
         self._max_embeddings = max_embedding_requests
 
+    @timed("investigation.total")
     async def execute(self, question: str, *, owner_id: str | None) -> InvestigationResult:
         validate_search_question(question)
         if len(question) > MAX_QUESTION_CHARS:
@@ -225,7 +227,15 @@ class InvestigateQuestion:
                     state.total_usage,
                     "Investigation stopped at the generation-request limit.",
                 )
-            turn = InvestigationTurn(question=question, exchanges=tuple(state.exchanges))
+            turn = InvestigationTurn(
+                question=question,
+                exchanges=tuple(state.exchanges),
+                final_only=(
+                    len(state.registry) >= self._max_evidence
+                    or len(state.records) >= self._max_searches
+                    or state.embedding_requests >= self._max_embeddings
+                ),
+            )
             if len(turn.context_json()) > self._max_context:
                 return _incomplete_result(
                     state.registry,
@@ -239,7 +249,8 @@ class InvestigateQuestion:
             state.generation_requests += 1
             action = await self._request_action(turn, state)  # noqa: WPS476 - each turn needs the prior transcript
             if isinstance(action, InvestigationDecision):
-                _validate_decision_citations(action, state.registry)
+                with stage_timing("citation_validation"):
+                    _validate_decision_citations(action, state.registry)
                 return _decision_result(
                     action,
                     state.registry,
@@ -248,6 +259,16 @@ class InvestigateQuestion:
                     state.embedding_requests,
                     state.model_version,
                     state.total_usage,
+                )
+            if turn.final_only:
+                return _incomplete_result(
+                    state.registry,
+                    state.records,
+                    state.generation_requests,
+                    state.embedding_requests,
+                    state.model_version,
+                    state.total_usage,
+                    "Investigation could not finalize with the admitted evidence; further searches are disabled.",
                 )
             incomplete = await self._process_search_action(  # noqa: WPS476 - the model selects this sequential search
                 action,
@@ -273,7 +294,8 @@ class InvestigateQuestion:
         turn: InvestigationTurn,
         state: _InvestigationState,
     ) -> InvestigationDecision | SearchEvidenceCall:
-        action = await self._model.next_action(turn)
+        with stage_timing("investigation.model_turn"):
+            action = await self._model.next_action(turn)
         if not isinstance(action, (InvestigationDecision, SearchEvidenceCall)):
             raise GenerationResponseError("Investigation model returned an unknown action")
         if isinstance(action.usage, TokenUsage):
@@ -314,7 +336,7 @@ class InvestigateQuestion:
             owner_id,
             state.records,
         )
-        exchange, overflow = _record_search_results(
+        exchange = _record_search_results(
             action,
             hits,
             elapsed,
@@ -323,17 +345,6 @@ class InvestigateQuestion:
             state.records,
             state.query_results,
         )
-        if overflow:
-            return _incomplete_result(
-                state.registry,
-                state.records,
-                state.generation_requests,
-                state.embedding_requests,
-                state.model_version,
-                state.total_usage,
-                "Investigation stopped at the accumulated-evidence limit.",
-            )
-
         state.exchanges.append(exchange)
         turn_context = InvestigationTurn(question=question, exchanges=tuple(state.exchanges)).context_json()
         if len(turn_context) > self._max_context:
@@ -348,6 +359,7 @@ class InvestigateQuestion:
             )
         return None
 
+    @timed("investigation.search")
     async def _search_with_record(
         self,
         query: str,
@@ -405,7 +417,7 @@ def _collect_evidence_references(
     references = []
     overflow = False
     for hit in hits:
-        identity = (hit.document_version_id, hit.start, hit.end)
+        identity = (hit.content_sha256, hit.start, hit.end)
         if identity not in registry:
             if len(registry) >= max_evidence:
                 overflow = True
@@ -413,7 +425,8 @@ def _collect_evidence_references(
             evidence_number = len(registry) + 1
             evidence_id = f"E{evidence_number}"
             registry[identity] = IdentifiedEvidence(evidence_id=evidence_id, evidence=replace(hit))
-        references.append(registry[identity])
+        if registry[identity] not in references:
+            references.append(registry[identity])
     return tuple(references), overflow
 
 

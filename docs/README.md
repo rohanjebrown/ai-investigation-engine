@@ -4,6 +4,10 @@
 **Audience:** Developer, reviewers, and Upgaming technical interviewers.  
 **Scope:** Architecture, approval evidence, and implementation/validation records; documentation does not imply completed implementation.
 
+The [29 October retrieval and investigation review](validation/retrieval-correctness-2026-10-29.md)
+records correctness fixes, sanitized timing/diagnostics, local performance measurements,
+validation limits and the pending chunk-level BM25 architecture decision.
+
 ## Reading order
 
 For installation and a database-free smoke check, start with the root [README](../README.md). The [AI usage record](../AI_USAGE.md) records assistance without claiming completed assignment delivery. Some historical approval attachments and temporary raw measurements are referenced through local paths; the register/ADRs preserve their relevant summaries. Those local references are not runtime dependencies or files available in a fresh clone.

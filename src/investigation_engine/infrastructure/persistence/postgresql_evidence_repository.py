@@ -1,6 +1,6 @@
 """Exact pgvector search with SQL visibility/completeness before LIMIT."""
 
-from sqlalchemy import and_, func, literal, literal_column, or_, select, union_all
+from sqlalchemy import and_, exists, func, literal, literal_column, or_, select, union_all
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -13,6 +13,7 @@ from investigation_engine.application.retrieval import (
     validate_search_question,
     validate_search_scope,
 )
+from investigation_engine.application.timing import stage_timing
 from investigation_engine.domain.provenance import SourceKind, SourceReference
 from investigation_engine.domain.source_span import LocatorKind, SourceLocator, SourceSpan
 from investigation_engine.infrastructure.persistence._document_mapping import _validate_json_object
@@ -67,14 +68,12 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
             VersionChunkPlanRow.expected_chunk_count,
             ChunkingConfigurationRow.strategy,
             ChunkingConfigurationRow.overlap,
-            func.char_length(ContentRow.text).label("content_length"),
             func.count().over(partition_by=DocumentVersionRow.id).label("matching_plans"),
         )
         .select_from(DocumentRow)
         .join(DocumentVersionRow, DocumentVersionRow.id == DocumentRow.current_version_id)
         .join(VersionChunkPlanRow, VersionChunkPlanRow.document_version_id == DocumentVersionRow.id)
         .join(ChunkingConfigurationRow, ChunkingConfigurationRow.id == VersionChunkPlanRow.chunking_configuration_id)
-        .join(ContentRow, ContentRow.sha256 == DocumentVersionRow.content_sha256)
         .where(
             DocumentRow.deleted_at.is_(None),
             visibility,
@@ -84,11 +83,13 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
         .cte("visible_serving_plans")
     )
 
-    partition = (ChunkMembershipRow.document_version_id, ChunkMembershipRow.chunking_configuration_id)
     chunk_text = _chunk_text(ContentRow.text, ChunkMembershipRow.start, ChunkMembershipRow.end)
-    members = (
+    # Evaluate text-dependent scalars before windows/sorts. The materialization
+    # boundary prevents PostgreSQL carrying canonical text through those sorts.
+    values = (
         select(
             plans,
+            func.char_length(ContentRow.text).label("content_length"),
             ChunkMembershipRow.ordinal,
             ChunkMembershipRow.start,
             ChunkMembershipRow.end,
@@ -96,19 +97,6 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
             # Only blankness matters. btrim stops at the first non-whitespace
             # boundary; translate needlessly scans every character of the chunk.
             (func.btrim(chunk_text, PYTHON_WHITESPACE) != "").label("eligible"),
-            func.lag(ChunkMembershipRow.start)
-            .over(
-                partition_by=partition,
-                order_by=ChunkMembershipRow.ordinal,
-            )
-            .label("previous_start"),
-            func.max(ChunkMembershipRow.end)
-            .over(
-                partition_by=partition,
-                order_by=ChunkMembershipRow.ordinal,
-                rows=(None, -1),
-            )
-            .label("covered_before"),
         )
         .select_from(plans)
         .join(
@@ -127,6 +115,19 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
                 keys.c.end == ChunkMembershipRow.end,
             ),
         )
+        .cte("membership_values")
+        .prefix_with("MATERIALIZED")
+    )
+    partition = (values.c.version_id, values.c.configuration_id)
+    members = (
+        select(
+            values,
+            func.lag(values.c.start).over(partition_by=partition, order_by=values.c.ordinal).label("previous_start"),
+            func.max(values.c.end)
+            .over(partition_by=partition, order_by=values.c.ordinal, rows=(None, -1))
+            .label("covered_before"),
+        )
+        .where(values.c.expected_chunk_count > 1)
         .cte("serving_memberships")
     )
     m = members.c
@@ -141,7 +142,7 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
     )
     # Match validate_chunk_plan's coverage rules without fetching/reconstructing
     # every plan. Count ALL memberships, but require vectors only for nonblank ones.
-    complete = (
+    multi_complete = (
         select(m.version_id, m.configuration_id)
         .group_by(m.version_id, m.configuration_id, m.expected_chunk_count, m.content_length, m.matching_plans)
         .having(
@@ -154,13 +155,59 @@ def _eligible_memberships(chunking: ChunkingConfig, embedding: EmbeddingConfig, 
             func.count().filter(m.eligible) > 0,
             func.bool_and(or_(~m.eligible, m.embedding_id.is_not(None))),
         )
-        .cte("complete_serving_plans")
     )
+    # A one-membership plan needs no coverage window. Verify its actual shape,
+    # including absence of extra ordinals, rather than trusting the stored count.
+    v = values.c
+    extra_membership = exists(
+        select(1).where(
+            ChunkMembershipRow.document_version_id == v.version_id,
+            ChunkMembershipRow.chunking_configuration_id == v.configuration_id,
+            ChunkMembershipRow.ordinal != 0,
+        )
+    )
+    single_complete = select(v.version_id, v.configuration_id).where(
+        v.expected_chunk_count == 1,
+        v.matching_plans == 1,
+        v.ordinal == 0,
+        v.start == 0,
+        v.end == v.content_length,
+        v.end > 0,
+        v.eligible,
+        v.embedding_id.is_not(None),
+        ~extra_membership,
+    )
+    complete = union_all(single_complete, multi_complete).cte("complete_serving_plans")
 
-    return members, complete
+    # Select one authorized, complete occurrence for each exact canonical range
+    # BEFORE channel limits. Preserve its own version/provenance for hydration.
+    # Different ranges, even overlapping ones, remain independent candidates.
+    m = values.c
+    representatives = (
+        select(
+            m.document_id,
+            m.version_id,
+            m.content_sha256,
+            m.start,
+            m.end,
+            m.content_length,
+            m.embedding_id,
+            func.row_number()
+            .over(
+                partition_by=(m.content_sha256, m.start, m.end),
+                order_by=(m.document_id, m.version_id),
+            )
+            .label("occurrence_rank"),
+        )
+        .join(complete, and_(complete.c.version_id == m.version_id, complete.c.configuration_id == m.configuration_id))
+        .where(m.eligible)
+        .cte("eligible_occurrences")
+    )
+    diverse = select(representatives).where(representatives.c.occurrence_rank == 1).cte("diverse_serving_memberships")
+    return diverse
 
 
-def _candidate_statement(members, complete, score, ordering, channel):
+def _candidate_statement(members, score, ordering, channel):
     m = members.c
     return (
         select(
@@ -175,8 +222,6 @@ def _candidate_statement(members, complete, score, ordering, channel):
             literal(channel).label("channel"),
         )
         .select_from(members)
-        .join(complete, and_(complete.c.version_id == m.version_id, complete.c.configuration_id == m.configuration_id))
-        .where(m.eligible)
         .order_by(ordering, m.document_id, m.version_id, m.start, m.end)
     )
 
@@ -186,11 +231,11 @@ def _chunk_text(content_text, start, end):
     return func.substr(content_text, start + 1, end - start)
 
 
-def _semantic_statement(members, complete, vector, limit):
+def _semantic_statement(members, vector, limit):
     m = members.c
     distance = ChunkEmbeddingRow.embedding.cosine_distance(list(vector))
     return (
-        _candidate_statement(members, complete, 1.0 - distance, distance, "cosine_similarity")
+        _candidate_statement(members, 1.0 - distance, distance, "cosine_similarity")
         .join(
             ChunkEmbeddingRow,
             and_(
@@ -204,7 +249,7 @@ def _semantic_statement(members, complete, vector, limit):
     )
 
 
-def _keyword_statement(members, complete, question, limit):
+def _keyword_statement(members, question, limit):
     m = members.c
     # English question/corpus baseline: built-in stemming and stop words apply
     # only to the derived lexical representation, never canonical Content.
@@ -214,7 +259,7 @@ def _keyword_statement(members, complete, question, limit):
     query = func.plainto_tsquery(configuration, question)
     score = func.ts_rank(vector, query)
     return (
-        _candidate_statement(members, complete, score, -score, "keyword_rank")
+        _candidate_statement(members, score, -score, "keyword_rank")
         .where(vector.op("@@")(query))
         .join(ContentRow, ContentRow.sha256 == m.content_sha256)
         .limit(limit)
@@ -225,7 +270,8 @@ def _hydrate(statement):
     """Resolve trusted payloads only for already eligible, ranked candidates.
 
     All selection remains in the same SQL statement/snapshot. No eligibility
-    predicate moves after LIMIT and no source occurrence is grouped away.
+    predicate moves after LIMIT. The selected representative retains its own
+    source occurrence; other stored occurrences are unchanged.
     """
     hits = statement.subquery("ranked_hits")
     return (
@@ -252,15 +298,15 @@ def _hydrate(statement):
 
 
 def _search_statement(vector, chunking, embedding, owner_id, limit):
-    members, complete = _eligible_memberships(chunking, embedding, owner_id)
-    return _hydrate(_semantic_statement(members, complete, vector, limit))
+    members = _eligible_memberships(chunking, embedding, owner_id)
+    return _hydrate(_semantic_statement(members, vector, limit))
 
 
 def _hybrid_statement(vector, question, chunking, embedding, owner_id, semantic_limit, keyword_limit):
-    members, complete = _eligible_memberships(chunking, embedding, owner_id)
+    members = _eligible_memberships(chunking, embedding, owner_id)
     hits = union_all(
-        _semantic_statement(members, complete, vector, semantic_limit),
-        _keyword_statement(members, complete, question, keyword_limit),
+        _semantic_statement(members, vector, semantic_limit),
+        _keyword_statement(members, question, keyword_limit),
     )
     return _hydrate(hits)
 
@@ -334,8 +380,9 @@ class PostgreSQLEvidenceRepository:
         validate_search_scope(owner_id, limit)
         vector = storage_vector(vector)
         statement = _search_statement(vector, chunking, embedding, owner_id, limit)
-        rows = await self._read(statement)
-        return tuple(_evidence(row, index) for index, row in enumerate(rows, 1))
+        rows = await self._read(statement, "semantic_sql_roundtrip")
+        with stage_timing("evidence_hydration"):
+            return tuple(_evidence(row, index) for index, row in enumerate(rows, 1))
 
     async def search_keywords(
         self,
@@ -348,9 +395,10 @@ class PostgreSQLEvidenceRepository:
     ) -> tuple[Evidence, ...]:
         validate_search_scope(owner_id, limit)
         validate_search_question(question)
-        members, complete = _eligible_memberships(chunking, embedding, owner_id)
-        rows = await self._read(_hydrate(_keyword_statement(members, complete, question, limit)))
-        return tuple(_evidence(row, index) for index, row in enumerate(rows, 1))
+        members = _eligible_memberships(chunking, embedding, owner_id)
+        rows = await self._read(_hydrate(_keyword_statement(members, question, limit)), "lexical_sql_roundtrip")
+        with stage_timing("evidence_hydration"):
+            return tuple(_evidence(row, index) for index, row in enumerate(rows, 1))
 
     async def search_channels(
         self,
@@ -376,20 +424,26 @@ class PostgreSQLEvidenceRepository:
                 owner_id,
                 semantic_limit,
                 keyword_limit,
-            )
+            ),
+            "hybrid_sql_roundtrip",
         )
         channels = {"cosine_similarity": [], "keyword_rank": []}
-        for row in rows:
-            channel = channels[row["channel"]]
-            channel.append(_evidence(row, len(channel) + 1))
+        with stage_timing("evidence_hydration"):
+            for row in rows:
+                channel = channels[row["channel"]]
+                channel.append(_evidence(row, len(channel) + 1))
         return tuple(channels["cosine_similarity"]), tuple(channels["keyword_rank"])
 
-    async def _read(self, statement):
+    async def _read(self, statement, stage):
         try:
             async with self._sessions() as session:
                 async with session.begin():
-                    await session.connection(execution_options={"isolation_level": "READ COMMITTED"})
-                    rows = (await session.execute(statement)).mappings().all()
+                    with stage_timing("connection_acquisition"):
+                        await session.connection(execution_options={"isolation_level": "READ COMMITTED"})
+                    # Includes driver transfer/decoding and server work. Server-only
+                    # and channel branch timings come from EXPLAIN, not this clock.
+                    with stage_timing(stage):
+                        rows = (await session.execute(statement)).mappings().all()
             return rows
         except SQLAlchemyError as error:
             raise RepositoryError("Evidence search could not be completed") from error

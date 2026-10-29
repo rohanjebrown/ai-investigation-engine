@@ -169,13 +169,11 @@ async def test_shared_vector_keyword_ties_and_rrf_keep_independent_provenance(hy
         semantic_limit=10,
         keyword_limit=10,
     )
-    assert [hit.document_id for hit in keyword] == sorted((a.document.id, b.document.id))
-    assert [hit.rank for hit in keyword] == [1, 2]
+    representative = min((a, b), key=lambda item: item.document.id)
+    assert [hit.document_id for hit in keyword] == [representative.document.id]
+    assert [hit.rank for hit in keyword] == [1]
     fused = reciprocal_rank_fusion(semantic, keyword, limit=10)
-    assert len(fused) == 2 and {hit.source.source_id for hit in fused} == {
-        a.version.source.source_id,
-        b.version.source.source_id,
-    }
+    assert len(fused) == 1 and fused[0].source == representative.version.source
     with db_engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 1
 
@@ -307,3 +305,116 @@ async def test_real_rag_hybrid_promotes_keyword_supported_evidence_above_semanti
     assert evidence.semantic_rank == 2 and evidence.keyword_rank == 1
     assert evidence.semantic_score == pytest.approx(2**-0.5) and evidence.keyword_score > 0
     assert generator.generate.await_args.args[0].evidence[0].text == target
+
+
+async def test_duplicates_do_not_crowd_top_k_and_ineligible_copies_cannot_be_representatives(hybrid, db_engine):
+    from sqlalchemy import delete
+
+    from investigation_engine.infrastructure.persistence.models import ChunkMembershipRow, DocumentVersionRow
+
+    private = await hybrid.create("quasar repeated", owner_id="other-user")
+    incomplete = await hybrid.create("quasar repeated")
+    with db_engine.begin() as connection:
+        connection.execute(
+            delete(ChunkMembershipRow).where(ChunkMembershipRow.document_version_id == incomplete.version.id)
+        )
+    shared = [await hybrid.create("quasar repeated") for _ in range(4)]
+    distinct = await hybrid.create("quasar distinct")
+    semantic, keyword = await hybrid.evidence.search_channels(
+        vector(),
+        "quasar",
+        hybrid.config,
+        hybrid.provider.configuration,
+        owner_id=None,
+        semantic_limit=2,
+        keyword_limit=2,
+    )
+    representative = min(shared, key=lambda item: item.document.id)
+    for channel in (semantic, keyword):
+        assert len(channel) == 2
+        assert {hit.document_id for hit in channel} == {representative.document.id, distinct.document.id}
+        assert private.document.id not in {hit.document_id for hit in channel}
+        assert incomplete.document.id not in {hit.document_id for hit in channel}
+        assert (
+            next(hit for hit in channel if hit.document_id == representative.document.id).source
+            == representative.version.source
+        )
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(DocumentVersionRow)) == 7
+        assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 2
+
+
+async def test_single_chunk_fast_path_rejects_extra_membership_even_when_declared_count_is_one(hybrid, db_engine):
+    from investigation_engine.infrastructure.persistence.models import ChunkMembershipRow
+
+    bad = await hybrid.create("quasar invalid")
+    good = await hybrid.create("quasar valid")
+    with db_engine.begin() as connection:
+        configuration_id = connection.scalar(
+            select(VersionChunkPlanRow.chunking_configuration_id).where(
+                VersionChunkPlanRow.document_version_id == bad.version.id
+            )
+        )
+        connection.execute(
+            ChunkMembershipRow.__table__.insert().values(
+                document_version_id=bad.version.id,
+                chunking_configuration_id=configuration_id,
+                ordinal=1,
+                start=1,
+                end=3,
+            )
+        )
+    semantic, keyword = await hybrid.evidence.search_channels(
+        vector(),
+        "quasar",
+        hybrid.config,
+        hybrid.provider.configuration,
+        owner_id=None,
+        semantic_limit=1,
+        keyword_limit=1,
+    )
+    assert [hit.document_id for hit in semantic] == [good.document.id]
+    assert [hit.document_id for hit in keyword] == [good.document.id]
+
+
+async def test_compound_quick_answer_uses_both_facts_when_whole_question_lexical_match_is_empty(hybrid):
+    first = "Maheen Khan worked on embroidery for Snow White and the Huntsman."
+    second = "Alice Washburn was an actress who appeared in Snow White as her only known feature film."
+    hybrid.provider.vectors = {first: vector(1, 0), second: vector(0, 1)}
+    a, b = await hybrid.create(first), await hybrid.create(second)
+    question = (
+        "Who worked on embroidery for Snow White and the Huntsman, "
+        "and which actress appeared in Snow White as her only known feature film?"
+    )
+    # A single all-terms lexical query cannot match either disjoint source.
+    assert await hybrid.keyword(question) == ()
+    assert await hybrid.keyword("embroidery Snow White Huntsman")
+    assert await hybrid.keyword("actress Snow White only known feature film")
+
+    async def embed_query(query):
+        hybrid.provider.queries.append(query)
+        return vector(1, 0) if "embroidery" in query else vector(0, 1)
+
+    hybrid.provider.embed_query = embed_query
+    search = SearchEvidence(
+        hybrid.evidence,
+        hybrid.provider,
+        hybrid.config,
+        hybrid.provider.configuration,
+        mode="hybrid",
+        hybrid_repository=hybrid.evidence,
+    )
+    generator = SimpleNamespace(
+        generate=AsyncMock(
+            return_value=GenerationResult(
+                status=AnswerStatus.ANSWERED,
+                answer="Maheen Khan [E1]; Alice Washburn [E2].",
+                citations=("E1", "E2"),
+            )
+        )
+    )
+    result = await AnswerQuestion(search, generator, max_evidence=2).execute(question, owner_id=None)
+    assert result.status == AnswerStatus.ANSWERED
+    assert result.embedding_requests == 2 and result.generation_requests == 1
+    assert [citation.evidence.document_version_id for citation in result.citations] == [a.version.id, b.version.id]
+    assert [item.text for item in generator.generate.await_args.args[0].evidence] == [first, second]

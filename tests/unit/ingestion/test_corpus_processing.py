@@ -76,6 +76,8 @@ async def test_partial_commit_replays_safely_and_completed_checkpoint_is_noop(fi
     failed = await process_corpus(path, repo, plans, tokenizer, config, **kwargs)
     assert failed["completed_occurrences"] == 0 and failed["failure"]["failed_operations"] == 1
     assert "SECRET_SENTINEL" not in json.dumps(failed)
+    assert failed["failure"]["operation"] == "save_chunk_plan"
+    assert failed["failure"]["underlying_exception_type"] == "RuntimeError"
     assert not checkpoint.exists() and len(repo._documents) == 1
     original_ids = set(repo._documents)
     completed = await process_corpus(path, repo, plans, tokenizer, config, **kwargs)

@@ -9,6 +9,7 @@ import argparse
 import asyncio
 import importlib.util
 import json
+import logging
 import random
 from dataclasses import asdict
 from hashlib import sha256
@@ -31,6 +32,7 @@ from investigation_engine.application.chunking import ChunkingConfig, ChunkingSt
 from investigation_engine.application.embeddings import EmbeddingConfig
 from investigation_engine.application.ports.text_tokenizer import TokenizerIdentity
 from investigation_engine.application.rrf import reciprocal_rank_fusion
+from investigation_engine.application.timing import stage_timing
 from investigation_engine.application.use_cases.index_document_version import IndexDocumentVersion
 from investigation_engine.domain.content import Content
 from investigation_engine.domain.document import Document
@@ -103,6 +105,27 @@ class Provider:
 
     async def embed_documents(self, texts):
         return tuple(tuple(DENSE) for _ in texts)
+
+
+class StageMeasurements(logging.Handler):
+    """Collect only numeric stage samples emitted during a benchmark batch."""
+
+    def __init__(self):
+        super().__init__()
+        self.stages = {}
+
+    def emit(self, record):
+        self.stages.setdefault(record.stage, []).append(record.duration_ms)
+
+    def summary(self):
+        return {
+            name: {
+                "samples": len(values),
+                "p50_ms": median(values),
+                "p95_ms": sorted(values)[ceil(0.95 * len(values)) - 1],
+            }
+            for name, values in self.stages.items()
+        }
 
 
 async def benchmark(engine, url, args, container):
@@ -264,9 +287,13 @@ async def benchmark(engine, url, args, container):
                             semantic_limit=20,
                             keyword_limit=20,
                         )
-                        return reciprocal_rank_fusion(sem, kw, limit=10)
+                        with stage_timing("hybrid_fusion"):
+                            return reciprocal_rank_fusion(sem, kw, limit=10)
 
-                    result = await search()  # Unmeasured warm-up, same policy for both variants.
+                    first_started = perf_counter()
+                    result = await search()
+                    first_call_ms = (perf_counter() - first_started) * 1000
+                    # First application call, NOT a flushed OS/PostgreSQL cache.
                     # Independent database runs generate different UUIDs. Keep the
                     # source occurrence and all evidence/scoring fields in the
                     # comparison while excluding those generated document IDs.
@@ -298,6 +325,15 @@ async def benchmark(engine, url, args, container):
                         captured.append((statement, parameters))
 
                     event.listen(async_engine.sync_engine, "before_cursor_execute", capture)
+                    stage_logger = logging.getLogger("investigation_engine.application.timing")
+                    stage_samples = StageMeasurements()
+                    previous_level = stage_logger.level
+                    previously_disabled = stage_logger.disabled
+                    # Alembic fileConfig disables pre-existing application loggers.
+                    # Enable this collector explicitly, then restore caller state.
+                    stage_logger.disabled = False
+                    stage_logger.addHandler(stage_samples)
+                    stage_logger.setLevel(logging.INFO)
                     try:
                         for _ in range(args.samples):
                             begin = perf_counter()
@@ -305,6 +341,9 @@ async def benchmark(engine, url, args, container):
                             samples.append((perf_counter() - begin) * 1000)
                             assert 0 < len(result) <= 20
                     finally:
+                        stage_logger.removeHandler(stage_samples)
+                        stage_logger.setLevel(previous_level)
+                        stage_logger.disabled = previously_disabled
                         event.remove(async_engine.sync_engine, "before_cursor_execute", capture)
                     cpu_after = container.get_wrapped_container().stats(stream=False, one_shot=True)["cpu_stats"][
                         "cpu_usage"
@@ -341,6 +380,8 @@ async def benchmark(engine, url, args, container):
                         records=size,
                         kind=kind,
                         variant=variant,
+                        first_call_ms=first_call_ms,
+                        stage_timings=stage_samples.summary(),
                         median_ms=median(samples),
                         p95_ms=sorted(samples)[ceil(0.95 * len(samples)) - 1],
                         samples_ms=samples,

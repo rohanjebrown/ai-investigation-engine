@@ -6,6 +6,18 @@ from investigation_engine.application.retrieval import Evidence
 
 
 class EvidenceRepository(Protocol):
+    async def search_keywords(
+        self,
+        question: str,
+        chunking: ChunkingConfig,
+        embedding: EmbeddingConfig,
+        *,
+        owner_id: str | None,
+        limit: int,
+    ) -> tuple[Evidence, ...]:
+        """Lexical-only path with the same eligibility and content diversity rules."""
+        ...
+
     async def search(
         self,
         vector: EmbeddingVector,
@@ -19,8 +31,10 @@ class EvidenceRepository(Protocol):
 
         None owner permits only shared documents; a trusted principal also sees
         its private documents. Require active, nondeleted versions with complete
-        selected plans and all selected-profile eligible vectors. Return separate
-        source occurrences with deterministic ties; do not deduplicate semantics.
+        selected plans and all selected-profile eligible vectors. Before top-K,
+        choose the lowest document/version IDs among eligible occurrences of each
+        exact (content hash, start, end). Preserve that occurrence's provenance;
+        never merge semantically similar content or alter stored occurrences.
         """
         ...
 

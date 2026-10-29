@@ -32,7 +32,7 @@ from investigation_engine.infrastructure.generation.gemini_diagnostics import er
 TOOL_NAME = "search_evidence"
 MAX_FINAL_CHARS = 12000
 MAX_NATIVE_CALLS = 1024
-INVESTIGATION_GUIDANCE_VERSION = "grounding-v2-entity-context"
+INVESTIGATION_GUIDANCE_VERSION = "grounding-v3-fact-coverage"
 
 
 @dataclass(frozen=True)
@@ -47,6 +47,18 @@ Use search_evidence to retrieve facts. Inspect each actual tool result before de
 what to search next; later queries should use entities or facts learned from earlier
 results when that helps answer the question. You may request one search per model turn.
 Never claim a search occurred unless the application returned its function response.
+
+Identify every fact required by the ORIGINAL question. Use the returned evidence to
+track which required facts are established and which remain unresolved. For independent
+subquestions, search each unresolved clause directly; do not require both clauses to
+appear in one document. For dependent multi-hop questions, first establish the linking
+entity or relationship, then search for the missing attribute using that evidence.
+Do not pivot to incidental people or works unless evidence links them to a required
+fact. A name merely appearing in a result is not a reason to investigate it. Finalize
+as soon as ALL required facts are supported; do not spend searches on unrelated details.
+If a required fact remains unsupported, abstain rather than answer only part of the question.
+When final_only is enabled, no more searches are available: use admitted evidence to
+answer, report supported conflicts, or explicitly return insufficient_evidence.
 
 A shared name does not establish that two excerpts describe the same entity.
 Retain identifying context in follow-up queries: roles, relevant works or organizations,
@@ -187,12 +199,21 @@ class GeminiInvestigationModel:
         function = types.FunctionDeclaration(**TOOL_DECLARATION)
         tool = types.Tool(function_declarations=[function])
         config = types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
+            system_instruction=SYSTEM_INSTRUCTION
+            + (
+                "\nfinal_only is enabled. Search is disabled. Return your final structured decision now."
+                if turn.final_only
+                else ""
+            ),
             tools=[tool],
             tool_config=types.ToolConfig(
                 function_calling_config=types.FunctionCallingConfig(
-                    mode=types.FunctionCallingConfigMode.VALIDATED,
-                    allowed_function_names=[TOOL_NAME],
+                    mode=(
+                        types.FunctionCallingConfigMode.NONE
+                        if turn.final_only
+                        else types.FunctionCallingConfigMode.VALIDATED
+                    ),
+                    allowed_function_names=None if turn.final_only else [TOOL_NAME],
                 )
             ),
             response_mime_type="application/json",
@@ -238,6 +259,8 @@ class GeminiInvestigationModel:
             try:
                 action = self._parse_response(response)
                 if isinstance(action, SearchEvidenceCall):
+                    if turn.final_only:
+                        raise GenerationResponseError("Search tool is disabled during finalization")
                     native = response.candidates[0].content
                     first_call = next(part for part in native.parts if part.function_call is not None)
                     if native.role != "model" or (

@@ -137,7 +137,10 @@ async def test_sdk_serializes_two_signed_sequential_searches_and_final_decision(
                 : 2 * index + 1
             ]
             assert request["tools"] == requests[0]["tools"]
-            assert request["toolConfig"] == requests[0]["toolConfig"]
+            if index == 2:
+                assert request["toolConfig"]["functionCallingConfig"]["mode"] == "NONE"
+            else:
+                assert request["toolConfig"] == requests[0]["toolConfig"]
             assert request["generationConfig"] == requests[0]["generationConfig"]
         assert requests[1]["contents"][1] == first == requests[2]["contents"][1]
         assert requests[2]["contents"][3] == second
@@ -334,5 +337,27 @@ async def test_gemma_native_calls_are_preserved_without_inventing_signatures(sdk
         assert decision.status == InvestigationStatus.ANSWERED
         assert sdk_transport.requests[1]["contents"][1] == native
         assert all(path == f"/v1beta/models/{model}:generateContent" for path in sdk_transport.paths)
+    finally:
+        await provider.aclose()
+
+
+async def test_final_only_disables_sdk_function_calls_and_preserves_native_response(sdk_transport, registration):
+    sdk_transport.replies.extend([(200, response(tool_content(1, "facts"))), (200, response(final_content()))])
+    evidence = (hit(registration, "one", "Director Aster Vale."), hit(registration, "two", "Aster Vale was Canadian."))
+
+    class Search:
+        async def execute(self, query, limit, *, owner_id):
+            return evidence
+
+    provider = sdk_transport.create()
+    try:
+        result = await InvestigateQuestion(Search(), provider, max_accumulated_evidence=2).execute("Q", owner_id=None)
+        assert result.status == InvestigationStatus.ANSWERED
+        final_request = sdk_transport.requests[-1]
+        assert final_request["toolConfig"]["functionCallingConfig"]["mode"] == "NONE"
+        assert final_request["contents"][0] == sdk_transport.requests[0]["contents"][0]
+        assert final_request["contents"][-1]["parts"][0]["functionResponse"]["name"] == "search_evidence"
+        assert len(final_request["contents"][-1]["parts"][0]["functionResponse"]["response"]["results"]) == 2
+        assert not provider._native_calls
     finally:
         await provider.aclose()

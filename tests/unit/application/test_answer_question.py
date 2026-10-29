@@ -187,3 +187,46 @@ async def test_invalid_question_rejected_before_any_io(rag, question):
         await rag.service.execute(question, owner_id=None)
     rag.search.execute.assert_not_called()
     rag.generator.generate.assert_not_called()
+
+
+async def test_compound_question_balances_independent_evidence_without_planning_call(rag):
+    first = rag.evidence("Maheen Khan worked on embroidery for Snow White and the Huntsman.")
+    second = rag.evidence("Alice Washburn appeared in Snow White as her only known feature film.")
+    noise = rag.evidence("Unrelated film detail.")
+    question = (
+        "Who worked on embroidery for Snow White and the Huntsman, "
+        "and which actress appeared in Snow White as her only known feature film?"
+    )
+    rag.search.execute.side_effect = [(first, noise), (second,)]
+    service = AnswerQuestion(rag.search, rag.generator, max_evidence=2)
+    result = await service.execute(question, owner_id="trusted")
+    assert len(rag.search.execute.await_args_list) == 2
+    assert all(call.kwargs == {"owner_id": "trusted"} for call in rag.search.execute.await_args_list)
+    assert [item.text for item in rag.generator.generate.await_args.args[0].evidence] == [first.text, second.text]
+    assert result.embedding_requests == 2 and result.generation_requests == 1
+    assert [citation.evidence.document_version_id for citation in result.citations] == [
+        first.document_version_id,
+        second.document_version_id,
+    ]
+
+
+async def test_compound_question_can_abstain_when_required_fact_is_missing(rag):
+    rag.search.execute.side_effect = [(rag.hits[0],), ()]
+    rag.generator.generate.return_value = GenerationResult(
+        status=AnswerStatus.INSUFFICIENT_EVIDENCE, answer=None, citations=()
+    )
+    result = await rag.service.execute("Who founded Paris, and which person founded Atlantis?", owner_id=None)
+    assert result.status == AnswerStatus.INSUFFICIENT_EVIDENCE and result.embedding_requests == 2
+
+
+async def test_dependent_subquestion_is_not_split_into_unresolved_pronoun_query(rag):
+    question = "Who directed Move and where was he born?"
+    await rag.service.execute(question, owner_id=None)
+    rag.search.execute.assert_awaited_once_with(question, 5, owner_id=None)
+
+
+async def test_identical_canonical_content_does_not_consume_two_context_slots(rag):
+    duplicate = replace(rag.hits[0], document_version_id=rag.hits[1].document_version_id)
+    rag.search.execute.return_value = (rag.hits[0], duplicate, rag.hits[1])
+    await AnswerQuestion(rag.search, rag.generator, max_evidence=2).execute("Where?", owner_id=None)
+    assert [item.text for item in rag.generator.generate.await_args.args[0].evidence] == [hit.text for hit in rag.hits]

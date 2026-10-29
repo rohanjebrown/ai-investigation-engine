@@ -31,12 +31,14 @@ class SearchExchange:
 class InvestigationTurn:
     question: str = field(repr=False)
     exchanges: tuple[SearchExchange, ...]
+    final_only: bool = False
 
     def context_json(self) -> str:
         """Bounded, provider-neutral representation of the complete tool transcript."""
         return json.dumps(
             {
                 "question": self.question,
+                "final_only": self.final_only,
                 "searches": [
                     {
                         "query": exchange.query,
