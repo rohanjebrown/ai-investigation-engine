@@ -32,6 +32,12 @@ jobs:
       - name: JavaScript tests
         run: node --test tests/frontend/test_web.cjs
       - name: Unit tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: test_password
         run: uv run --locked --no-env-file pytest tests/unit --cov --cov-report=term-missing
       - name: PostgreSQL and pgvector integration tests
         run: |
