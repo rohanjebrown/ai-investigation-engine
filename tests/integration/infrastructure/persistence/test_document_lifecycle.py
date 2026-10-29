@@ -8,11 +8,12 @@ from sqlalchemy import func, select
 
 from investigation_engine.application.chunking import ChunkingConfig, ChunkingStrategy, chunk_document
 from investigation_engine.application.document_access import DocumentActor
-from investigation_engine.application.embeddings import embedding_eligible
 from investigation_engine.application.ingestion.extracted_document import ExtractedDocument
 from investigation_engine.application.ports.embedding_errors import EmbeddingResponseError
 from investigation_engine.application.ports.repository_errors import (
-    ActivationConflict, DocumentAccessDenied, DocumentUpdateConflict,
+    ActivationConflict,
+    DocumentAccessDenied,
+    DocumentUpdateConflict,
 )
 from investigation_engine.application.ports.text_tokenizer import TokenizerIdentity
 from investigation_engine.application.use_cases.delete_document import DeleteDocument
@@ -22,9 +23,15 @@ from investigation_engine.application.use_cases.list_documents import ListDocume
 from investigation_engine.application.use_cases.search_evidence import SearchEvidence
 from investigation_engine.application.use_cases.update_document import UpdateDocument
 from investigation_engine.infrastructure.persistence.models import ChunkEmbeddingRow, ContentRow, DocumentRow
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (
+    PostgreSQLDocumentActivationRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
+    PostgreSQLEmbeddingRepository,
+)
 from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import PostgreSQLEvidenceRepository
 
 
@@ -32,7 +39,9 @@ from investigation_engine.infrastructure.persistence.postgresql_evidence_reposit
 def lifecycle_services(sessions, repository, registration, synthetic_provider):
     class CharacterTokenizer:
         identity = TokenizerIdentity(
-            name="lifecycle-characters", revision="1", artifact_sha256="1" * 64,
+            name="lifecycle-characters",
+            revision="1",
+            artifact_sha256="1" * 64,
             runtime_version="test",
         )
 
@@ -41,7 +50,9 @@ def lifecycle_services(sessions, repository, registration, synthetic_provider):
 
     tokenizer = CharacterTokenizer()
     chunking = ChunkingConfig(
-        strategy=ChunkingStrategy.WHOLE_PASSAGE, tokenizer=tokenizer.identity, max_tokens=256,
+        strategy=ChunkingStrategy.WHOLE_PASSAGE,
+        tokenizer=tokenizer.identity,
+        max_tokens=256,
     )
     plans = PostgreSQLChunkPlanRepository(sessions)
     vectors = PostgreSQLEmbeddingRepository(sessions)
@@ -63,9 +74,17 @@ def lifecycle_services(sessions, repository, registration, synthetic_provider):
         return SimpleNamespace(document=document, version=version)
 
     return SimpleNamespace(
-        repository=repository, provider=synthetic_provider, chunking=chunking, plans=plans,
-        vectors=vectors, activation=activation, workflow=workflow, evidence=evidence,
-        search=search, index=index, create=create,
+        repository=repository,
+        provider=synthetic_provider,
+        chunking=chunking,
+        plans=plans,
+        vectors=vectors,
+        activation=activation,
+        workflow=workflow,
+        evidence=evidence,
+        search=search,
+        index=index,
+        create=create,
     )
 
 
@@ -80,7 +99,8 @@ def embedding_count(db_engine):
 
 
 async def test_update_keeps_old_evidence_until_new_version_is_fully_indexed_then_switches(
-    lifecycle_services, db_engine,
+    lifecycle_services,
+    db_engine,
 ):
     services = lifecycle_services
     item = await services.create()
@@ -90,13 +110,17 @@ async def test_update_keeps_old_evidence_until_new_version_is_fully_indexed_then
     source = replace(item.version.source, revision="upload-revision-2")
     extracted = ExtractedDocument(text="The timeout is 45 seconds.", source=source, title="renamed")
     updated_document, second = await UpdateDocument(services.repository).execute(
-        item.document.id, extracted, actor=DocumentActor("alice"),
+        item.document.id,
+        extracted,
+        actor=DocumentActor("alice"),
         expected_current_version_id=item.version.id,
     )
     assert updated_document.id == item.document.id
     assert second.version_number == 2 and second.content.text == extracted.text
     assert active_version(db_engine, item.document.id) == item.version.id
-    assert [hit.document_version_id for hit in await services.search.execute("timeout", owner_id="alice")] == [item.version.id]
+    assert [hit.document_version_id for hit in await services.search.execute("timeout", owner_id="alice")] == [
+        item.version.id
+    ]
 
     details = await GetDocument(services.repository).execute(item.document.id, actor=DocumentActor("alice"))
     assert [version.version_number for version in details.versions] == [1, 2]
@@ -106,14 +130,17 @@ async def test_update_keeps_old_evidence_until_new_version_is_fully_indexed_then
     assert [hit.document_version_id for hit in updated_hits] == [second.id]
     assert updated_hits[0].text == extracted.text
     retry_document, retry_version = await UpdateDocument(services.repository).execute(
-        item.document.id, extracted, actor=DocumentActor("alice"),
+        item.document.id,
+        extracted,
+        actor=DocumentActor("alice"),
         expected_current_version_id=item.version.id,
     )
     assert retry_document.current_version_id == second.id and retry_version.id == second.id
 
 
 async def test_identical_text_on_explicit_new_revision_creates_version_and_reuses_content(
-    lifecycle_services, db_engine,
+    lifecycle_services,
+    db_engine,
 ):
     services = lifecycle_services
     item = await services.create()
@@ -123,7 +150,9 @@ async def test_identical_text_on_explicit_new_revision_creates_version_and_reuse
     )
     with pytest.raises(DocumentUpdateConflict, match="retain the document's source"):
         await UpdateDocument(services.repository).execute(
-            item.document.id, different_json_type, actor=DocumentActor("alice"),
+            item.document.id,
+            different_json_type,
+            actor=DocumentActor("alice"),
             expected_current_version_id=item.version.id,
         )
     second_document, second = await UpdateDocument(services.repository).execute(
@@ -132,7 +161,8 @@ async def test_identical_text_on_explicit_new_revision_creates_version_and_reuse
             text=item.version.content.text,
             source=replace(item.version.source, revision="upload-revision-2"),
         ),
-        actor=DocumentActor("alice"), expected_current_version_id=item.version.id,
+        actor=DocumentActor("alice"),
+        expected_current_version_id=item.version.id,
     )
     assert second_document.id == item.document.id
     assert second.version_number == 2 and second.id != item.version.id
@@ -145,7 +175,8 @@ async def test_identical_text_on_explicit_new_revision_creates_version_and_reuse
 
 
 async def test_failed_replacement_indexing_preserves_active_version_and_retry_reuses_pending_version(
-    lifecycle_services, db_engine,
+    lifecycle_services,
+    db_engine,
 ):
     services = lifecycle_services
     item = await services.create()
@@ -155,17 +186,23 @@ async def test_failed_replacement_indexing_preserves_active_version_and_retry_re
     )
     update = UpdateDocument(services.repository)
     document, pending = await update.execute(
-        item.document.id, request, actor=DocumentActor("alice"),
+        item.document.id,
+        request,
+        actor=DocumentActor("alice"),
         expected_current_version_id=item.version.id,
     )
     services.provider.failures = [EmbeddingResponseError("synthetic provider failure")]
     with pytest.raises(EmbeddingResponseError):
         await services.index(document, pending)
     assert active_version(db_engine, item.document.id) == item.version.id
-    assert [hit.document_version_id for hit in await services.search.execute("timeout", owner_id="alice")] == [item.version.id]
+    assert [hit.document_version_id for hit in await services.search.execute("timeout", owner_id="alice")] == [
+        item.version.id
+    ]
 
     retried_document, retried_version = await update.execute(
-        item.document.id, request, actor=DocumentActor("alice"),
+        item.document.id,
+        request,
+        actor=DocumentActor("alice"),
         expected_current_version_id=item.version.id,
     )
     assert retried_document.id == document.id and retried_version.id == pending.id
@@ -182,11 +219,13 @@ async def test_only_one_pending_update_wins_concurrent_attempts(lifecycle_servic
         ExtractedDocument(text="replacement A", source=replace(item.version.source, revision="revision-A")),
         ExtractedDocument(text="replacement B", source=replace(item.version.source, revision="revision-B")),
     )
-    results = await asyncio.gather(*(
-        update.execute(item.document.id, request, actor=actor,
-                       expected_current_version_id=item.version.id)
-        for request in requests
-    ), return_exceptions=True)
+    results = await asyncio.gather(
+        *(
+            update.execute(item.document.id, request, actor=actor, expected_current_version_id=item.version.id)
+            for request in requests
+        ),
+        return_exceptions=True,
+    )
     successes = [value for value in results if isinstance(value, tuple)]
     failures = [value for value in results if isinstance(value, BaseException)]
     assert len(successes) == 1 and len(failures) == 1
@@ -212,7 +251,8 @@ async def test_listing_authorization_deletion_and_shared_embeddings(lifecycle_se
         await UpdateDocument(services.repository).execute(
             bob.document.id,
             ExtractedDocument(text="unauthorized", source=replace(bob.version.source, revision="unauthorized")),
-            actor=DocumentActor("alice"), expected_current_version_id=bob.version.id,
+            actor=DocumentActor("alice"),
+            expected_current_version_id=bob.version.id,
         )
     with pytest.raises(DocumentAccessDenied):
         await DeleteDocument(services.repository).execute(shared.document.id, actor=DocumentActor("alice"))
@@ -231,7 +271,8 @@ async def test_listing_authorization_deletion_and_shared_embeddings(lifecycle_se
 
 
 async def test_deletion_during_provider_call_prevents_pending_activation_and_preserves_shared_content(
-    lifecycle_services, db_engine,
+    lifecycle_services,
+    db_engine,
 ):
     services = lifecycle_services
     private = await services.create(owner="alice", source_id="private-occurrence")
@@ -242,16 +283,21 @@ async def test_deletion_during_provider_call_prevents_pending_activation_and_pre
         source=replace(private.version.source, revision="private-revision-2"),
     )
     document, pending = await UpdateDocument(services.repository).execute(
-        private.document.id, request, actor=DocumentActor("alice"),
+        private.document.id,
+        request,
+        actor=DocumentActor("alice"),
         expected_current_version_id=private.version.id,
     )
     deleted = []
 
     async def delete_while_provider_is_running():
         if not deleted:
-            deleted.append(await DeleteDocument(services.repository).execute(
-                private.document.id, actor=DocumentActor("alice"),
-            ))
+            deleted.append(
+                await DeleteDocument(services.repository).execute(
+                    private.document.id,
+                    actor=DocumentActor("alice"),
+                )
+            )
 
     services.provider.before_call = delete_while_provider_is_running
     with pytest.raises(ActivationConflict, match="Deleted"):
@@ -260,4 +306,3 @@ async def test_deletion_during_provider_call_prevents_pending_activation_and_pre
     assert deleted and active_version(db_engine, private.document.id) == private.version.id
     shared_hits = await services.search.execute("timeout", owner_id="alice")
     assert {hit.document_id for hit in shared_hits} == {shared.document.id}
-

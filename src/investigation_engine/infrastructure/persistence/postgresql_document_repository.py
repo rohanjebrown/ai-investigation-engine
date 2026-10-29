@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from investigation_engine.application.document_views import DocumentDetails, DocumentListItem, DocumentPage
 from investigation_engine.application.ports.repository_errors import (
     ContentHashCollision,
     DocumentAccessDenied,
@@ -16,7 +17,6 @@ from investigation_engine.application.ports.repository_errors import (
     RegistrationConflict,
     RepositoryError,
 )
-from investigation_engine.application.document_views import DocumentDetails, DocumentListItem, DocumentPage
 from investigation_engine.domain.content import Content
 from investigation_engine.domain.document import Document
 from investigation_engine.domain.document_version import DocumentVersion
@@ -31,7 +31,6 @@ from investigation_engine.infrastructure.persistence.models import (
     DocumentRow,
     DocumentVersionRow,
 )
-
 
 _OCCURRENCE_CONSTRAINT = "uq_document_versions_source_occurrence"
 
@@ -48,7 +47,9 @@ class PostgreSQLDocumentRepository:
         self._sessions = sessions
 
     async def register(
-        self, document: Document, version: DocumentVersion,
+        self,
+        document: Document,
+        version: DocumentVersion,
     ) -> tuple[Document, DocumentVersion]:
         # All caller-owned mutable data is copied before the first await.
         document, version = _snapshot(document, version)
@@ -75,7 +76,9 @@ class PostgreSQLDocumentRepository:
             ) from error
 
     async def _register_once(
-        self, document: Document, version: DocumentVersion,
+        self,
+        document: Document,
+        version: DocumentVersion,
     ) -> tuple[Document, DocumentVersion]:
         async with self._sessions() as session:
             async with session.begin():
@@ -88,7 +91,8 @@ class PostgreSQLDocumentRepository:
                         raise ValueError("New registrations require version 1 and no active version")
                     digest = bytes.fromhex(version.content.sha256)
                     inserted = await session.scalar(
-                        insert(ContentRow).values(sha256=digest, text=version.content.text)
+                        insert(ContentRow)
+                        .values(sha256=digest, text=version.content.text)
                         .on_conflict_do_nothing(constraint="pk_contents")
                         .returning(ContentRow.sha256)
                     )
@@ -101,8 +105,11 @@ class PostgreSQLDocumentRepository:
                         if stored_content.text != version.content.text:
                             raise ContentHashCollision("Content hash collision detected")
                     stored_document = DocumentRow(
-                        id=document.id, owner_id=document.owner_id, title=document.title,
-                        current_version_id=None, created_at=document.created_at,
+                        id=document.id,
+                        owner_id=document.owner_id,
+                        title=document.title,
+                        current_version_id=None,
+                        created_at=document.created_at,
                         deleted_at=document.deleted_at,
                     )
                     stored_version = _version_row(version)
@@ -115,25 +122,39 @@ class PostgreSQLDocumentRepository:
         return result
 
     async def append_version(
-        self, document_id: UUID, *, actor_id: str, expected_current_version_id: UUID,
-        content: Content, source, structure=(), source_spans=(),
+        self,
+        document_id: UUID,
+        *,
+        actor_id: str,
+        expected_current_version_id: UUID,
+        content: Content,
+        source,
+        structure=(),
+        source_spans=(),
     ) -> tuple[Document, DocumentVersion]:
         candidate_document = Document(id=document_id, owner_id=actor_id)
         candidate_version = DocumentVersion(
-            document_id=document_id, version_number=1, content=content, source=source,
-            structure=structure, source_spans=source_spans,
+            document_id=document_id,
+            version_number=1,
+            content=content,
+            source=source,
+            structure=structure,
+            source_spans=source_spans,
         )
         candidate_document, candidate_version = _snapshot(candidate_document, candidate_version)
         try:
             try:
                 return await self._append_version_once(
-                    candidate_document, candidate_version, expected_current_version_id,
+                    candidate_document,
+                    candidate_version,
+                    expected_current_version_id,
                 )
             except IntegrityError as error:
                 constraint = getattr(getattr(error.orig, "diag", None), "constraint_name", None)
                 if getattr(error.orig, "sqlstate", None) == "23505" and constraint == _OCCURRENCE_CONSTRAINT:
                     return await self._resolve_append_retry(
-                        candidate_document, candidate_version,
+                        candidate_document,
+                        candidate_version,
                     )
                 raise
         except SQLAlchemyError as error:
@@ -143,7 +164,10 @@ class PostgreSQLDocumentRepository:
             ) from error
 
     async def _append_version_once(
-        self, document: Document, version: DocumentVersion, expected_current_version_id: UUID,
+        self,
+        document: Document,
+        version: DocumentVersion,
+        expected_current_version_id: UUID,
     ) -> tuple[Document, DocumentVersion]:
         async with self._sessions() as session:
             async with session.begin():
@@ -172,12 +196,14 @@ class PostgreSQLDocumentRepository:
                     active = await session.get(DocumentVersionRow, stored_document.current_version_id)
                     if active is None or active.document_id != document.id:
                         raise RepositoryError("The active document version could not be resolved")
-                    same_source = await session.scalar(select(DocumentVersionRow.id).where(
-                        DocumentVersionRow.id == active.id,
-                        DocumentVersionRow.kind == version.source.kind,
-                        DocumentVersionRow.source_id == version.source.source_id,
-                        DocumentVersionRow.record_locator == version.source.record_locator,
-                    ))
+                    same_source = await session.scalar(
+                        select(DocumentVersionRow.id).where(
+                            DocumentVersionRow.id == active.id,
+                            DocumentVersionRow.kind == version.source.kind,
+                            DocumentVersionRow.source_id == version.source.source_id,
+                            DocumentVersionRow.record_locator == version.source.record_locator,
+                        )
+                    )
                     if same_source is None:
                         raise DocumentUpdateConflict(
                             "An update must retain the document's source kind, source ID, and record locator"
@@ -194,7 +220,8 @@ class PostgreSQLDocumentRepository:
                     version_number = latest_number + 1
                     digest = bytes.fromhex(version.content.sha256)
                     inserted = await session.scalar(
-                        insert(ContentRow).values(sha256=digest, text=version.content.text)
+                        insert(ContentRow)
+                        .values(sha256=digest, text=version.content.text)
                         .on_conflict_do_nothing(constraint="pk_contents")
                         .returning(ContentRow.sha256)
                     )
@@ -205,9 +232,14 @@ class PostgreSQLDocumentRepository:
                         if stored_content.text != version.content.text:
                             raise ContentHashCollision("Content hash collision detected")
                     new_version = DocumentVersion(
-                        id=version.id, document_id=document.id, version_number=version_number,
-                        content=version.content, source=version.source, structure=version.structure,
-                        source_spans=version.source_spans, created_at=version.created_at,
+                        id=version.id,
+                        document_id=document.id,
+                        version_number=version_number,
+                        content=version.content,
+                        source=version.source,
+                        structure=version.structure,
+                        source_spans=version.source_spans,
+                        created_at=version.created_at,
                     )
                     row = _version_row(new_version)
                     session.add(row)
@@ -216,7 +248,9 @@ class PostgreSQLDocumentRepository:
         return result
 
     async def _resolve_append_retry(
-        self, document: Document, version: DocumentVersion,
+        self,
+        document: Document,
+        version: DocumentVersion,
     ) -> tuple[Document, DocumentVersion]:
         async with self._sessions() as session:
             async with session.begin():
@@ -260,8 +294,11 @@ class PostgreSQLDocumentRepository:
                     if row.deleted_at is None:
                         row.deleted_at = datetime.now(UTC)
                     result = Document(
-                        id=row.id, owner_id=row.owner_id, title=row.title,
-                        current_version_id=row.current_version_id, created_at=row.created_at,
+                        id=row.id,
+                        owner_id=row.owner_id,
+                        title=row.title,
+                        current_version_id=row.current_version_id,
+                        created_at=row.created_at,
                         deleted_at=row.deleted_at,
                     )
             return result
@@ -275,26 +312,38 @@ class PostgreSQLDocumentRepository:
                     await session.connection(execution_options={"isolation_level": "READ COMMITTED"})
                     document_row = await session.get(DocumentRow, document_id)
                     self._authorize_read(document_row, actor_id)
-                    rows = (await session.execute(
-                        select(DocumentVersionRow, ContentRow)
-                        .join(ContentRow, ContentRow.sha256 == DocumentVersionRow.content_sha256)
-                        .where(DocumentVersionRow.document_id == document_id)
-                        .order_by(DocumentVersionRow.version_number)
-                    )).all()
+                    rows = (
+                        await session.execute(
+                            select(DocumentVersionRow, ContentRow)
+                            .join(ContentRow, ContentRow.sha256 == DocumentVersionRow.content_sha256)
+                            .where(DocumentVersionRow.document_id == document_id)
+                            .order_by(DocumentVersionRow.version_number)
+                        )
+                    ).all()
                     document = Document(
-                        id=document_row.id, owner_id=document_row.owner_id, title=document_row.title,
-                        current_version_id=document_row.current_version_id, created_at=document_row.created_at,
+                        id=document_row.id,
+                        owner_id=document_row.owner_id,
+                        title=document_row.title,
+                        current_version_id=document_row.current_version_id,
+                        created_at=document_row.created_at,
                         deleted_at=document_row.deleted_at,
                     )
-                    versions = tuple(self._reconstruct(document_row, version, self._checked_content(content))[1]
-                                     for version, content in rows)
+                    versions = tuple(
+                        self._reconstruct(document_row, version, self._checked_content(content))[1]
+                        for version, content in rows
+                    )
                     result = DocumentDetails(document=document, versions=versions)
             return result
         except SQLAlchemyError as error:
             raise RepositoryError("Document details could not be read") from error
 
     async def list_documents(
-        self, *, actor_id: str, offset: int, limit: int, include_deleted: bool = False,
+        self,
+        *,
+        actor_id: str,
+        offset: int,
+        limit: int,
+        include_deleted: bool = False,
     ) -> DocumentPage:
         visibility = or_(DocumentRow.owner_id.is_(None), DocumentRow.owner_id == actor_id)
         filters = [visibility]
@@ -303,7 +352,8 @@ class PostgreSQLDocumentRepository:
         count_versions = (
             select(func.count(DocumentVersionRow.id))
             .where(DocumentVersionRow.document_id == DocumentRow.id)
-            .correlate(DocumentRow).scalar_subquery()
+            .correlate(DocumentRow)
+            .scalar_subquery()
         )
         statement = (
             select(DocumentRow, DocumentVersionRow, ContentRow, count_versions.label("version_count"))
@@ -311,7 +361,8 @@ class PostgreSQLDocumentRepository:
             .outerjoin(ContentRow, ContentRow.sha256 == DocumentVersionRow.content_sha256)
             .where(*filters)
             .order_by(DocumentRow.created_at.desc(), DocumentRow.id.desc())
-            .offset(offset).limit(limit)
+            .offset(offset)
+            .limit(limit)
         )
         try:
             async with self._sessions() as session:
@@ -322,13 +373,18 @@ class PostgreSQLDocumentRepository:
                     items = []
                     for document_row, version_row, content_row, version_count in rows:
                         document = Document(
-                            id=document_row.id, owner_id=document_row.owner_id, title=document_row.title,
-                            current_version_id=document_row.current_version_id, created_at=document_row.created_at,
+                            id=document_row.id,
+                            owner_id=document_row.owner_id,
+                            title=document_row.title,
+                            current_version_id=document_row.current_version_id,
+                            created_at=document_row.created_at,
                             deleted_at=document_row.deleted_at,
                         )
                         current = None
                         if version_row is not None:
-                            current = self._reconstruct(document_row, version_row, self._checked_content(content_row))[1]
+                            current = self._reconstruct(document_row, version_row, self._checked_content(content_row))[
+                                1
+                            ]
                         items.append(DocumentListItem(document, current, version_count))
                     result = DocumentPage(tuple(items), total, offset, limit)
             return result
@@ -345,7 +401,9 @@ class PostgreSQLDocumentRepository:
             raise RepositoryError("Stored Content is invalid") from error
 
     async def _resolve_winner(
-        self, document: Document, version: DocumentVersion,
+        self,
+        document: Document,
+        version: DocumentVersion,
     ) -> tuple[Document, DocumentVersion]:
         async with self._sessions() as session:
             async with session.begin():
@@ -356,19 +414,24 @@ class PostgreSQLDocumentRepository:
         return result
 
     async def _existing(
-        self, session: AsyncSession, document: Document, version: DocumentVersion,
+        self,
+        session: AsyncSession,
+        document: Document,
+        version: DocumentVersion,
     ) -> tuple[Document, DocumentVersion] | None:
         source = version.source
-        found = (await session.execute(
-            select(DocumentRow, DocumentVersionRow)
-            .join(DocumentVersionRow, DocumentVersionRow.document_id == DocumentRow.id)
-            .where(
-                DocumentVersionRow.kind == source.kind,
-                DocumentVersionRow.source_id == source.source_id,
-                DocumentVersionRow.revision.is_not_distinct_from(source.revision),
-                DocumentVersionRow.record_locator == source.record_locator,
+        found = (
+            await session.execute(
+                select(DocumentRow, DocumentVersionRow)
+                .join(DocumentVersionRow, DocumentVersionRow.document_id == DocumentRow.id)
+                .where(
+                    DocumentVersionRow.kind == source.kind,
+                    DocumentVersionRow.source_id == source.source_id,
+                    DocumentVersionRow.revision.is_not_distinct_from(source.revision),
+                    DocumentVersionRow.record_locator == source.record_locator,
+                )
             )
-        )).one_or_none()
+        ).one_or_none()
         if found is None:
             return None
         stored_document, stored_version = found
@@ -385,16 +448,15 @@ class PostgreSQLDocumentRepository:
         result = self._reconstruct(stored_document, stored_version, content)
         if result[1].content.text != version.content.text:
             raise RegistrationConflict("Registration conflict: extracted text differs")
-        if (
-            result[1].structure != version.structure
-            or result[1].source_spans != version.source_spans
-        ):
+        if result[1].structure != version.structure or result[1].source_spans != version.source_spans:
             raise RegistrationConflict("Registration conflict: structural or source spans differ")
         return result
 
     @staticmethod
     def _reconstruct(
-        document: DocumentRow, version: DocumentVersionRow, content: Content,
+        document: DocumentRow,
+        version: DocumentVersionRow,
+        content: Content,
     ) -> tuple[Document, DocumentVersion]:
         try:
             return _domain_registration(document, version, content)

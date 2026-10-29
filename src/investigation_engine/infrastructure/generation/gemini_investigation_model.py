@@ -1,10 +1,10 @@
 """Manual, application-executed Gemini function calling for investigations."""
 
 import asyncio
+import json
 from collections import OrderedDict
 from dataclasses import dataclass
 from hashlib import sha256
-import json
 from uuid import uuid4
 
 import httpx
@@ -29,7 +29,6 @@ from investigation_engine.application.ports.generation_errors import (
 from investigation_engine.application.ports.provider_diagnostics import attach_diagnostic, status_category
 from investigation_engine.infrastructure.generation.gemini_diagnostics import error_details
 
-
 TOOL_NAME = "search_evidence"
 MAX_FINAL_CHARS = 12000
 MAX_NATIVE_CALLS = 1024
@@ -41,6 +40,7 @@ class _NativeCall:
     content: types.Content
     preceding_calls: tuple[str, ...]
     question_hash: bytes
+
 
 SYSTEM_INSTRUCTION = """You are conducting a bounded investigation using the application's search tool.
 Use search_evidence to retrieve facts. Inspect each actual tool result before deciding
@@ -118,8 +118,9 @@ def _unique_object(pairs):
 class GeminiInvestigationModel:
     """One generateContent request per turn; no automatic tool execution or retry."""
 
-    def __init__(self, *, api_key: str | None, model: str, timeout_seconds: int = 45,
-                 max_output_tokens: int = 1024) -> None:
+    def __init__(
+        self, *, api_key: str | None, model: str, timeout_seconds: int = 45, max_output_tokens: int = 1024
+    ) -> None:
         if not isinstance(api_key, str) or not api_key.strip():
             raise GenerationProviderError("GEMINI_API_KEY is required for investigations")
         if not isinstance(model, str) or not model.strip() or model != model.strip():
@@ -169,21 +170,31 @@ class GeminiInvestigationModel:
         try:
             contents = self._contents(turn)
         except GenerationResponseError as error:
-            reason = "missing_native_history" if any(
-                exchange.call_id not in self._native_calls for exchange in turn.exchanges
-            ) else "history_mismatch"
-            raise attach_diagnostic(error, operation="generate_content", model_id=self.model,
-                category="invalid_response", request_count=self._provider_requests,
-                error_reason=reason, investigation_step=step) from None
+            reason = (
+                "missing_native_history"
+                if any(exchange.call_id not in self._native_calls for exchange in turn.exchanges)
+                else "history_mismatch"
+            )
+            raise attach_diagnostic(
+                error,
+                operation="generate_content",
+                model_id=self.model,
+                category="invalid_response",
+                request_count=self._provider_requests,
+                error_reason=reason,
+                investigation_step=step,
+            ) from None
         function = types.FunctionDeclaration(**TOOL_DECLARATION)
         tool = types.Tool(function_declarations=[function])
         config = types.GenerateContentConfig(
             system_instruction=SYSTEM_INSTRUCTION,
             tools=[tool],
-            tool_config=types.ToolConfig(function_calling_config=types.FunctionCallingConfig(
-                mode=types.FunctionCallingConfigMode.VALIDATED,
-                allowed_function_names=[TOOL_NAME],
-            )),
+            tool_config=types.ToolConfig(
+                function_calling_config=types.FunctionCallingConfig(
+                    mode=types.FunctionCallingConfigMode.VALIDATED,
+                    allowed_function_names=[TOOL_NAME],
+                )
+            ),
             response_mime_type="application/json",
             response_json_schema=FINAL_SCHEMA,
             max_output_tokens=self.max_output_tokens,
@@ -195,7 +206,9 @@ class GeminiInvestigationModel:
             self._provider_requests += 1
             async with asyncio.timeout(self.timeout_seconds):
                 response = await self._client.aio.models.generate_content(
-                    model=self.model, contents=contents, config=config,
+                    model=self.model,
+                    contents=contents,
+                    config=config,
                 )
         except errors.APIError as error:
             details = error_details(error)
@@ -205,9 +218,10 @@ class GeminiInvestigationModel:
             if code == 429:
                 failure = GenerationRateLimitError("Investigation generation quota limit exceeded", retryable=True)
             else:
-                failure = GenerationProviderError("Investigation generation provider unavailable",
-                    retryable=code in (408, 425, 500, 502, 503, 504))
-        except (TimeoutError, httpx.TimeoutException):
+                failure = GenerationProviderError(
+                    "Investigation generation provider unavailable", retryable=code in (408, 425, 500, 502, 503, 504)
+                )
+        except TimeoutError, httpx.TimeoutException:
             category = "timeout"
             cause = RuntimeError("Investigation generation request timed out")
             failure = GenerationTimeoutError("Investigation generation request timed out")
@@ -226,13 +240,17 @@ class GeminiInvestigationModel:
                 if isinstance(action, SearchEvidenceCall):
                     native = response.candidates[0].content
                     first_call = next(part for part in native.parts if part.function_call is not None)
-                    if native.role != "model" or (self.model.startswith("gemini-3") and not first_call.thought_signature):
+                    if native.role != "model" or (
+                        self.model.startswith("gemini-3") and not first_call.thought_signature
+                    ):
                         raise GenerationResponseError("Gemini returned an unsigned or invalid native tool message")
                     if len(native.model_dump_json()) > 64000:
                         raise GenerationResponseError("Gemini native tool message exceeds the bound")
                     self._native_calls[action.call_id] = _NativeCall(
-                        native.model_copy(deep=True), tuple(item.call_id for item in turn.exchanges),
-                        sha256(turn.question.encode("utf-8")).digest())
+                        native.model_copy(deep=True),
+                        tuple(item.call_id for item in turn.exchanges),
+                        sha256(turn.question.encode("utf-8")).digest(),
+                    )
                     while len(self._native_calls) > MAX_NATIVE_CALLS:
                         self._native_calls.popitem(last=False)
                 else:
@@ -240,12 +258,27 @@ class GeminiInvestigationModel:
                         self._native_calls.pop(exchange.call_id, None)
                 return action
             except GenerationResponseError as error:
-                raise attach_diagnostic(error, operation="generate_content", model_id=self.model,
-                    http_status=200, category="invalid_response", request_count=self._provider_requests,
-                    error_reason="invalid_response", investigation_step=step) from None
-        raise attach_diagnostic(failure, operation="generate_content", model_id=self.model,
-            http_status=status, category=category, retryable=getattr(failure, "retryable", False),
-            request_count=self._provider_requests, investigation_step=step, **details) from cause
+                raise attach_diagnostic(
+                    error,
+                    operation="generate_content",
+                    model_id=self.model,
+                    http_status=200,
+                    category="invalid_response",
+                    request_count=self._provider_requests,
+                    error_reason="invalid_response",
+                    investigation_step=step,
+                ) from None
+        raise attach_diagnostic(
+            failure,
+            operation="generate_content",
+            model_id=self.model,
+            http_status=status,
+            category=category,
+            retryable=getattr(failure, "retryable", False),
+            request_count=self._provider_requests,
+            investigation_step=step,
+            **details,
+        ) from cause
 
     def _contents(self, turn: InvestigationTurn) -> list[types.Content]:
         initial = json.dumps({"question": turn.question}, ensure_ascii=False, separators=(",", ":"))
@@ -253,9 +286,13 @@ class GeminiInvestigationModel:
         for sequence, exchange in enumerate(turn.exchanges, 1):
             state = self._native_calls.get(exchange.call_id)
             if state is None:
-                raise GenerationResponseError("Gemini native conversation state is unavailable; restart the investigation")
-            if (state.preceding_calls != tuple(item.call_id for item in turn.exchanges[:sequence - 1])
-                or state.question_hash != sha256(turn.question.encode("utf-8")).digest()):
+                raise GenerationResponseError(
+                    "Gemini native conversation state is unavailable; restart the investigation"
+                )
+            if (
+                state.preceding_calls != tuple(item.call_id for item in turn.exchanges[: sequence - 1])
+                or state.question_hash != sha256(turn.question.encode("utf-8")).digest()
+            ):
                 raise GenerationResponseError("Gemini conversation history does not match the original sequence")
             model_content = state.content.model_copy(deep=True)
             call = next(part.function_call for part in model_content.parts if part.function_call is not None)
@@ -265,14 +302,22 @@ class GeminiInvestigationModel:
             response = {
                 "search_sequence": sequence,
                 "query": exchange.query,
-                "results": [
-                    evidence_payload(item)
-                    for item in exchange.evidence
-                ],
+                "results": [evidence_payload(item) for item in exchange.evidence],
             }
-            contents.append(types.Content(role="user", parts=[types.Part(function_response=types.FunctionResponse(
-                id=call.id, name=call.name, response=response,
-            ))]))
+            contents.append(
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part(
+                            function_response=types.FunctionResponse(
+                                id=call.id,
+                                name=call.name,
+                                response=response,
+                            )
+                        )
+                    ],
+                )
+            )
         return contents
 
     @classmethod
@@ -283,8 +328,13 @@ class GeminiInvestigationModel:
                 raise ValueError("generation did not complete normally")
             parts = candidates[0].content.parts
             calls = [part.function_call for part in parts if getattr(part, "function_call", None) is not None]
-            texts = [part.text for part in parts if isinstance(getattr(part, "text", None), str)
-                     and part.text.strip() and not getattr(part, "thought", False)]
+            texts = [
+                part.text
+                for part in parts
+                if isinstance(getattr(part, "text", None), str)
+                and part.text.strip()
+                and not getattr(part, "thought", False)
+            ]
             usage = _usage(response.usage_metadata)
             model_version = getattr(response, "model_version", None)
             if calls:
@@ -293,8 +343,9 @@ class GeminiInvestigationModel:
                 call = calls[0]
                 if call.name != TOOL_NAME or not isinstance(call.args, dict) or set(call.args) != {"query"}:
                     raise ValueError("unknown tool or malformed tool arguments")
-                return SearchEvidenceCall(query=call.args["query"], call_id=str(uuid4()),
-                                          usage=usage, model_version=model_version)
+                return SearchEvidenceCall(
+                    query=call.args["query"], call_id=str(uuid4()), usage=usage, model_version=model_version
+                )
             if len(texts) != 1 or len(texts[0]) > MAX_FINAL_CHARS:
                 raise ValueError("missing or oversized final object")
             raw = json.loads(texts[0], object_pairs_hook=_unique_object)
@@ -303,16 +354,24 @@ class GeminiInvestigationModel:
             if not isinstance(raw["citations"], list) or not isinstance(raw["conflicts"], list):
                 raise ValueError("final citation/conflict shape mismatch")
             status = InvestigationStatus(raw["status"])
-            if any(not isinstance(item, dict) or set(item) != {"claim", "citations"}
-                   or not isinstance(item["citations"], list) for item in raw["conflicts"]):
+            if any(
+                not isinstance(item, dict)
+                or set(item) != {"claim", "citations"}
+                or not isinstance(item["citations"], list)
+                for item in raw["conflicts"]
+            ):
                 raise ValueError("conflict item shape mismatch")
             return InvestigationDecision(
-                status=status, answer=raw["answer"], citations=tuple(raw["citations"]),
-                conflicts=tuple(ConflictClaim(claim=item["claim"], citations=tuple(item["citations"]))
-                                for item in raw["conflicts"]),
-                usage=usage, model_version=model_version,
+                status=status,
+                answer=raw["answer"],
+                citations=tuple(raw["citations"]),
+                conflicts=tuple(
+                    ConflictClaim(claim=item["claim"], citations=tuple(item["citations"])) for item in raw["conflicts"]
+                ),
+                usage=usage,
+                model_version=model_version,
             )
-        except (AttributeError, KeyError, TypeError, ValueError, GenerationResponseError):
+        except AttributeError, KeyError, TypeError, ValueError, GenerationResponseError:
             raise GenerationResponseError("Investigation model returned malformed or unsupported output") from None
 
 

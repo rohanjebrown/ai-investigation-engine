@@ -11,7 +11,6 @@ from investigation_engine.domain.structural_span import StructuralSpan
 
 
 class DocumentRepository(Protocol):
-
     async def register(
         self,
         document: Document,
@@ -31,8 +30,13 @@ class DocumentRepository(Protocol):
         ...
 
     async def append_version(
-        self, document_id: UUID, *, actor_id: str, expected_current_version_id: UUID,
-        content: Content, source: SourceReference,
+        self,
+        document_id: UUID,
+        *,
+        actor_id: str,
+        expected_current_version_id: UUID,
+        content: Content,
+        source: SourceReference,
         structure: tuple[StructuralSpan, ...] = (),
         source_spans: tuple[SourceSpan, ...] = (),
     ) -> tuple[Document, DocumentVersion]:
@@ -48,7 +52,12 @@ class DocumentRepository(Protocol):
         ...
 
     async def list_documents(
-        self, *, actor_id: str, offset: int, limit: int, include_deleted: bool = False,
+        self,
+        *,
+        actor_id: str,
+        offset: int,
+        limit: int,
+        include_deleted: bool = False,
     ) -> DocumentPage:
         """List visible documents using repository-side visibility filtering."""
         ...

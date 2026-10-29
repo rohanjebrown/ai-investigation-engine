@@ -10,7 +10,9 @@ from google import genai
 from google.genai import errors, types
 
 from investigation_engine.application.ports.embedding_errors import (
-    EmbeddingInputError, EmbeddingProviderError, EmbeddingRateLimitError,
+    EmbeddingInputError,
+    EmbeddingProviderError,
+    EmbeddingRateLimitError,
     EmbeddingResponseError,
 )
 from investigation_engine.application.ports.embedding_provider import EmbeddingProvider
@@ -18,9 +20,7 @@ from investigation_engine.infrastructure.embeddings import gemini_provider as mo
 
 
 def response(first=2.0):
-    return types.EmbedContentResponse(
-        embeddings=[types.ContentEmbedding(values=[first] + [0.0] * 767)]
-    )
+    return types.EmbedContentResponse(embeddings=[types.ContentEmbedding(values=[first] + [0.0] * 767)])
 
 
 @pytest.fixture
@@ -30,7 +30,8 @@ def sdk(monkeypatch):
         embed_content=AsyncMock(return_value=response()),
     )
     client = SimpleNamespace(
-        aio=SimpleNamespace(models=models, aclose=AsyncMock()), close=Mock(),
+        aio=SimpleNamespace(models=models, aclose=AsyncMock()),
+        close=Mock(),
     )
     factory = Mock(return_value=client)
     monkeypatch.setattr(module.genai, "Client", factory)
@@ -38,10 +39,12 @@ def sdk(monkeypatch):
 
 
 async def test_exact_document_inputs_keep_order_and_request_one_vector_each(sdk):
-    sdk.models.embed_content.return_value = types.EmbedContentResponse(embeddings=[
-        types.ContentEmbedding(values=[2.0] + [0.0] * 767),
-        types.ContentEmbedding(values=[3.0] + [0.0] * 767),
-    ])
+    sdk.models.embed_content.return_value = types.EmbedContentResponse(
+        embeddings=[
+            types.ContentEmbedding(values=[2.0] + [0.0] * 767),
+            types.ContentEmbedding(values=[3.0] + [0.0] * 767),
+        ]
+    )
     texts = [" A😀\r\n", "second | text: literal"]
     async with module.GeminiEmbeddingProvider(api_key="dummy-key") as provider:
         port: EmbeddingProvider = provider
@@ -58,7 +61,8 @@ async def test_exact_document_inputs_keep_order_and_request_one_vector_each(sdk)
     assert embed.kwargs["model"] == "gemini-embedding-2"
     assert profile.model_id == embed.kwargs["model"]
     assert [item.parts[0].text for item in embed.kwargs["contents"]] == [
-        "title: none | text: " + text for text in texts]
+        "title: none | text: " + text for text in texts
+    ]
     config = embed.kwargs["config"]
     assert config.output_dimensionality == 768
     assert profile.dimensions == config.output_dimensionality
@@ -84,13 +88,15 @@ async def test_query_uses_its_own_exact_versioned_envelope(sdk):
 async def test_batch_size_and_aggregate_token_limit_bound_synchronous_requests(sdk):
     sdk.models.count_tokens.return_value = types.CountTokensResponse(total_tokens=2)
     sdk.models.embed_content.side_effect = [
-        types.EmbedContentResponse(embeddings=[
-            types.ContentEmbedding(values=[1.0] + [0.0] * 767),
-            types.ContentEmbedding(values=[2.0] + [0.0] * 767),
-        ]), response(3),
+        types.EmbedContentResponse(
+            embeddings=[
+                types.ContentEmbedding(values=[1.0] + [0.0] * 767),
+                types.ContentEmbedding(values=[2.0] + [0.0] * 767),
+            ]
+        ),
+        response(3),
     ]
-    async with module.GeminiEmbeddingProvider(api_key="dummy-key", batch_size=2,
-                                              batch_token_limit=5) as provider:
+    async with module.GeminiEmbeddingProvider(api_key="dummy-key", batch_size=2, batch_token_limit=5) as provider:
         vectors = await provider.embed_documents(["first", "second", "third"])
     assert [vector[0] for vector in vectors] == [1, 2, 3]
     # The batch size is two and the aggregate token limit is five.
@@ -140,16 +146,23 @@ async def test_complete_formatted_input_is_counted_at_the_model_limit(sdk):
     )
 
 
-@pytest.mark.parametrize("values", [
-    None, [1.0] * 767, [True] + [0.0] * 767, ["1"] + [0.0] * 767,
-    [float("nan")] + [0.0] * 767, [float("inf")] + [0.0] * 767,
-    [0.0] * 768, [10 ** 1000] + [0.0] * 767, [1e308] * 768,
-])
+@pytest.mark.parametrize(
+    "values",
+    [
+        None,
+        [1.0] * 767,
+        [True] + [0.0] * 767,
+        ["1"] + [0.0] * 767,
+        [float("nan")] + [0.0] * 767,
+        [float("inf")] + [0.0] * 767,
+        [0.0] * 768,
+        [10**1000] + [0.0] * 767,
+        [1e308] * 768,
+    ],
+)
 async def test_invalid_vectors_are_rejected_without_normalization(sdk, values):
     # Bypass SDK coercion to also protect the adapter's response boundary.
-    sdk.models.embed_content.return_value = SimpleNamespace(
-        embeddings=[SimpleNamespace(values=values)]
-    )
+    sdk.models.embed_content.return_value = SimpleNamespace(embeddings=[SimpleNamespace(values=values)])
     async with module.GeminiEmbeddingProvider(api_key="dummy-key") as provider:
         with pytest.raises(EmbeddingResponseError):
             await provider.embed_query("query")
@@ -172,16 +185,24 @@ async def test_provider_reported_truncation_is_not_accepted(sdk):
             await provider.embed_query("query")
 
 
-@pytest.mark.parametrize("code,error_type", [
-    (400, EmbeddingInputError), (413, EmbeddingInputError),
-    (401, EmbeddingProviderError), (403, EmbeddingProviderError),
-    (404, EmbeddingProviderError), (429, EmbeddingRateLimitError),
-    (501, EmbeddingProviderError), (503, EmbeddingProviderError),
-])
+@pytest.mark.parametrize(
+    "code,error_type",
+    [
+        (400, EmbeddingInputError),
+        (413, EmbeddingInputError),
+        (401, EmbeddingProviderError),
+        (403, EmbeddingProviderError),
+        (404, EmbeddingProviderError),
+        (429, EmbeddingRateLimitError),
+        (501, EmbeddingProviderError),
+        (503, EmbeddingProviderError),
+    ],
+)
 async def test_api_failures_are_mapped_and_raw_sdk_payloads_are_not_retained(sdk, code, error_type):
     private_text = "sensitive-body"
     sdk.models.count_tokens.side_effect = errors.APIError(
-        code, {"error": {"message": "sensitive-body dummy-key"}},
+        code,
+        {"error": {"message": "sensitive-body dummy-key"}},
     )
     async with module.GeminiEmbeddingProvider(api_key="dummy-key") as provider:
         with pytest.raises(error_type) as caught:
@@ -194,6 +215,7 @@ async def test_api_failures_are_mapped_and_raw_sdk_payloads_are_not_retained(sdk
     assert caught.value.__context__ is None
     sdk.models.embed_content.assert_not_awaited()
     from investigation_engine.application.ports.provider_diagnostics import safe_diagnostic
+
     safe = safe_diagnostic(caught.value)
     assert safe["http_status"] == code and safe["operation"] == "count_tokens"
     assert safe["model_id"] == "gemini-embedding-2" and safe["request_count"] == 1
@@ -201,10 +223,13 @@ async def test_api_failures_are_mapped_and_raw_sdk_payloads_are_not_retained(sdk
     assert "sensitive-body" not in str(safe) and "dummy-key" not in str(safe)
 
 
-@pytest.mark.parametrize("error,error_type", [
-    (httpx.ReadTimeout("sensitive-body dummy-key"), EmbeddingProviderError),
-    (ValueError("sensitive-body dummy-key"), EmbeddingResponseError),
-])
+@pytest.mark.parametrize(
+    "error,error_type",
+    [
+        (httpx.ReadTimeout("sensitive-body dummy-key"), EmbeddingProviderError),
+        (ValueError("sensitive-body dummy-key"), EmbeddingResponseError),
+    ],
+)
 async def test_embedding_transport_or_decoding_failure_stops_later_inputs(sdk, error, error_type):
     sdk.models.embed_content.side_effect = [response(), error]
     async with module.GeminiEmbeddingProvider(api_key="dummy-key", batch_size=1) as provider:
@@ -294,8 +319,7 @@ async def test_real_sdk_serializes_single_entry_requests_over_mock_transport(mon
             await provider.embed_query("where?")
         assert len(vectors) == 2 and vectors[0][0] == 2.0
         assert len(requests) == 5
-        expected = ["title: none | text: one😀", "title: none | text: two",
-                    "task: search result | query: where?"]
+        expected = ["title: none | text: one😀", "title: none | text: two", "task: search result | query: where?"]
         for index, text in enumerate(expected[:2]):
             count_url, count_body = requests[index]
             assert count_url.host == "generativelanguage.googleapis.com"

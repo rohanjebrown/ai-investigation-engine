@@ -18,7 +18,10 @@ def load_settings(tmp_path, monkeypatch):
 @pytest.fixture
 def dotenv_file(tmp_path):
     path = tmp_path / ".env"
-    path.write_text('DB_HOST=127.0.0.1\nDB_PORT=15432\nDB_NAME=synthetic\nDB_USER=synthetic\nDB_PASSWORD="dummy-${literal}-@secret"\n', encoding="utf-8")
+    path.write_text(
+        'DB_HOST=127.0.0.1\nDB_PORT=15432\nDB_NAME=synthetic\nDB_USER=synthetic\nDB_PASSWORD="dummy-${literal}-@secret"\n',
+        encoding="utf-8",
+    )
     return path
 
 
@@ -46,8 +49,11 @@ def test_cloud_run_uses_managed_socket_without_tcp_authority(load_settings, dote
     monkeypatch.setenv("DB_PORT", "5432")
     url = load_settings().database_url()
     assert url.host is None and url.port is None
-    assert url.query == {"host": "/cloudsql/project-123:europe-west3:existing-db",
-                         "sslmode": "disable", "connect_timeout": "5"}
+    assert url.query == {
+        "host": "/cloudsql/project-123:europe-west3:existing-db",
+        "sslmode": "disable",
+        "connect_timeout": "5",
+    }
     assert url.password == "dummy-${literal}-@secret"
 
 
@@ -57,9 +63,17 @@ def test_cloud_run_rejects_development_proxy(load_settings, dotenv_file, monkeyp
         load_settings()
 
 
-@pytest.mark.parametrize("name,value", [("DB_POOL_SIZE", "0"), ("DB_MAX_OVERFLOW", "11"),
-    ("DB_POOL_TIMEOUT_SECONDS", "31"), ("DB_CONNECT_TIMEOUT_SECONDS", "0"),
-    ("DB_STATEMENT_TIMEOUT_MS", "999"), ("DB_CONNECTION_MODE", "tcp")])
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("DB_POOL_SIZE", "0"),
+        ("DB_MAX_OVERFLOW", "11"),
+        ("DB_POOL_TIMEOUT_SECONDS", "31"),
+        ("DB_CONNECT_TIMEOUT_SECONDS", "0"),
+        ("DB_STATEMENT_TIMEOUT_MS", "999"),
+        ("DB_CONNECTION_MODE", "tcp"),
+    ],
+)
 def test_database_runtime_bounds(load_settings, dotenv_file, monkeypatch, name, value):
     monkeypatch.setenv(name, value)
     with pytest.raises(ValueError, match=name):
@@ -111,19 +125,32 @@ def test_embedding_batch_settings_are_typed_and_bounded(load_settings, dotenv_fi
     assert selected.gemini_embedding_batch_token_limit == 16000
 
 
-@pytest.mark.parametrize("name,value", [("GENERATION_MAX_ATTEMPTS", "4"), ("GENERATION_TIMEOUT_SECONDS", "bad"),
-    ("GENERATION_MAX_OUTPUT_TOKENS", "0"), ("GENERATION_TEMPERATURE", "NaN"),
-    ("GENERATION_TEMPERATURE", "2.1"), ("GENERATION_TEMPERATURE", "-0.1"),
-    ("GENERATION_TEMPERATURE", "bad"), ("RAG_MAX_EVIDENCE", "11"),
-    ("RAG_MAX_CONTEXT_CHARS", "64001"), ("SERVING_CHUNKING_CONFIGURATION_ID", "0"),
-    ("GEMINI_EMBEDDING_BATCH_SIZE", "101"), ("GEMINI_EMBEDDING_BATCH_TOKEN_LIMIT", "0")])
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("GENERATION_MAX_ATTEMPTS", "4"),
+        ("GENERATION_TIMEOUT_SECONDS", "bad"),
+        ("GENERATION_MAX_OUTPUT_TOKENS", "0"),
+        ("GENERATION_TEMPERATURE", "NaN"),
+        ("GENERATION_TEMPERATURE", "2.1"),
+        ("GENERATION_TEMPERATURE", "-0.1"),
+        ("GENERATION_TEMPERATURE", "bad"),
+        ("RAG_MAX_EVIDENCE", "11"),
+        ("RAG_MAX_CONTEXT_CHARS", "64001"),
+        ("SERVING_CHUNKING_CONFIGURATION_ID", "0"),
+        ("GEMINI_EMBEDDING_BATCH_SIZE", "101"),
+        ("GEMINI_EMBEDDING_BATCH_TOKEN_LIMIT", "0"),
+    ],
+)
 def test_generation_setting_bounds_fail_by_name(load_settings, dotenv_file, monkeypatch, name, value):
     monkeypatch.setenv(name, value)
     with pytest.raises(ValueError, match=name):
         load_settings()
 
 
-def test_flat_retrieval_settings_preserve_semantic_default_and_allow_explicit_hybrid(load_settings, dotenv_file, monkeypatch):
+def test_flat_retrieval_settings_preserve_semantic_default_and_allow_explicit_hybrid(
+    load_settings, dotenv_file, monkeypatch
+):
     initial = load_settings()
     assert initial.retrieval_mode == "semantic" and initial.rrf_k == 60
     monkeypatch.setenv("RETRIEVAL_MODE", "hybrid")
@@ -148,19 +175,34 @@ def test_investigation_is_disabled_by_default_and_limits_are_explicitly_typed(lo
     assert selected.investigation_max_context_chars == 18000
 
 
-@pytest.mark.parametrize("name,value", [("INVESTIGATION_ENABLED", "sometimes"),
-    ("INVESTIGATION_MAX_TURNS", "0"), ("INVESTIGATION_MAX_SEARCH_CALLS", "11"),
-    ("INVESTIGATION_MAX_CONTEXT_CHARS", "511"), ("INVESTIGATION_MAX_GENERATION_REQUESTS", "13"),
-    ("INVESTIGATION_TIMEOUT_SECONDS", "181")])
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("INVESTIGATION_ENABLED", "sometimes"),
+        ("INVESTIGATION_MAX_TURNS", "0"),
+        ("INVESTIGATION_MAX_SEARCH_CALLS", "11"),
+        ("INVESTIGATION_MAX_CONTEXT_CHARS", "511"),
+        ("INVESTIGATION_MAX_GENERATION_REQUESTS", "13"),
+        ("INVESTIGATION_TIMEOUT_SECONDS", "181"),
+    ],
+)
 def test_invalid_investigation_configuration_is_rejected_by_name(load_settings, dotenv_file, monkeypatch, name, value):
     monkeypatch.setenv(name, value)
     with pytest.raises(ValueError, match=name):
         load_settings()
 
 
-@pytest.mark.parametrize("name,value", [("RETRIEVAL_MODE","keyword"), ("SEMANTIC_CANDIDATE_LIMIT","101"),
-    ("KEYWORD_CANDIDATE_LIMIT","0"), ("RRF_K","-1"), ("RRF_K","1.5")])
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("RETRIEVAL_MODE", "keyword"),
+        ("SEMANTIC_CANDIDATE_LIMIT", "101"),
+        ("KEYWORD_CANDIDATE_LIMIT", "0"),
+        ("RRF_K", "-1"),
+        ("RRF_K", "1.5"),
+    ],
+)
 def test_invalid_retrieval_configuration_is_rejected_by_name(load_settings, dotenv_file, monkeypatch, name, value):
-    monkeypatch.setenv(name,value)
+    monkeypatch.setenv(name, value)
     with pytest.raises(ValueError, match=name):
         load_settings()

@@ -6,17 +6,17 @@ Canonical text, identities, chunking and transactions remain in existing code.
 
 import argparse
 import asyncio
+import json
+import math
+import os
+import shutil
+import tempfile
+import time
 from collections import Counter
 from collections.abc import Iterator
 from dataclasses import asdict
 from hashlib import file_digest, sha256
-import json
-import math
-import os
 from pathlib import Path
-import shutil
-import tempfile
-import time
 from time import perf_counter
 from uuid import uuid7
 
@@ -29,17 +29,20 @@ from investigation_engine.domain.content import Content
 from investigation_engine.domain.document_version import DocumentVersion
 from investigation_engine.infrastructure.ingestion.twowiki_adapter import DATASET_ID, extract_2wiki
 from investigation_engine.infrastructure.tokenization.huggingface_tokenizer import (
-    HuggingFaceTokenizer, VOYAGE_REFERENCE_NAME, VOYAGE_REFERENCE_REVISION, VOYAGE_REFERENCE_SHA256,
+    VOYAGE_REFERENCE_NAME,
+    VOYAGE_REFERENCE_REVISION,
+    VOYAGE_REFERENCE_SHA256,
+    HuggingFaceTokenizer,
 )
-
 
 REVISION = "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
 FILE_SHA256 = "c0d8b60b9026b728fb07ad74c5252a0f188f6942e8ba5c02df4dfa369502ea8d"
 
 
 def fingerprint(value) -> str:
-    return sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
-                             ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+    return sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+    ).hexdigest()
 
 
 def atomic_json(path: Path, value: dict) -> None:
@@ -47,8 +50,15 @@ def atomic_json(path: Path, value: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", newline="\n",
-                dir=path.parent, prefix=path.name+".", suffix=".tmp", delete=False) as output:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            dir=path.parent,
+            prefix=path.name + ".",
+            suffix=".tmp",
+            delete=False,
+        ) as output:
             temporary = Path(output.name)
             json.dump(value, output, indent=2, ensure_ascii=False, allow_nan=False)
             output.write("\n")
@@ -63,7 +73,7 @@ def atomic_json(path: Path, value: dict) -> None:
             except PermissionError:
                 if attempt == 9:
                     raise
-                time.sleep(.05 * (attempt+1))
+                time.sleep(0.05 * (attempt + 1))
     finally:
         if temporary is not None:
             try:
@@ -83,25 +93,25 @@ def verify_input(path: Path, expected_sha256: str = FILE_SHA256) -> str:
 def load_checkpoint(path: Path) -> dict | None:
     """Read the newest immutable batch record, also accepting an older single file."""
     path = Path(path)
-    folder = path.with_name(path.name+".d")
+    folder = path.with_name(path.name + ".d")
     records = sorted(folder.glob("[0-9]*.json")) if folder.exists() else []
     candidates = ([path] if path.is_file() else []) + (records[-1:] if records else [])
     values = [json.loads(candidate.read_text(encoding="utf-8")) for candidate in candidates]
-    return max(values,key=lambda value:value["completed_occurrences"]) if values else None
+    return max(values, key=lambda value: value["completed_occurrences"]) if values else None
 
 
 def save_checkpoint(path: Path, value: dict) -> None:
     # Do not replace a frequently observed Windows file. Each completed batch
     # gets one immutable small record; a partial temporary write is ignored.
     path = Path(path)
-    folder = path.with_name(path.name+".d")
-    folder.mkdir(parents=True,exist_ok=True)
-    record = folder/f"{value['completed_occurrences']:020d}.json"
+    folder = path.with_name(path.name + ".d")
+    folder.mkdir(parents=True, exist_ok=True)
+    record = folder / f"{value['completed_occurrences']:020d}.json"
     if record.exists():
         if json.loads(record.read_text(encoding="utf-8")) != value:
             raise ValueError("Conflicting checkpoint record")
         return
-    atomic_json(record,value)
+    atomic_json(record, value)
 
 
 def source_documents(path: Path, *, revision: str = REVISION, batch_size: int = 64) -> Iterator[ExtractedDocument]:
@@ -113,7 +123,7 @@ def source_documents(path: Path, *, revision: str = REVISION, batch_size: int = 
                 record_id = row["_id"]
                 try:
                     context = json.loads(row["context"])
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     raise ValueError(f"2Wiki record {record_id!r}: invalid context JSON") from None
                 extracted = extract_2wiki({"_id": record_id, "context": context}, split="dev", revision=revision)
                 if record_id in seen:
@@ -123,36 +133,55 @@ def source_documents(path: Path, *, revision: str = REVISION, batch_size: int = 
 
 
 def tokenizer_from_file(path: Path) -> HuggingFaceTokenizer:
-    return HuggingFaceTokenizer(Path(path), name=VOYAGE_REFERENCE_NAME,
-        revision=VOYAGE_REFERENCE_REVISION, expected_sha256=VOYAGE_REFERENCE_SHA256)
+    return HuggingFaceTokenizer(
+        Path(path),
+        name=VOYAGE_REFERENCE_NAME,
+        revision=VOYAGE_REFERENCE_REVISION,
+        expected_sha256=VOYAGE_REFERENCE_SHA256,
+    )
 
 
 def configurations(tokenizer) -> tuple[ChunkingConfig, ...]:
     return (
         ChunkingConfig(strategy=ChunkingStrategy.WHOLE_PASSAGE, tokenizer=tokenizer.identity, max_tokens=32000),
-        ChunkingConfig(strategy=ChunkingStrategy.FIXED_TOKENS, tokenizer=tokenizer.identity, max_tokens=128, overlap=16),
+        ChunkingConfig(
+            strategy=ChunkingStrategy.FIXED_TOKENS, tokenizer=tokenizer.identity, max_tokens=128, overlap=16
+        ),
         ChunkingConfig(strategy=ChunkingStrategy.SENTENCE_PACKING, tokenizer=tokenizer.identity, max_tokens=128),
     )
 
 
 def version_for(extracted: ExtractedDocument) -> DocumentVersion:
-    return DocumentVersion(document_id=uuid7(), version_number=1, content=Content(extracted.text),
-        source=extracted.source, structure=extracted.structure, source_spans=extracted.source_spans)
+    return DocumentVersion(
+        document_id=uuid7(),
+        version_number=1,
+        content=Content(extracted.text),
+        source=extracted.source,
+        structure=extracted.structure,
+        source_spans=extracted.source_spans,
+    )
 
 
 def distribution(histogram):
     total = sum(histogram.values())
     if not total:
         return {"count": 0, "min": None, "median": None, "p95": None, "max": None, "mean": None}
+
     def percentile(fraction):
         target, cumulative = math.ceil(fraction * total), 0
         for value, count in sorted(histogram.items()):
             cumulative += count
             if cumulative >= target:
                 return value
-    return {"count": total, "min": min(histogram), "median": percentile(.5),
-        "p95": percentile(.95), "max": max(histogram),
-        "mean": sum(key * count for key, count in histogram.items()) / total}
+
+    return {
+        "count": total,
+        "min": min(histogram),
+        "median": percentile(0.5),
+        "p95": percentile(0.95),
+        "max": max(histogram),
+        "mean": sum(key * count for key, count in histogram.items()) / total,
+    }
 
 
 def audit_corpus(path, tokenizer, *, expected_sha256=FILE_SHA256, revision=REVISION, records_path=None):
@@ -161,8 +190,17 @@ def audit_corpus(path, tokenizer, *, expected_sha256=FILE_SHA256, revision=REVIS
     contents, layouts, questions = set(), set(), set()
     ranges = [set() for _ in configs]
     cache = {}
-    metrics = [{"memberships": 0, "split_occurrences": 0, "sentence_count": 0,
-                "whole_sentences_covered": 0, "chars": Counter(), "tokens": Counter()} for _ in configs]
+    metrics = [
+        {
+            "memberships": 0,
+            "split_occurrences": 0,
+            "sentence_count": 0,
+            "whole_sentences_covered": 0,
+            "chars": Counter(),
+            "tokens": Counter(),
+        }
+        for _ in configs
+    ]
     total_bytes = unique_bytes = occurrences = 0
     ordered = sha256()
     output = Path(records_path).open("w", encoding="utf-8", newline="\n") if records_path else None
@@ -186,10 +224,14 @@ def audit_corpus(path, tokenizer, *, expected_sha256=FILE_SHA256, revision=REVIS
                     plan = chunk_document(version, config=config, tokenizer=tokenizer)
                     plans.append(tuple((c.start, c.end, len(tokenizer.offsets(c.text))) for c in plan.chunks))
                 cache[layout] = tuple(plans)
-            descriptor = {"record_locator": doc.source.record_locator, "content_sha256": content_hash,
-                "characters": len(doc.text), "utf8_bytes": size,
+            descriptor = {
+                "record_locator": doc.source.record_locator,
+                "content_sha256": content_hash,
+                "characters": len(doc.text),
+                "utf8_bytes": size,
                 "sentence_spans_sha256": fingerprint([(s.start, s.end) for s in doc.source_spans]),
-                "chunk_counts": [len(p) for p in cache[layout]]}
+                "chunk_counts": [len(p) for p in cache[layout]],
+            }
             line = json.dumps(descriptor, sort_keys=True, ensure_ascii=False, separators=(",", ":")) + "\n"
             ordered.update(line.encode("utf-8"))
             if output:
@@ -200,7 +242,8 @@ def audit_corpus(path, tokenizer, *, expected_sha256=FILE_SHA256, revision=REVIS
                 metric["split_occurrences"] += len(plan) > 1
                 metric["sentence_count"] += len(doc.source_spans)
                 metric["whole_sentences_covered"] += sum(
-                    any(a <= span.start < span.end <= b for a, b, _ in plan) for span in doc.source_spans)
+                    any(a <= span.start < span.end <= b for a, b, _ in plan) for span in doc.source_spans
+                )
                 for start, end, tokens in plan:
                     ranges[index].add((content_hash, start, end))
                     metric["chars"][end - start] += 1
@@ -208,25 +251,58 @@ def audit_corpus(path, tokenizer, *, expected_sha256=FILE_SHA256, revision=REVIS
     finally:
         if output:
             output.close()
-    return {"manifest_version": "2wiki-corpus-v1", "dataset": DATASET_ID, "revision": revision,
-        "splits": ["dev"], "selection": "complete pinned development split, original Parquet row/context order",
-        "input_sha256": digest, "question_rows": len(questions), "passage_occurrences": occurrences,
-        "unique_source_occurrences": occurrences, "unique_exact_contents": len(contents),
-        "duplicate_occurrences": occurrences - len(contents), "excluded_records": 0,
-        "occurrence_text_utf8_bytes": total_bytes, "unique_text_utf8_bytes": unique_bytes,
-        "unique_sentence_layouts": len(layouts), "ordered_records_sha256": ordered.hexdigest(),
+    return {
+        "manifest_version": "2wiki-corpus-v1",
+        "dataset": DATASET_ID,
+        "revision": revision,
+        "splits": ["dev"],
+        "selection": "complete pinned development split, original Parquet row/context order",
+        "input_sha256": digest,
+        "question_rows": len(questions),
+        "passage_occurrences": occurrences,
+        "unique_source_occurrences": occurrences,
+        "unique_exact_contents": len(contents),
+        "duplicate_occurrences": occurrences - len(contents),
+        "excluded_records": 0,
+        "occurrence_text_utf8_bytes": total_bytes,
+        "unique_text_utf8_bytes": unique_bytes,
+        "unique_sentence_layouts": len(layouts),
+        "ordered_records_sha256": ordered.hexdigest(),
         "counting_limitation": "Exact-text uniqueness is a conservative baseline, not proof of semantic independence. Chunks are excluded.",
-        "chunking": [{"configuration": asdict(config), "memberships": metric["memberships"],
-            "unique_content_ranges": len(keys), "split_occurrences": metric["split_occurrences"],
-            "sentences": metric["sentence_count"], "whole_sentences_covered": metric["whole_sentences_covered"],
-            "characters": distribution(metric["chars"]), "reference_tokens": distribution(metric["tokens"])}
-            for config, metric, keys in zip(configs, metrics, ranges, strict=True)]}
+        "chunking": [
+            {
+                "configuration": asdict(config),
+                "memberships": metric["memberships"],
+                "unique_content_ranges": len(keys),
+                "split_occurrences": metric["split_occurrences"],
+                "sentences": metric["sentence_count"],
+                "whole_sentences_covered": metric["whole_sentences_covered"],
+                "characters": distribution(metric["chars"]),
+                "reference_tokens": distribution(metric["tokens"]),
+            }
+            for config, metric, keys in zip(configs, metrics, ranges, strict=True)
+        ],
+    }
 
 
-async def process_corpus(path, repository, plans, tokenizer, config, *, checkpoint_path,
-                         target_identity, batch_size=128, concurrency=8, stop_after=None,
-                         expected_sha256=FILE_SHA256, revision=REVISION, min_free_bytes=512 * 1024**2,
-                         progress=None, start_at=0):
+async def process_corpus(
+    path,
+    repository,
+    plans,
+    tokenizer,
+    config,
+    *,
+    checkpoint_path,
+    target_identity,
+    batch_size=128,
+    concurrency=8,
+    stop_after=None,
+    expected_sha256=FILE_SHA256,
+    revision=REVISION,
+    min_free_bytes=512 * 1024**2,
+    progress=None,
+    start_at=0,
+):
     """Commit-before-checkpoint. Replay an interrupted batch with existing idempotent operations.
 
     One operator process owns the checkpoint. No distributed job/lease guarantee
@@ -243,25 +319,36 @@ async def process_corpus(path, repository, plans, tokenizer, config, *, checkpoi
     if not isinstance(target_identity, str) or not target_identity:
         raise ValueError("An explicit database identity is required")
     digest = verify_input(path, expected_sha256)
-    identity_values = {"file_sha256": digest, "dataset_revision": revision,
-        "selection": "complete-dev", "config": asdict(config), "owner_id": None,
-        "target_identity": target_identity}
+    identity_values = {
+        "file_sha256": digest,
+        "dataset_revision": revision,
+        "selection": "complete-dev",
+        "config": asdict(config),
+        "owner_id": None,
+        "target_identity": target_identity,
+    }
     # Preserve this task's earlier unpartitioned checkpoints. Both signatures
     # bind the same input/configuration/database; the old form implies start 0.
     allowed_identities = {fingerprint(identity_values)} if start_at == 0 else set()
-    identity = fingerprint({**identity_values,"range_start":start_at})
+    identity = fingerprint({**identity_values, "range_start": start_at})
     allowed_identities.add(identity)
     checkpoint_path = Path(checkpoint_path)
     saved = load_checkpoint(checkpoint_path) or {
-        "format_version": 1, "identity": identity, "completed_occurrences": start_at}
+        "format_version": 1,
+        "identity": identity,
+        "completed_occurrences": start_at,
+    }
     if saved.get("format_version") != 1 or saved.get("identity") not in allowed_identities:
         raise ValueError("Checkpoint belongs to a different dataset, configuration, owner or database")
     cursor = saved["completed_occurrences"]
     if type(cursor) is not int or cursor < start_at:
         raise ValueError("Invalid checkpoint cursor")
     started = perf_counter()
-    timings = {"registration_worker_seconds": 0.0, "chunking_worker_seconds": 0.0,
-               "plan_persistence_worker_seconds": 0.0}
+    timings = {
+        "registration_worker_seconds": 0.0,
+        "chunking_worker_seconds": 0.0,
+        "plan_persistence_worker_seconds": 0.0,
+    }
     attempted = succeeded = 0
     failure = None
     semaphore = asyncio.Semaphore(concurrency)
@@ -297,16 +384,20 @@ async def process_corpus(path, repository, plans, tokenizer, config, *, checkpoi
                 results += [None] * (len(batch) - 1)
         else:
             results = await asyncio.gather(*(one(item) for item in batch), return_exceptions=True)
-        errors = [(item, result) for item, result in zip(batch, results, strict=True)
-                  if isinstance(result, BaseException)]
+        errors = [
+            (item, result) for item, result in zip(batch, results, strict=True) if isinstance(result, BaseException)
+        ]
         if errors:
             item, error = errors[0]
-            failure = {"category": "batch_failure", "error_type": type(error).__name__,
-                "record_locator": item.source.record_locator, "failed_operations": len(errors)}
+            failure = {
+                "category": "batch_failure",
+                "error_type": type(error).__name__,
+                "record_locator": item.source.record_locator,
+                "failed_operations": len(errors),
+            }
             return False
         cursor += len(batch)
-        save_checkpoint(checkpoint_path, {"format_version": 1, "identity": identity,
-                                     "completed_occurrences": cursor})
+        save_checkpoint(checkpoint_path, {"format_version": 1, "identity": identity, "completed_occurrences": cursor})
         if progress:
             progress(cursor)
         return True
@@ -330,11 +421,20 @@ async def process_corpus(path, repository, plans, tokenizer, config, *, checkpoi
         await flush(batch)
     if cursor > seen:
         raise ValueError("Checkpoint exceeds the selected dataset")
-    return {"input_sha256": digest, "checkpoint_identity": identity,
-        "range_start": start_at, "resumed_from": saved["completed_occurrences"], "completed_occurrences": cursor,
-        "successful_operations_this_run": succeeded, "attempted_operations_this_run": attempted,
-        "duration_seconds": perf_counter() - started, **timings, "failure": failure,
-        "embeddings_generated": 0, "activation_performed": False}
+    return {
+        "input_sha256": digest,
+        "checkpoint_identity": identity,
+        "range_start": start_at,
+        "resumed_from": saved["completed_occurrences"],
+        "completed_occurrences": cursor,
+        "successful_operations_this_run": succeeded,
+        "attempted_operations_this_run": attempted,
+        "duration_seconds": perf_counter() - started,
+        **timings,
+        "failure": failure,
+        "embeddings_generated": 0,
+        "activation_performed": False,
+    }
 
 
 def main():
@@ -345,10 +445,20 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     start = perf_counter()
-    manifest = audit_corpus(args.dataset, tokenizer_from_file(args.tokenizer), records_path=args.output / "records.jsonl")
+    manifest = audit_corpus(
+        args.dataset, tokenizer_from_file(args.tokenizer), records_path=args.output / "records.jsonl"
+    )
     atomic_json(args.output / "manifest.json", manifest)
-    print(json.dumps({"occurrences": manifest["passage_occurrences"],
-        "unique_contents": manifest["unique_exact_contents"], "duration_seconds": perf_counter() - start}, ensure_ascii=True))
+    print(
+        json.dumps(
+            {
+                "occurrences": manifest["passage_occurrences"],
+                "unique_contents": manifest["unique_exact_contents"],
+                "duration_seconds": perf_counter() - start,
+            },
+            ensure_ascii=True,
+        )
+    )
 
 
 if __name__ == "__main__":

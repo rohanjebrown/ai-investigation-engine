@@ -6,7 +6,9 @@ from pathlib import Path
 from urllib.request import urlopen
 
 from investigation_engine.infrastructure.tokenization.huggingface_tokenizer import (
-    VOYAGE_REFERENCE_NAME, VOYAGE_REFERENCE_REVISION, VOYAGE_REFERENCE_SHA256,
+    VOYAGE_REFERENCE_NAME,
+    VOYAGE_REFERENCE_REVISION,
+    VOYAGE_REFERENCE_SHA256,
 )
 
 

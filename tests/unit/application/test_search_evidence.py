@@ -21,11 +21,20 @@ def search(tokenizer):
     config = ChunkingConfig(strategy=ChunkingStrategy.WHOLE_PASSAGE, tokenizer=tokenizer.identity, max_tokens=100)
     profile = EmbeddingConfig(provider="synthetic", model_id="known-cosine")
     vector = (1.0,) + (0.0,) * 767
-    provider = SimpleNamespace(configuration=profile, embed_query=AsyncMock(return_value=vector),
-                               embed_documents=AsyncMock(side_effect=AssertionError("Document formatting used for query")))
+    provider = SimpleNamespace(
+        configuration=profile,
+        embed_query=AsyncMock(return_value=vector),
+        embed_documents=AsyncMock(side_effect=AssertionError("Document formatting used for query")),
+    )
     repository = SimpleNamespace(search=AsyncMock(return_value=()))
-    return SimpleNamespace(use_case=SearchEvidence(repository, provider, config, profile),
-                           provider=provider, repository=repository, config=config, profile=profile, vector=vector)
+    return SimpleNamespace(
+        use_case=SearchEvidence(repository, provider, config, profile),
+        provider=provider,
+        repository=repository,
+        config=config,
+        profile=profile,
+        vector=vector,
+    )
 
 
 async def test_exact_query_and_trusted_scope_pass_to_selected_profile(search):
@@ -35,7 +44,8 @@ async def test_exact_query_and_trusted_scope_pass_to_selected_profile(search):
     search.provider.embed_query.assert_awaited_once_with(question)
     search.provider.embed_documents.assert_not_called()
     search.repository.search.assert_awaited_once_with(
-        search.vector, search.config, search.profile, owner_id="principal:alice", limit=3)
+        search.vector, search.config, search.profile, owner_id="principal:alice", limit=3
+    )
 
 
 @pytest.mark.parametrize("question", ["", " \t\u0085", None, 17, "\ud800"])
@@ -73,17 +83,25 @@ async def test_profile_cannot_change_during_query(search):
     async def change_profile(question):
         search.provider.configuration = replace(search.profile, model_id="different")
         return search.vector
+
     search.provider.embed_query.side_effect = change_profile
     with pytest.raises(EmbeddingInputError, match="changed"):
         await search.use_case.execute("question", owner_id=None)
     search.repository.search.assert_not_called()
 
 
-@pytest.mark.parametrize("vector", [
-    (1.0,) * 767, (1.0,) * 769, (0.0,) * 768,
-    (float("nan"),) + (0.0,) * 767, (float("inf"),) + (0.0,) * 767,
-    (1e100,) * 768, (1e-100,) * 768,
-])
+@pytest.mark.parametrize(
+    "vector",
+    [
+        (1.0,) * 767,
+        (1.0,) * 769,
+        (0.0,) * 768,
+        (float("nan"),) + (0.0,) * 767,
+        (float("inf"),) + (0.0,) * 767,
+        (1e100,) * 768,
+        (1e-100,) * 768,
+    ],
+)
 async def test_bad_query_vectors_fail_before_database_io(search, vector):
     search.provider.embed_query.return_value = vector
     with pytest.raises(EmbeddingResponseError, match="storage"):
@@ -103,18 +121,31 @@ async def test_provider_and_repository_failures_propagate(search):
 
 
 def test_source_intersections_preserve_original_bounds_and_native_locators():
-    spans = tuple(SourceSpan(start=a, end=b, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=i),))
-                  for i, (a, b) in enumerate(((0, 3), (4, 8), (8, 12))))
+    spans = tuple(
+        SourceSpan(start=a, end=b, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=i),))
+        for i, (a, b) in enumerate(((0, 3), (4, 8), (8, 12)))
+    )
     assert intersecting_source_spans(spans, 2, 8) == spans[:2]
     assert intersecting_source_spans(spans, 3, 4) == ()
     assert intersecting_source_spans((), 0, 1) == ()
 
 
 def test_evidence_preserves_source_identity_with_defensive_provenance_copies():
-    source = SourceReference(kind=SourceKind.DATASET, source_id="source", record_locator={"context": [1]},
-                             metadata={"labels": ["original"]})
-    fields = dict(document_id=uuid7(), document_version_id=uuid7(), content_sha256="0" * 64,
-                  start=2, end=4, text="😀a", source=source, source_spans=(), score=0.75, rank=1)
+    source = SourceReference(
+        kind=SourceKind.DATASET, source_id="source", record_locator={"context": [1]}, metadata={"labels": ["original"]}
+    )
+    fields = dict(
+        document_id=uuid7(),
+        document_version_id=uuid7(),
+        content_sha256="0" * 64,
+        start=2,
+        end=4,
+        text="😀a",
+        source=source,
+        source_spans=(),
+        score=0.75,
+        rank=1,
+    )
     first, second = Evidence(**fields), Evidence(**fields)
     first.source.record_locator["context"].append(2)
     source.metadata["labels"].append("changed")
@@ -129,26 +160,51 @@ def test_sql_blankness_characters_match_python_strip_exactly():
 
 async def test_hybrid_embeds_once_and_requests_independent_bounded_channels(search):
     channels = SimpleNamespace(search_channels=AsyncMock(return_value=((), ())))
-    service = SearchEvidence(search.repository, search.provider, search.config, search.profile,
-        mode="hybrid", hybrid_repository=channels, semantic_candidates=7, keyword_candidates=11, rrf_k=20)
+    service = SearchEvidence(
+        search.repository,
+        search.provider,
+        search.config,
+        search.profile,
+        mode="hybrid",
+        hybrid_repository=channels,
+        semantic_candidates=7,
+        keyword_candidates=11,
+        rrf_k=20,
+    )
     assert await service.execute("  Original query 😀 ", 3, owner_id="trusted") == ()
     search.provider.embed_query.assert_awaited_once_with("  Original query 😀 ")
-    channels.search_channels.assert_awaited_once_with(search.vector, "  Original query 😀 ", search.config, search.profile,
-        owner_id="trusted", semantic_limit=7, keyword_limit=11)
+    channels.search_channels.assert_awaited_once_with(
+        search.vector,
+        "  Original query 😀 ",
+        search.config,
+        search.profile,
+        owner_id="trusted",
+        semantic_limit=7,
+        keyword_limit=11,
+    )
     search.repository.search.assert_not_called()
 
 
 async def test_hybrid_channel_failure_does_not_silently_fall_back_to_semantic(search):
     channels = SimpleNamespace(search_channels=AsyncMock(side_effect=RepositoryError("keyword failed")))
-    service = SearchEvidence(search.repository, search.provider, search.config, search.profile,
-                             mode="hybrid", hybrid_repository=channels)
+    service = SearchEvidence(
+        search.repository, search.provider, search.config, search.profile, mode="hybrid", hybrid_repository=channels
+    )
     with pytest.raises(RepositoryError, match="keyword failed"):
         await service.execute("q", owner_id=None)
     search.repository.search.assert_not_called()
 
 
-@pytest.mark.parametrize("options", [dict(mode="keyword"), dict(mode="hybrid"), dict(semantic_candidates=0),
-    dict(keyword_candidates=101), dict(rrf_k=-1)])
+@pytest.mark.parametrize(
+    "options",
+    [
+        dict(mode="keyword"),
+        dict(mode="hybrid"),
+        dict(semantic_candidates=0),
+        dict(keyword_candidates=101),
+        dict(rrf_k=-1),
+    ],
+)
 def test_invalid_server_retrieval_configuration_fails_before_io(search, options):
     with pytest.raises(ValueError):
         SearchEvidence(search.repository, search.provider, search.config, search.profile, **options)

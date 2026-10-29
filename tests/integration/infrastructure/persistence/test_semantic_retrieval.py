@@ -18,12 +18,24 @@ from investigation_engine.application.use_cases.search_evidence import SearchEvi
 from investigation_engine.domain.source_span import LocatorKind, SourceLocator, SourceSpan
 from investigation_engine.infrastructure.persistence._document_mapping import _version_row
 from investigation_engine.infrastructure.persistence.models import (
-    ChunkEmbeddingRow, ChunkMembershipRow, ChunkingConfigurationRow, ContentRow, DocumentRow,
-    DocumentVersionRow, EmbeddingConfigurationRow, VersionChunkPlanRow,
+    ChunkEmbeddingRow,
+    ChunkingConfigurationRow,
+    ChunkMembershipRow,
+    ContentRow,
+    DocumentRow,
+    DocumentVersionRow,
+    EmbeddingConfigurationRow,
+    VersionChunkPlanRow,
 )
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (
+    PostgreSQLDocumentActivationRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
+    PostgreSQLEmbeddingRepository,
+)
 from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import PostgreSQLEvidenceRepository
 
 
@@ -66,7 +78,9 @@ def retrieval(sessions, repository, registration):
     workflow = IndexDocumentVersion(plans, embeddings, activation, provider, max_attempts=1)
     evidence = PostgreSQLEvidenceRepository(sessions)
 
-    async def create(body="passage", *, owner_id=None, config=config, activate=True, store=False, spans=(), source=None):
+    async def create(
+        body="passage", *, owner_id=None, config=config, activate=True, store=False, spans=(), source=None
+    ):
         document, version = registration(body=body, source_id=str(uuid7()), owner_id=owner_id, source_spans=spans)
         if source is not None:
             version = replace(version, source=source)
@@ -84,14 +98,28 @@ def retrieval(sessions, repository, registration):
     def search(config=config, profile=None):
         return SearchEvidence(evidence, provider, config, profile or provider.configuration)
 
-    return SimpleNamespace(create=create, config=config, plans=plans, embeddings=embeddings,
-                           activation=activation, workflow=workflow, provider=provider, evidence=evidence, search=search)
+    return SimpleNamespace(
+        create=create,
+        config=config,
+        plans=plans,
+        embeddings=embeddings,
+        activation=activation,
+        workflow=workflow,
+        provider=provider,
+        evidence=evidence,
+        search=search,
+    )
 
 
 async def test_end_to_end_known_cosine_order_limits_ties_and_restarted_search(retrieval, sessions, db_engine):
     r = retrieval
-    r.provider.vectors = {"same direction": vector(2), "scaled direction": vector(7),
-                          "diagonal": vector(1, 1), "orthogonal": vector(0, 3), "opposite": vector(-1)}
+    r.provider.vectors = {
+        "same direction": vector(2),
+        "scaled direction": vector(7),
+        "diagonal": vector(1, 1),
+        "orthogonal": vector(0, 3),
+        "opposite": vector(-1),
+    }
     items = [await r.create(body) for body in r.provider.vectors]
     before = tuple(r.provider.documents)
     hits = await r.search().execute("Which direction?", owner_id=None)
@@ -118,20 +146,34 @@ async def test_filter_before_top_k_with_owner_metadata_deletion_and_inactive_ver
     deleted = await r.create("deleted nearest")
     await r.create("inactive nearest", activate=False, store=True)
     with db_engine.begin() as connection:
-        connection.execute(update(DocumentRow).where(DocumentRow.id == deleted.document.id).values(deleted_at=datetime.now(UTC)))
+        connection.execute(
+            update(DocumentRow).where(DocumentRow.id == deleted.document.id).values(deleted_at=datetime.now(UTC))
+        )
     assert [hit.document_id for hit in await r.search().execute("q", 1, owner_id=None)] == [shared.document.id]
-    assert [hit.document_id for hit in await r.search().execute("q", 1, owner_id="principal:alice")] == [alice.document.id]
+    assert [hit.document_id for hit in await r.search().execute("q", 1, owner_id="principal:alice")] == [
+        alice.document.id
+    ]
     assert [hit.document_id for hit in await r.search().execute("q", 1, owner_id="principal:bob")] == [bob.document.id]
-    assert {hit.document_id for hit in await r.search().execute("q", owner_id="principal:alice")} == {shared.document.id, alice.document.id}
-    assert {hit.document_id for hit in await r.search().execute("q", owner_id="principal:bob")} == {shared.document.id, bob.document.id}
+    assert {hit.document_id for hit in await r.search().execute("q", owner_id="principal:alice")} == {
+        shared.document.id,
+        alice.document.id,
+    }
+    assert {hit.document_id for hit in await r.search().execute("q", owner_id="principal:bob")} == {
+        shared.document.id,
+        bob.document.id,
+    }
 
 
 async def test_shared_vector_retains_independent_source_occurrences_and_exact_provenance(retrieval, db_engine):
     r = retrieval
     a = await r.create("identical source content")
-    source = replace(a.version.source, source_id="another dataset occurrence", revision="pinned-revision",
-                     record_locator={"split": "dev", "question_id": "question-2", "context_position": 9},
-                     metadata={"title": "Distinct passage title"})
+    source = replace(
+        a.version.source,
+        source_id="another dataset occurrence",
+        revision="pinned-revision",
+        record_locator={"split": "dev", "question_id": "question-2", "context_position": 9},
+        metadata={"title": "Distinct passage title"},
+    )
     b = await r.create("identical source content", source=source)
     hits = await r.search().execute("q", owner_id=None)
     assert {hit.identity for hit in hits} == {(a.version.id, 0, 24), (b.version.id, 0, 24)}
@@ -151,8 +193,14 @@ async def test_unicode_ranges_resolve_multiple_original_partial_spans(retrieval)
     spans = (
         SourceSpan(start=0, end=2, locators=(SourceLocator(kind=LocatorKind.PAGE, index=0),)),
         SourceSpan(start=3, end=6, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=4),)),
-        SourceSpan(start=7, end=10, locators=(SourceLocator(kind=LocatorKind.PARAGRAPH, index=2),
-                                          SourceLocator(kind=LocatorKind.LINE, index=8))),
+        SourceSpan(
+            start=7,
+            end=10,
+            locators=(
+                SourceLocator(kind=LocatorKind.PARAGRAPH, index=2),
+                SourceLocator(kind=LocatorKind.LINE, index=8),
+            ),
+        ),
     )
     config = replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=5)
     item = await r.create(body, config=config, spans=spans)
@@ -179,8 +227,13 @@ async def test_superseded_version_and_old_locations_are_excluded(retrieval, sess
     old = await r.create("same content")
     span = SourceSpan(start=0, end=12, locators=(SourceLocator(kind=LocatorKind.PAGE, index=7),))
     # Fixture setup only: appending source revisions is outside the registration API.
-    version = replace(old.version, id=uuid7(), version_number=2, source=replace(old.version.source, revision="2"),
-                      source_spans=(span,))
+    version = replace(
+        old.version,
+        id=uuid7(),
+        version_number=2,
+        source=replace(old.version.source, revision="2"),
+        source_spans=(span,),
+    )
     async with sessions() as session:
         async with session.begin():
             session.add(_version_row(version))
@@ -207,7 +260,9 @@ async def test_selected_embedding_profile_requires_every_eligible_vector_before_
     assert await r.search(config).execute("q", owner_id=None) == ()
 
 
-@pytest.mark.parametrize("changes", [dict(provider="other-provider"), dict(model_id="other-model"), dict(model_revision=None)])
+@pytest.mark.parametrize(
+    "changes", [dict(provider="other-provider"), dict(model_id="other-model"), dict(model_revision=None)]
+)
 async def test_exact_serving_embedding_identity_prevents_cross_profile_search(retrieval, changes):
     r = retrieval
     await r.create()
@@ -220,8 +275,9 @@ async def test_selected_chunking_profile_requires_complete_plan(retrieval):
     item = await r.create("ab")
     other = replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=1)
     assert await r.search(other).execute("q", owner_id=None) == ()
-    plan = replace(item.plan, config=other, chunks=tuple(
-        replace(item.plan.chunks[0], start=i, end=i + 1) for i in range(2)))
+    plan = replace(
+        item.plan, config=other, chunks=tuple(replace(item.plan.chunks[0], start=i, end=i + 1) for i in range(2))
+    )
     await r.plans.save(plan)
     await r.embeddings.save(plan.chunks[0], r.provider.configuration, vector())
     assert await r.search(other).execute("q", owner_id=None) == ()
@@ -241,12 +297,19 @@ async def test_invalid_active_plan_is_excluded_before_limit(retrieval, db_engine
         if corruption == "missing":
             connection.execute(delete(ChunkMembershipRow).where(member, ChunkMembershipRow.ordinal == 1))
         elif corruption == "ordinal":
-            connection.execute(update(ChunkMembershipRow).where(member, ChunkMembershipRow.ordinal == 1).values(ordinal=2))
+            connection.execute(
+                update(ChunkMembershipRow).where(member, ChunkMembershipRow.ordinal == 1).values(ordinal=2)
+            )
         elif corruption == "count":
-            connection.execute(update(VersionChunkPlanRow).where(VersionChunkPlanRow.document_version_id == bad.version.id)
-                               .values(expected_chunk_count=3))
+            connection.execute(
+                update(VersionChunkPlanRow)
+                .where(VersionChunkPlanRow.document_version_id == bad.version.id)
+                .values(expected_chunk_count=3)
+            )
         elif corruption == "gap":
-            connection.execute(update(ChunkMembershipRow).where(member, ChunkMembershipRow.ordinal == 1).values(start=3))
+            connection.execute(
+                update(ChunkMembershipRow).where(member, ChunkMembershipRow.ordinal == 1).values(start=3)
+            )
         else:
             connection.execute(update(ChunkMembershipRow).where(member, ChunkMembershipRow.ordinal == 1).values(end=5))
     hits = await r.search(config).execute("q", 1, owner_id=None)
@@ -262,8 +325,9 @@ async def test_python_unicode_whitespace_agrees_with_indexer_and_empty_active_st
     # Legacy invalid pointers must not make blank/empty documents searchable.
     with db_engine.begin() as connection:
         for item in (blank, empty):
-            connection.execute(update(DocumentRow).where(DocumentRow.id == item.document.id)
-                               .values(current_version_id=item.version.id))
+            connection.execute(
+                update(DocumentRow).where(DocumentRow.id == item.document.id).values(current_version_id=item.version.id)
+            )
     hits = await r.search(config).execute("q", owner_id=None)
     assert [(hit.document_id, hit.start, hit.end, hit.text) for hit in hits] == [(mixed.document.id, 3, 4, "😀")]
 
@@ -273,12 +337,22 @@ async def test_equivalent_embedding_rows_do_not_duplicate_or_change_reused_vecto
     item = await r.create()
     with db_engine.begin() as connection:
         values = connection.execute(select(EmbeddingConfigurationRow)).mappings().one()
-        duplicate_id = connection.scalar(insert(EmbeddingConfigurationRow).values(
-            **{k: v for k, v in values.items() if k != "id"}).returning(EmbeddingConfigurationRow.id))
+        duplicate_id = connection.scalar(
+            insert(EmbeddingConfigurationRow)
+            .values(**{k: v for k, v in values.items() if k != "id"})
+            .returning(EmbeddingConfigurationRow.id)
+        )
         chunk = item.plan.chunks[0]
-        connection.execute(insert(ChunkEmbeddingRow).values(
-            embedding_configuration_id=duplicate_id, content_sha256=bytes.fromhex(chunk.content_sha256),
-            start=chunk.start, end=chunk.end, embedding=list(vector(-1)), created_at=datetime.now(UTC)))
+        connection.execute(
+            insert(ChunkEmbeddingRow).values(
+                embedding_configuration_id=duplicate_id,
+                content_sha256=bytes.fromhex(chunk.content_sha256),
+                start=chunk.start,
+                end=chunk.end,
+                embedding=list(vector(-1)),
+                created_at=datetime.now(UTC),
+            )
+        )
     hits = await r.search().execute("q", owner_id=None)
     assert len(hits) == 1 and hits[0].score == pytest.approx(1)
 
@@ -288,12 +362,28 @@ async def test_ambiguous_equivalent_chunk_plans_are_not_served(retrieval, db_eng
     item = await r.create()
     with db_engine.begin() as connection:
         values = connection.execute(select(ChunkingConfigurationRow)).mappings().one()
-        duplicate_id = connection.scalar(insert(ChunkingConfigurationRow).values(
-            **{k: v for k, v in values.items() if k != "id"}).returning(ChunkingConfigurationRow.id))
-        connection.execute(insert(VersionChunkPlanRow).values(document_version_id=item.version.id,
-                            chunking_configuration_id=duplicate_id, expected_chunk_count=1, created_at=datetime.now(UTC)))
-        connection.execute(insert(ChunkMembershipRow).values(document_version_id=item.version.id,
-                            chunking_configuration_id=duplicate_id, ordinal=0, start=0, end=len(item.version.content.text)))
+        duplicate_id = connection.scalar(
+            insert(ChunkingConfigurationRow)
+            .values(**{k: v for k, v in values.items() if k != "id"})
+            .returning(ChunkingConfigurationRow.id)
+        )
+        connection.execute(
+            insert(VersionChunkPlanRow).values(
+                document_version_id=item.version.id,
+                chunking_configuration_id=duplicate_id,
+                expected_chunk_count=1,
+                created_at=datetime.now(UTC),
+            )
+        )
+        connection.execute(
+            insert(ChunkMembershipRow).values(
+                document_version_id=item.version.id,
+                chunking_configuration_id=duplicate_id,
+                ordinal=0,
+                start=0,
+                end=len(item.version.content.text),
+            )
+        )
     assert await r.search().execute("q", owner_id=None) == ()
 
 
@@ -349,23 +439,56 @@ async def test_bounded_single_statement_search_over_one_thousand_distinct_vector
             doc_id, version_id = uuid7(), uuid7()
             contents.append(dict(sha256=digest, text=body))
             documents.append({**doc, "id": doc_id, "current_version_id": None})
-            versions.append({**version, "id": version_id, "document_id": doc_id,
-                             "content_sha256": digest, "source_id": f"synthetic:{i}"})
+            versions.append(
+                {
+                    **version,
+                    "id": version_id,
+                    "document_id": doc_id,
+                    "content_sha256": digest,
+                    "source_id": f"synthetic:{i}",
+                }
+            )
             plans.append({**plan, "document_version_id": version_id})
-            memberships.append(dict(document_version_id=version_id, chunking_configuration_id=plan["chunking_configuration_id"],
-                                    ordinal=0, start=0, end=len(body)))
-            embeddings.append({**stored, "content_sha256": digest, "end": len(body),
-                               "embedding": list(vector(i % 10 + 1, 10))})
+            memberships.append(
+                dict(
+                    document_version_id=version_id,
+                    chunking_configuration_id=plan["chunking_configuration_id"],
+                    ordinal=0,
+                    start=0,
+                    end=len(body),
+                )
+            )
+            embeddings.append(
+                {**stored, "content_sha256": digest, "end": len(body), "embedding": list(vector(i % 10 + 1, 10))}
+            )
             pointers.append(dict(doc_key=doc_id, version_key=version_id))
-        for model, rows in ((ContentRow, contents), (DocumentRow, documents), (DocumentVersionRow, versions),
-                            (VersionChunkPlanRow, plans), (ChunkMembershipRow, memberships), (ChunkEmbeddingRow, embeddings)):
+        for model, rows in (
+            (ContentRow, contents),
+            (DocumentRow, documents),
+            (DocumentVersionRow, versions),
+            (VersionChunkPlanRow, plans),
+            (ChunkMembershipRow, memberships),
+            (ChunkEmbeddingRow, embeddings),
+        ):
             connection.execute(insert(model.__table__), rows)
-        connection.execute(update(DocumentRow.__table__).where(DocumentRow.id == bindparam("doc_key"))
-                           .values(current_version_id=bindparam("version_key")), pointers)
+        connection.execute(
+            update(DocumentRow.__table__)
+            .where(DocumentRow.id == bindparam("doc_key"))
+            .values(current_version_id=bindparam("version_key")),
+            pointers,
+        )
         # Fresh bulk fixtures have no autovacuum statistics yet. Analyze only
         # these disposable tables so the timing uses representative estimates.
-        for model in (ContentRow, DocumentRow, DocumentVersionRow, VersionChunkPlanRow,
-                      ChunkMembershipRow, ChunkEmbeddingRow, ChunkingConfigurationRow, EmbeddingConfigurationRow):
+        for model in (
+            ContentRow,
+            DocumentRow,
+            DocumentVersionRow,
+            VersionChunkPlanRow,
+            ChunkMembershipRow,
+            ChunkEmbeddingRow,
+            ChunkingConfigurationRow,
+            EmbeddingConfigurationRow,
+        ):
             connection.execute(text(f"ANALYZE {model.__tablename__}"))
 
     statements = []
@@ -387,9 +510,13 @@ async def test_bounded_single_statement_search_over_one_thousand_distinct_vector
     assert len(statements) == 5  # One bounded SQL result, no per-result fetches.
     statement, parameters = statements[-1]
     with db_engine.connect() as connection:
-        explain = connection.exec_driver_sql("EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) " + statement, parameters).scalar_one()[0]
+        explain = connection.exec_driver_sql(
+            "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) " + statement, parameters
+        ).scalar_one()[0]
     assert explain["Plan"]["Actual Rows"] == 10
-    print(f"\nSynthetic exact search: 1,001 active documents / distinct vectors, limit 10, "
-          f"5 consecutive end-to-end calls median={median(times):.2f} ms, "
-          f"EXPLAIN execution={explain['Execution Time']:.2f} ms, "
-          f"planning={explain['Planning Time']:.2f} ms. Not a full-corpus benchmark.")
+    print(
+        f"\nSynthetic exact search: 1,001 active documents / distinct vectors, limit 10, "
+        f"5 consecutive end-to-end calls median={median(times):.2f} ms, "
+        f"EXPLAIN execution={explain['Execution Time']:.2f} ms, "
+        f"planning={explain['Planning Time']:.2f} ms. Not a full-corpus benchmark."
+    )

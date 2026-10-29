@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Protocol
 
+SHA256_HEX_LENGTH = 64
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class TokenizerIdentity:
@@ -12,13 +14,13 @@ class TokenizerIdentity:
     runtime_version: str
 
     def __post_init__(self) -> None:
-        for value in (self.name, self.revision, self.runtime_version):
-            if not isinstance(value, str) or not value.strip():
+        for identity_part in (self.name, self.revision, self.runtime_version):
+            if not isinstance(identity_part, str) or not identity_part.strip():
                 raise ValueError("Tokenizer identity requires nonblank name, revision, and runtime")
         if (
             not isinstance(self.artifact_sha256, str)
-            or len(self.artifact_sha256) != 64
-            or any(c not in "0123456789abcdef" for c in self.artifact_sha256)
+            or len(self.artifact_sha256) != SHA256_HEX_LENGTH
+            or any(hex_digit not in "0123456789abcdef" for hex_digit in self.artifact_sha256)
         ):
             raise ValueError("Tokenizer artifact digest must be a lowercase SHA-256 hex string")
 

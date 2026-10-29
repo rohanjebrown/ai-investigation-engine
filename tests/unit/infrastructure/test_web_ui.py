@@ -17,17 +17,36 @@ from investigation_engine.infrastructure.api.app import create_app
 def web(registration):
     hits = []
     for index in range(2):
-        document, version = registration(body=f"Exact source {index}: 😀 <script>untrusted</script>", source_id=f"source-{index}")
-        hits.append(Evidence(document_id=document.id, document_version_id=version.id,
-            content_sha256=version.content.sha256, start=0, end=len(version.content.text), text=version.content.text,
-            source=version.source, source_spans=(), rank=index + 1, score=1.0))
+        document, version = registration(
+            body=f"Exact source {index}: 😀 <script>untrusted</script>", source_id=f"source-{index}"
+        )
+        hits.append(
+            Evidence(
+                document_id=document.id,
+                document_version_id=version.id,
+                content_sha256=version.content.sha256,
+                start=0,
+                end=len(version.content.text),
+                text=version.content.text,
+                source=version.source,
+                source_spans=(),
+                rank=index + 1,
+                score=1.0,
+            )
+        )
     search = SimpleNamespace(execute=AsyncMock(return_value=tuple(hits)))
-    generator = SimpleNamespace(generate=AsyncMock(return_value=GenerationResult(
-        status=AnswerStatus.ANSWERED, answer="An answer. [E1] [E2]", citations=("E1", "E2"))))
+    generator = SimpleNamespace(
+        generate=AsyncMock(
+            return_value=GenerationResult(
+                status=AnswerStatus.ANSWERED, answer="An answer. [E1] [E2]", citations=("E1", "E2")
+            )
+        )
+    )
 
     @asynccontextmanager
     async def factory():
         yield AnswerQuestion(search, generator)
+
     return SimpleNamespace(app=create_app(service_factory=factory), search=search, generator=generator, hits=hits)
 
 
@@ -53,12 +72,18 @@ async def test_page_and_local_assets_load_without_retrieval_or_generation(web):
             assert ("label", {"for": "question"}) in page.elements
             assert any(tag == "form" and attrs.get("id") == "question-form" for tag, attrs in page.elements)
             assert any(attrs.get("role") == "status" for tag, attrs in page.elements)
-            assets = [attrs.get("src") or attrs.get("href") for tag, attrs in page.elements if tag in ("script", "link")]
+            assets = [
+                attrs.get("src") or attrs.get("href") for tag, attrs in page.elements if tag in ("script", "link")
+            ]
             assert set(assets) == {"/static/app.js", "/static/admin.js", "/static/styles.css"}
             for asset in assets:
                 loaded = await client.get(asset)
                 assert loaded.status_code == 200
-                assert "javascript" in loaded.headers["content-type"] if asset.endswith(".js") else "text/css" in loaded.headers["content-type"]
+                assert (
+                    "javascript" in loaded.headers["content-type"]
+                    if asset.endswith(".js")
+                    else "text/css" in loaded.headers["content-type"]
+                )
             assert (await client.get("/health")).json() == {"status": "ok"}
     web.search.execute.assert_not_called()
     web.generator.generate.assert_not_called()
@@ -88,7 +113,12 @@ async def test_same_app_keeps_question_contract_multiple_sources_and_shared_scop
             assert (await client.post("/questions", json={"question": " "})).status_code == 422
     web.search.execute.assert_awaited_once_with("q", 5, owner_id=None)
     assert sorted(web.app.openapi()["paths"]) == [
-        "/documents", "/documents/{document_id}", "/documents/{document_id}/index", "/health", "/investigations", "/questions",
+        "/documents",
+        "/documents/{document_id}",
+        "/documents/{document_id}/index",
+        "/health",
+        "/investigations",
+        "/questions",
     ]
 
 

@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from typing import Protocol
+
 from investigation_engine.application.embeddings import EmbeddingConfig, EmbeddingVector
 
 

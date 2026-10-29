@@ -2,9 +2,9 @@ from pathlib import Path
 from zipfile import BadZipFile
 
 import docx
+from docx.opc.constants import RELATIONSHIP_TYPE
 from docx.table import Table
 from docx.text.paragraph import Paragraph
-from docx.opc.constants import RELATIONSHIP_TYPE
 from lxml.etree import XMLSyntaxError
 
 from investigation_engine.application.ingestion.extracted_document import ExtractedDocument
@@ -12,7 +12,9 @@ from investigation_engine.domain.provenance import SourceKind, SourceReference
 from investigation_engine.domain.source_span import LocatorKind, SourceLocator, SourceSpan
 from investigation_engine.domain.structural_span import StructuralSpan, StructureKind
 from investigation_engine.infrastructure.ingestion.extraction_errors import (
-    DocumentExtractionError, DocumentLimitExceededError, InsufficientTextError,
+    DocumentExtractionError,
+    DocumentLimitExceededError,
+    InsufficientTextError,
 )
 
 
@@ -44,8 +46,13 @@ def extract_docx(path: Path, *, source_id: str, max_text_chars: int | None = Non
                 start = offset
                 emit(block.text)
                 if offset > start:
-                    spans.append(SourceSpan(start=start, end=offset, locators=prefix + (
-                        SourceLocator(kind=LocatorKind.PARAGRAPH, index=paragraph_index),)))
+                    spans.append(
+                        SourceSpan(
+                            start=start,
+                            end=offset,
+                            locators=prefix + (SourceLocator(kind=LocatorKind.PARAGRAPH, index=paragraph_index),),
+                        )
+                    )
                     structure.append(StructuralSpan(kind=StructureKind.PARAGRAPH, start=start, end=offset))
                 paragraph_index += 1
             elif isinstance(block, Table):
@@ -62,11 +69,19 @@ def extract_docx(path: Path, *, source_id: str, max_text_chars: int | None = Non
                         if cell._tc in seen:
                             continue
                         seen.add(cell._tc)
-                        walk(cell, prefix + (SourceLocator(kind=LocatorKind.TABLE, index=table_index),
-                            SourceLocator(kind=LocatorKind.ROW, index=row_index),
-                            SourceLocator(kind=LocatorKind.CELL, index=cell_index)))
+                        walk(
+                            cell,
+                            prefix
+                            + (
+                                SourceLocator(kind=LocatorKind.TABLE, index=table_index),
+                                SourceLocator(kind=LocatorKind.ROW, index=row_index),
+                                SourceLocator(kind=LocatorKind.CELL, index=cell_index),
+                            ),
+                        )
                 if offset > start:
-                    structure.insert(structure_position, StructuralSpan(kind=StructureKind.TABLE, start=start, end=offset))
+                    structure.insert(
+                        structure_position, StructuralSpan(kind=StructureKind.TABLE, start=start, end=offset)
+                    )
                 table_index += 1
 
     with path.open("rb") as stream:
@@ -77,8 +92,20 @@ def extract_docx(path: Path, *, source_id: str, max_text_chars: int | None = Non
             # Preserve absence instead of reporting those defaults as source metadata.
             if any(rel.reltype == RELATIONSHIP_TYPE.CORE_PROPERTIES for rel in document.part.package.rels.values()):
                 properties = document.core_properties
-                metadata = {key: getattr(properties, key) for key in (
-                    "title", "subject", "author", "keywords", "comments", "category", "language", "last_modified_by", "revision")}
+                metadata = {
+                    key: getattr(properties, key)
+                    for key in (
+                        "title",
+                        "subject",
+                        "author",
+                        "keywords",
+                        "comments",
+                        "category",
+                        "language",
+                        "last_modified_by",
+                        "revision",
+                    )
+                }
                 for key in ("created", "modified", "last_printed"):
                     value = getattr(properties, key)
                     if value is not None:
@@ -90,8 +117,21 @@ def extract_docx(path: Path, *, source_id: str, max_text_chars: int | None = Non
     if not text.strip():
         raise InsufficientTextError(f"DOCX {path.name!r}: no extractable body text; image extraction is unsupported")
     title = metadata.get("title")
-    return ExtractedDocument(text=text, title=title if title and title.strip() else path.name,
-        source=SourceReference(kind=SourceKind.UPLOAD, source_id=source_id, display_name=path.name,
-            metadata={"format": "docx", "filename": path.name, "core_properties": metadata,
-                      "extractor": "python-docx", "extractor_version": docx.__version__}),
-        structure=tuple(structure), source_spans=tuple(spans))
+    return ExtractedDocument(
+        text=text,
+        title=title if title and title.strip() else path.name,
+        source=SourceReference(
+            kind=SourceKind.UPLOAD,
+            source_id=source_id,
+            display_name=path.name,
+            metadata={
+                "format": "docx",
+                "filename": path.name,
+                "core_properties": metadata,
+                "extractor": "python-docx",
+                "extractor_version": docx.__version__,
+            },
+        ),
+        structure=tuple(structure),
+        source_spans=tuple(spans),
+    )

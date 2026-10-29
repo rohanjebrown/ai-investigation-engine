@@ -1,6 +1,7 @@
 """Gemini Developer API text embeddings; no persistence or chunk transformation."""
 
 from collections.abc import Awaitable, Sequence
+from http import HTTPStatus
 from math import hypot, isfinite
 from types import TracebackType
 from typing import Self
@@ -10,8 +11,6 @@ from google import genai
 from google.genai import errors, types
 
 from investigation_engine.application.embeddings import EmbeddingConfig
-from investigation_engine.application.ports.provider_diagnostics import attach_diagnostic, status_category
-
 from investigation_engine.application.ports.embedding_errors import (
     EmbeddingInputError,
     EmbeddingProviderError,
@@ -19,7 +18,7 @@ from investigation_engine.application.ports.embedding_errors import (
     EmbeddingResponseError,
 )
 from investigation_engine.application.ports.embedding_provider import EmbeddingVector
-
+from investigation_engine.application.ports.provider_diagnostics import attach_diagnostic, status_category
 
 MODEL = "gemini-embedding-2"
 DIMENSIONS = 768
@@ -39,9 +38,13 @@ class GeminiEmbeddingProvider:
     Calls must run within the owning async application's client lifetime.
     """
 
-    def __init__(self, *, api_key: str | None,
-                 batch_size: int = DEFAULT_BATCH_SIZE,
-                 batch_token_limit: int = DEFAULT_BATCH_TOKEN_LIMIT) -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str | None,
+        batch_size: int = DEFAULT_BATCH_SIZE,
+        batch_token_limit: int = DEFAULT_BATCH_TOKEN_LIMIT,
+    ) -> None:
         if type(batch_size) is not int or batch_size < 1:
             raise ValueError("batch_size must be a positive integer")
         if type(batch_token_limit) is not int or batch_token_limit < 1:
@@ -53,7 +56,8 @@ class GeminiEmbeddingProvider:
             enterprise=False,
             http_options=types.HttpOptions(
                 base_url="https://generativelanguage.googleapis.com",
-                api_version="v1beta", timeout=60_000,
+                api_version="v1beta",
+                timeout=60_000,
                 retry_options=types.HttpRetryOptions(attempts=1),
             ),
         )
@@ -65,21 +69,26 @@ class GeminiEmbeddingProvider:
 
     @property
     def configuration(self) -> EmbeddingConfig:
-        return EmbeddingConfig(provider="gemini_developer_api", model_id=MODEL,
-                               dimensions=DIMENSIONS, document_format=DOCUMENT_FORMAT_VERSION)
+        return EmbeddingConfig(
+            provider="gemini_developer_api",
+            model_id=MODEL,
+            dimensions=DIMENSIONS,
+            document_format=DOCUMENT_FORMAT_VERSION,
+        )
 
     @property
     def request_counts(self) -> dict[str, int]:
-        return {"count_tokens": self._token_count_requests,
-                "embed_content": self._embed_content_requests}
+        return {"count_tokens": self._token_count_requests, "embed_content": self._embed_content_requests}
 
     async def __aenter__(self) -> Self:
         self._ensure_open()
         return self
 
     async def __aexit__(
-        self, exc_type: type[BaseException] | None,
-        exc: BaseException | None, traceback: TracebackType | None,
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         await self.aclose()
 
@@ -99,8 +108,9 @@ class GeminiEmbeddingProvider:
         inputs = tuple(texts)
         for index, text in enumerate(inputs):
             _validate_text(text, label=f"Document input {index}")
-        contents = tuple(types.Content(parts=[types.Part.from_text(text=f"title: none | text: {text}")])
-                         for text in inputs)
+        contents = tuple(
+            types.Content(parts=[types.Part.from_text(text=f"title: none | text: {text}")]) for text in inputs
+        )
         vectors = []
         group, group_tokens = [], 0
         for content in contents:
@@ -147,9 +157,11 @@ class GeminiEmbeddingProvider:
     async def _send_batch(self, contents: Sequence[types.Content]) -> tuple[EmbeddingVector, ...]:
         response = await self._request(
             self._client.aio.models.embed_content(
-                model=MODEL, contents=contents[0] if len(contents) == 1 else list(contents),
+                model=MODEL,
+                contents=contents[0] if len(contents) == 1 else list(contents),
                 config=types.EmbedContentConfig(output_dimensionality=DIMENSIONS),
-            ), operation="embedding generation",
+            ),
+            operation="embedding generation",
         )
         return self._parse_embeddings(response, expected=len(contents))
 
@@ -180,9 +192,14 @@ class GeminiEmbeddingProvider:
         return tuple(vectors)
 
     def _response_error(self, message, *, operation="embed_content"):
-        return attach_diagnostic(EmbeddingResponseError(message), operation=operation,
-            model_id=MODEL, http_status=200, category="invalid_response",
-            request_count=self._token_count_requests if operation == "count_tokens" else self._embed_content_requests)
+        return attach_diagnostic(
+            EmbeddingResponseError(message),
+            operation=operation,
+            model_id=MODEL,
+            http_status=HTTPStatus.OK,
+            category="invalid_response",
+            request_count=self._token_count_requests if operation == "count_tokens" else self._embed_content_requests,
+        )
 
     async def _request[T](self, request: Awaitable[T], *, operation: str) -> T:
         status = None
@@ -196,13 +213,14 @@ class GeminiEmbeddingProvider:
             code = error.code
             status, category = code, status_category(code)
             cause = RuntimeError(f"Gemini API failure during {operation} (HTTP {code})")
-            if code == 429:
+            if code == HTTPStatus.TOO_MANY_REQUESTS:
                 failure = EmbeddingRateLimitError("Gemini rate or quota limit exceeded")
             elif code in (400, 413, 422):
                 failure = EmbeddingInputError("Gemini rejected the embedding input")
             else:
                 failure = EmbeddingProviderError(
-                    f"Gemini {operation} failed", retryable=code in (408, 425, 500, 502, 503, 504),
+                    f"Gemini {operation} failed",
+                    retryable=code in (408, 425, 500, 502, 503, 504),
                 )
         except httpx.RequestError as error:
             category = "timeout" if isinstance(error, httpx.TimeoutException) else "transport"
@@ -216,11 +234,15 @@ class GeminiEmbeddingProvider:
         # bodies and response echoes. Keep only a sanitized diagnostic cause.
         # CancelledError is not caught and propagates unchanged.
         count = self._token_count_requests if operation == "token counting" else self._embed_content_requests
-        raise attach_diagnostic(failure,
+        raise attach_diagnostic(
+            failure,
             operation="count_tokens" if operation == "token counting" else "embed_content",
-            model_id=MODEL, http_status=status, category=category,
-            retryable=getattr(failure, "retryable", status == 429),
-            request_count=count) from cause
+            model_id=MODEL,
+            http_status=status,
+            category=category,
+            retryable=getattr(failure, "retryable", status == HTTPStatus.TOO_MANY_REQUESTS),
+            request_count=count,
+        ) from cause
 
 
 def _validate_text(text: str, *, label: str) -> None:

@@ -1,9 +1,8 @@
 import io
-from pathlib import Path
 from unittest.mock import Mock
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 from investigation_engine.infrastructure.api import server
 from investigation_engine.infrastructure.api.bootstrap import _engine_options
@@ -41,6 +40,7 @@ def test_invalid_port_fails_before_start(monkeypatch, port):
 
 def test_pool_is_bounded_and_statements_timeout():
     from types import SimpleNamespace
+
     options = _engine_options(SimpleNamespace())
     assert (options["pool_size"], options["max_overflow"], options["pool_timeout"]) == (3, 0, 5)
     assert options["connect_args"]["options"] == "-c statement_timeout=30000"
@@ -56,6 +56,7 @@ def test_tokenizer_fetch_rejects_unpinned_bytes_without_writing(monkeypatch, tmp
 
 def test_tokenizer_fetch_verifies_before_writing(monkeypatch, tmp_path):
     from hashlib import sha256
+
     content = b'{"synthetic":"tokenizer fixture"}'
     monkeypatch.setattr(fetch_runtime, "urlopen", lambda *a, **kw: io.BytesIO(content))
     monkeypatch.setattr(fetch_runtime, "VOYAGE_REFERENCE_SHA256", sha256(content).hexdigest())

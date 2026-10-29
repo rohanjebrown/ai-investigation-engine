@@ -18,20 +18,31 @@ from investigation_engine.domain.provenance import SourceKind, SourceReference
 from investigation_engine.domain.source_span import LocatorKind, SourceLocator, SourceSpan
 from investigation_engine.evaluation.retrieval import RetrievalRun, evaluate, export, fingerprint
 from investigation_engine.infrastructure.persistence.models import DocumentRow, DocumentVersionRow
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (
+    PostgreSQLDocumentActivationRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
+    PostgreSQLEmbeddingRepository,
+)
 from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import PostgreSQLEvidenceRepository
 
 
 async def test_fixed_40_question_suite_compares_real_postgresql_modes_with_fake_ai(
-    sessions, repository, db_engine, tmp_path,
+    sessions,
+    repository,
+    db_engine,
+    tmp_path,
 ):
     root = Path("data/samples/evaluation")
     suite, corpus = (json.loads((root / f"{name}.json").read_text(encoding="utf8")) for name in ("suite", "corpus"))
 
     class Tokenizer:
-        identity = TokenizerIdentity(name="characters", revision="1", artifact_sha256="0" * 64, runtime_version="evaluation-test")
+        identity = TokenizerIdentity(
+            name="characters", revision="1", artifact_sha256="0" * 64, runtime_version="evaluation-test"
+        )
 
         def offsets(self, text):
             return tuple((i, i + 1) for i in range(len(text)))
@@ -50,28 +61,74 @@ async def test_fixed_40_question_suite_compares_real_postgresql_modes_with_fake_
     config = ChunkingConfig(strategy=ChunkingStrategy.WHOLE_PASSAGE, tokenizer=Tokenizer.identity, max_tokens=100000)
     provider = Provider()
     plans = PostgreSQLChunkPlanRepository(sessions)
-    index = IndexDocumentVersion(plans, PostgreSQLEmbeddingRepository(sessions),
-        PostgreSQLDocumentActivationRepository(sessions), provider, max_attempts=1)
+    index = IndexDocumentVersion(
+        plans,
+        PostgreSQLEmbeddingRepository(sessions),
+        PostgreSQLDocumentActivationRepository(sessions),
+        provider,
+        max_attempts=1,
+    )
     for doc in corpus["documents"]:
-        spans = tuple(SourceSpan(start=s["start"], end=s["end"], locators=tuple(
-            SourceLocator(kind=LocatorKind(loc["kind"]), index=loc["index"]) for loc in s["locators"])) for s in doc["source_spans"])
+        spans = tuple(
+            SourceSpan(
+                start=s["start"],
+                end=s["end"],
+                locators=tuple(
+                    SourceLocator(kind=LocatorKind(loc["kind"]), index=loc["index"]) for loc in s["locators"]
+                ),
+            )
+            for s in doc["source_spans"]
+        )
         document = Document(title=doc["title"], owner_id=None)
-        version = DocumentVersion(document_id=document.id, version_number=1, content=Content(doc["text"]),
-            source=SourceReference(**{**doc["source"], "kind": SourceKind(doc["source"]["kind"])}), source_spans=spans)
+        version = DocumentVersion(
+            document_id=document.id,
+            version_number=1,
+            content=Content(doc["text"]),
+            source=SourceReference(**{**doc["source"], "kind": SourceKind(doc["source"]["kind"])}),
+            source_spans=spans,
+        )
         document, version = await repository.register(document, version)
         await plans.save(chunk_document(version, config=config, tokenizer=Tokenizer()))
         await index.execute(document.id, version.id, config, provider.configuration)
     # Attest the source snapshot from actual rows, not only a caller-provided label.
     with db_engine.connect() as connection:
-        actual = connection.execute(select(DocumentVersionRow.source_id, DocumentVersionRow.revision,
-            DocumentVersionRow.record_locator, DocumentVersionRow.content_sha256)).mappings().all()
-        assert connection.scalar(select(func.count()).select_from(DocumentRow).where(DocumentRow.current_version_id.is_not(None))) == corpus["record_count"]
-    assert {(r["source_id"], r["revision"], fingerprint(r["record_locator"]), r["content_sha256"].hex()) for r in actual} == {
-        (d["source"]["source_id"], d["source"]["revision"], fingerprint(d["source"]["record_locator"]), d["content_sha256"]) for d in corpus["documents"]}
+        actual = (
+            connection.execute(
+                select(
+                    DocumentVersionRow.source_id,
+                    DocumentVersionRow.revision,
+                    DocumentVersionRow.record_locator,
+                    DocumentVersionRow.content_sha256,
+                )
+            )
+            .mappings()
+            .all()
+        )
+        assert (
+            connection.scalar(
+                select(func.count()).select_from(DocumentRow).where(DocumentRow.current_version_id.is_not(None))
+            )
+            == corpus["record_count"]
+        )
+    assert {
+        (r["source_id"], r["revision"], fingerprint(r["record_locator"]), r["content_sha256"].hex()) for r in actual
+    } == {
+        (
+            d["source"]["source_id"],
+            d["source"]["revision"],
+            fingerprint(d["source"]["record_locator"]),
+            d["content_sha256"],
+        )
+        for d in corpus["documents"]
+    }
     evidence = PostgreSQLEvidenceRepository(sessions)
-    runs = [(RetrievalRun(name=mode, mode=mode, chunking=asdict(config), embedding=asdict(provider.configuration)),
-             SearchEvidence(evidence, provider, config, provider.configuration, mode=mode, hybrid_repository=evidence))
-            for mode in ("semantic", "hybrid")]
+    runs = [
+        (
+            RetrievalRun(name=mode, mode=mode, chunking=asdict(config), embedding=asdict(provider.configuration)),
+            SearchEvidence(evidence, provider, config, provider.configuration, mode=mode, hybrid_repository=evidence),
+        )
+        for mode in ("semantic", "hybrid")
+    ]
     report = await evaluate(suite, corpus, runs, indexed_corpus_fingerprint=fingerprint(corpus))
     assert provider.query_count == 80
     assert all(run["aggregate"]["status_counts"] == {"ok": 40} for run in report["runs"])
@@ -82,6 +139,13 @@ async def test_fixed_40_question_suite_compares_real_postgresql_modes_with_fake_
     # Capture a small inspectable local result without treating tied fake vectors as model quality.
     output = Path(".cache/evaluation-controlled")
     export(report, output)
-    print(json.dumps({"corpus_records": corpus["record_count"], "unique_contents": corpus["unique_content_count"],
-                      "runs": [{"name": r["configuration"]["name"], "aggregate": r["aggregate"]} for r in report["runs"]],
-                      "comparisons": report["comparisons"]}))
+    print(
+        json.dumps(
+            {
+                "corpus_records": corpus["record_count"],
+                "unique_contents": corpus["unique_content_count"],
+                "runs": [{"name": r["configuration"]["name"], "aggregate": r["aggregate"]} for r in report["runs"]],
+                "comparisons": report["comparisons"],
+            }
+        )
+    )

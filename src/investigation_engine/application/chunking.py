@@ -4,13 +4,13 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from uuid import UUID
 
+from investigation_engine.application.chunking_ranges import CharacterRanges, _fixed_ranges, _sentence_ranges
 from investigation_engine.application.ports.text_tokenizer import (
     TextTokenizer,
     TokenizerIdentity,
 )
 from investigation_engine.domain.content import Content
 from investigation_engine.domain.document_version import DocumentVersion
-from investigation_engine.domain.structural_span import StructureKind
 
 
 class ChunkingStrategy(StrEnum):
@@ -34,28 +34,33 @@ class ChunkingConfig:
             raise ValueError("A supported ChunkingStrategy is required")
         if not isinstance(self.tokenizer, TokenizerIdentity):
             raise ValueError("An immutable TokenizerIdentity is required")
-        if type(self.max_tokens) is not int or self.max_tokens < 1:
-            raise ValueError("Content token budget must be a positive integer")
-        if type(self.overlap) is not int or not 0 <= self.overlap < self.max_tokens:
-            raise ValueError("Overlap must be an integer below the token budget")
+        self._validate_token_limits()
         if self.strategy != ChunkingStrategy.FIXED_TOKENS and self.overlap:
             raise ValueError("Only fixed-token windows support overlap")
+
+    def _validate_token_limits(self) -> None:
+        if type(self.max_tokens) is not int or self.max_tokens < 1:  # noqa: WPS516 - reject bool budgets
+            raise ValueError("Content token budget must be a positive integer")
+        if type(self.overlap) is not int:  # noqa: WPS516 - reject bool overlap
+            raise ValueError("Overlap must be an integer below the token budget")
+        if not 0 <= self.overlap < self.max_tokens:
+            raise ValueError("Overlap must be an integer below the token budget")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Chunk:
     """An exact range, without a new ID, title, provenance, or copied text."""
 
-    content: Content = field(repr=False)
+    content: Content = field(repr=False)  # noqa: WPS110 - this is the domain content field
     start: int
     end: int
 
     def __post_init__(self) -> None:
-        if (
-            type(self.start) is not int
-            or type(self.end) is not int
-            or not 0 <= self.start < self.end <= len(self.content.text)
-        ):
+        # Reject bool values too; bool is a subclass of int.
+        if type(self.start) is not int or type(self.end) is not int:  # noqa: WPS516
+            raise ValueError("Chunk requires a nonempty range within Content")
+        # A chained comparison states the canonical half-open character range.
+        if not 0 <= self.start < self.end <= len(self.content.text):  # noqa: WPS228
             raise ValueError("Chunk requires a nonempty range within Content")
 
     @property
@@ -64,7 +69,7 @@ class Chunk:
 
     @property
     def text(self) -> str:
-        return self.content.text[self.start:self.end]
+        return self.content.text[self.start : self.end]
 
     @property
     def identity(self) -> tuple[str, int, int]:
@@ -98,123 +103,23 @@ def chunk_document(
         raise ValueError("Configuration and actual tokenizer identities differ")
 
     text = version.content.text
-    if not text:
+    if text == "":
         ranges = ()
     elif config.strategy == ChunkingStrategy.SENTENCE_PACKING:
         ranges = _sentence_ranges(version, config.max_tokens, tokenizer)
     else:
         ranges = _fixed_ranges(text, config.max_tokens, config.overlap, tokenizer)
 
+    chunks = _chunks_from_ranges(version.content, ranges)
     return ChunkPlan(
         document_version_id=version.id,
         config=config,
-        chunks=tuple(
-            Chunk(content=version.content, start=start, end=end)
-            for start, end in ranges
-        ),
+        chunks=chunks,
     )
 
 
-def _offsets(text: str, tokenizer: TextTokenizer) -> tuple[tuple[int, int], ...]:
-    offsets = tokenizer.offsets(text)
-    previous_start = previous_end = 0
-    for start, end in offsets:
-        if (
-            type(start) is not int
-            or type(end) is not int
-            or not 0 <= start < end <= len(text)
-            or start < previous_start
-            or end < previous_end
-        ):
-            raise ValueError("Tokenizer must return ordered Python-character offsets")
-        previous_start, previous_end = start, end
-    return offsets
-
-
-def _fixed_ranges(
-    text: str, budget: int, overlap: int, tokenizer: TextTokenizer,
-) -> tuple[tuple[int, int], ...]:
-    ranges = []
-    start = 0
-    while start < len(text):
-        offsets = _offsets(text[start:], tokenizer)
-        if len(offsets) <= budget:
-            ranges.append((start, len(text)))
-            break
-
-        # A token start beyond the budget is an original-character boundary.
-        # Duplicate starts are possible when several tokens encode one emoji.
-        ends = sorted({start + a for a, _ in offsets[:budget + 1] if a > 0})
-        while ends:
-            end = ends.pop()
-            chunk_offsets = _offsets(text[start:end], tokenizer)
-            if len(chunk_offsets) <= budget:
-                break
-        else:
-            raise ValueError(
-                f"Token budget {budget} cannot fit an indivisible character "
-                f"or token boundary at input offset {start}"
-            )
-
-        ranges.append((start, end))
-        if overlap:
-            overlap_index = max(0, len(chunk_offsets) - overlap)
-            # Keep token boundaries in original-character units. A byte-token
-            # overlap can contain more than the target count at one character.
-            following = start + chunk_offsets[overlap_index][0]
-            start = following if following > start else end
-        else:
-            start = end
-    return tuple(ranges)
-
-
-def _sentence_ranges(
-    version: DocumentVersion, budget: int, tokenizer: TextTokenizer,
-) -> tuple[tuple[int, int], ...]:
-    text = version.content.text
-    sentences = tuple(
-        s for s in version.structure if s.kind == StructureKind.SENTENCE
-    )
-    previous_end = 0
-    missing_text = not sentences
-    for sentence in sentences:
-        if (
-            not 0 <= sentence.start < sentence.end <= len(text)
-            or sentence.start < previous_end
-        ):
-            raise ValueError("Sentence spans must be ordered, nonoverlapping Content ranges")
-        if text[previous_end:sentence.start].strip():
-            missing_text = True
-        previous_end = sentence.end
-    if text[previous_end:].strip():
-        missing_text = True
-    if missing_text:
-        return _fixed_ranges(text, budget, 0, tokenizer)
-
-    ranges = []
-    start = end = 0
-    for index in range(len(sentences)):
-        # Assign the separator to the preceding sentence's packing unit.
-        # This changes neither authoritative spans nor original source indices.
-        unit_end = (
-            sentences[index + 1].start
-            if index + 1 < len(sentences)
-            else len(text)
-        )
-        if len(_offsets(text[start:unit_end], tokenizer)) <= budget:
-            end = unit_end
-            continue
-        if end > start:
-            ranges.append((start, end))
-            start = end
-        if len(_offsets(text[start:unit_end], tokenizer)) > budget:
-            ranges.extend(
-                (start + a, start + b)
-                for a, b in _fixed_ranges(text[start:unit_end], budget, 0, tokenizer)
-            )
-            start = end = unit_end
-        else:
-            end = unit_end
-    if end > start:
-        ranges.append((start, end))
-    return tuple(ranges)
+def _chunks_from_ranges(source_content: Content, ranges: CharacterRanges) -> tuple[Chunk, ...]:
+    chunks = []
+    for start, end in ranges:
+        chunks.append(Chunk(content=source_content, start=start, end=end))
+    return tuple(chunks)

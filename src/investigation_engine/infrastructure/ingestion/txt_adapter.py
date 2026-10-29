@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from investigation_engine.infrastructure.ingestion.extraction_errors import DocumentLimitExceededError
-
 from investigation_engine.application.ingestion.extracted_document import (
     ExtractedDocument,
 )
@@ -14,6 +12,7 @@ from investigation_engine.domain.source_span import (
     SourceLocator,
     SourceSpan,
 )
+from investigation_engine.infrastructure.ingestion.extraction_errors import DocumentLimitExceededError
 
 
 def extract_txt(path: Path, *, source_id: str, max_text_chars: int | None = None) -> ExtractedDocument:

@@ -2,7 +2,6 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-
 type JsonValue = str | int | float | bool | None | list[JsonValue] | JsonObject
 type JsonObject = dict[str, JsonValue]
 

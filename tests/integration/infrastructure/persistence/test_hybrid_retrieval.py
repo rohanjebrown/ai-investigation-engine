@@ -18,124 +18,166 @@ from investigation_engine.application.use_cases.search_evidence import SearchEvi
 from investigation_engine.domain.source_span import LocatorKind, SourceLocator, SourceSpan
 from investigation_engine.infrastructure.persistence._document_mapping import _version_row
 from investigation_engine.infrastructure.persistence.models import ChunkEmbeddingRow, DocumentRow, VersionChunkPlanRow
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (
+    PostgreSQLDocumentActivationRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
+    PostgreSQLEmbeddingRepository,
+)
 from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import PostgreSQLEvidenceRepository
 
 
 def vector(x=1, y=0):
-    return (float(x),float(y)) + (0.0,) * 766
+    return (float(x), float(y)) + (0.0,) * 766
 
 
 @pytest.fixture
 def hybrid(sessions, repository, registration):
     class Tokenizer:
-        identity = TokenizerIdentity(name="characters",revision="1",artifact_sha256="0"*64,runtime_version="test")
+        identity = TokenizerIdentity(name="characters", revision="1", artifact_sha256="0" * 64, runtime_version="test")
 
         def offsets(self, text):
-            return tuple((i,i+1) for i in range(len(text)))
+            return tuple((i, i + 1) for i in range(len(text)))
 
     class Provider:
-        configuration = EmbeddingConfig(provider="synthetic", model_id="hybrid",model_revision="1")
+        configuration = EmbeddingConfig(provider="synthetic", model_id="hybrid", model_revision="1")
 
         def __init__(self):
             self.vectors = {}
             self.queries = []
 
         async def embed_documents(self, texts):
-            return tuple(self.vectors.get(value,vector()) for value in texts)
+            return tuple(self.vectors.get(value, vector()) for value in texts)
 
         async def embed_query(self, question):
             self.queries.append(question)
             return vector()
 
     provider = Provider()
-    config = ChunkingConfig(strategy=ChunkingStrategy.WHOLE_PASSAGE,tokenizer=Tokenizer.identity,max_tokens=512)
+    config = ChunkingConfig(strategy=ChunkingStrategy.WHOLE_PASSAGE, tokenizer=Tokenizer.identity, max_tokens=512)
     plans, embeddings = PostgreSQLChunkPlanRepository(sessions), PostgreSQLEmbeddingRepository(sessions)
     activation = PostgreSQLDocumentActivationRepository(sessions)
-    indexing = IndexDocumentVersion(plans,embeddings,activation,provider,max_attempts=1)
+    indexing = IndexDocumentVersion(plans, embeddings, activation, provider, max_attempts=1)
     evidence = PostgreSQLEvidenceRepository(sessions)
 
-    async def create(body="quasar archive", *, config=config, owner_id=None, active=True, store=False, source=None, spans=()):
-        document, version = registration(body=body,source_id=str(uuid7()),owner_id=owner_id,source_spans=spans)
+    async def create(
+        body="quasar archive", *, config=config, owner_id=None, active=True, store=False, source=None, spans=()
+    ):
+        document, version = registration(body=body, source_id=str(uuid7()), owner_id=owner_id, source_spans=spans)
         if source is not None:
-            version = replace(version,source=source)
-        document, version = await repository.register(document,version)
-        plan = chunk_document(version,config=config,tokenizer=Tokenizer())
+            version = replace(version, source=source)
+        document, version = await repository.register(document, version)
+        plan = chunk_document(version, config=config, tokenizer=Tokenizer())
         await plans.save(plan)
         if active:
-            await indexing.execute(document.id,version.id,config,provider.configuration)
+            await indexing.execute(document.id, version.id, config, provider.configuration)
         elif store:
             for chunk in plan.chunks:
                 if embedding_eligible(chunk):
-                    await embeddings.save(chunk,provider.configuration,vector())
-        return SimpleNamespace(document=document,version=version,plan=plan,config=config)
+                    await embeddings.save(chunk, provider.configuration, vector())
+        return SimpleNamespace(document=document, version=version, plan=plan, config=config)
 
     async def keyword(question, *, config=config, profile=None, owner_id=None, limit=10):
-        return await evidence.search_keywords(question,config,profile or provider.configuration,owner_id=owner_id,limit=limit)
+        return await evidence.search_keywords(
+            question, config, profile or provider.configuration, owner_id=owner_id, limit=limit
+        )
 
-    return SimpleNamespace(create=create,keyword=keyword,config=config,provider=provider,
-        plans=plans,embeddings=embeddings,indexing=indexing,evidence=evidence)
+    return SimpleNamespace(
+        create=create,
+        keyword=keyword,
+        config=config,
+        provider=provider,
+        plans=plans,
+        embeddings=embeddings,
+        indexing=indexing,
+        evidence=evidence,
+    )
 
 
-@pytest.mark.parametrize("body,question", [("Quasar archive catalogue", "quasar"),
-    ("Ada Lovelace wrote notes", "Ada Lovelace"), ("Café — naïve astronomy", "café naïve"),
-    ("서울 school archive", "서울"), ("quasar archive", "quasar & archive"),
-    ("archived observations", "observations")])
-async def test_keyword_entities_unicode_punctuation_and_multiple_terms(hybrid,body,question):
+@pytest.mark.parametrize(
+    "body,question",
+    [
+        ("Quasar archive catalogue", "quasar"),
+        ("Ada Lovelace wrote notes", "Ada Lovelace"),
+        ("Café — naïve astronomy", "café naïve"),
+        ("서울 school archive", "서울"),
+        ("quasar archive", "quasar & archive"),
+        ("archived observations", "observations"),
+    ],
+)
+async def test_keyword_entities_unicode_punctuation_and_multiple_terms(hybrid, body, question):
     item = await hybrid.create(body)
     hits = await hybrid.keyword(question)
-    assert len(hits)==1 and hits[0].document_version_id==item.version.id
-    assert hits[0].text==body and hits[0].score>0 and hits[0].score_kind=="keyword_rank"
+    assert len(hits) == 1 and hits[0].document_version_id == item.version.id
+    assert hits[0].text == body and hits[0].score > 0 and hits[0].score_kind == "keyword_rank"
 
 
 @pytest.mark.parametrize("question", ["unrelated", "the is", "!!!", "quas"])
-async def test_no_keyword_or_empty_tsquery_has_no_matches(hybrid,question):
+async def test_no_keyword_or_empty_tsquery_has_no_matches(hybrid, question):
     await hybrid.create()
-    assert await hybrid.keyword(question)==()
+    assert await hybrid.keyword(question) == ()
 
 
 async def test_document_matches_do_not_make_unrelated_chunks_match_and_fragments_are_searchable(hybrid):
-    config=replace(hybrid.config,strategy=ChunkingStrategy.FIXED_TOKENS,max_tokens=12)
-    item=await hybrid.create("quasar earth pluto mars",config=config)
-    assert [(h.start,h.end,h.text) for h in await hybrid.keyword("quasar",config=config)]==[(0,12,"quasar earth")]
-    assert [(h.start,h.end,h.text) for h in await hybrid.keyword("mars",config=config)]==[(12,23," pluto mars")]
-    assert await hybrid.keyword("quasar mars",config=config)==()
-    fragment_config=replace(config,max_tokens=5)
-    await hybrid.create("microelectronics",config=fragment_config)
-    hit=(await hybrid.keyword("micro",config=fragment_config))[0]
-    assert hit.text=="micro" and hit.start==0 and hit.end==5
+    config = replace(hybrid.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=12)
+    item = await hybrid.create("quasar earth pluto mars", config=config)
+    assert [(h.start, h.end, h.text) for h in await hybrid.keyword("quasar", config=config)] == [
+        (0, 12, "quasar earth")
+    ]
+    assert [(h.start, h.end, h.text) for h in await hybrid.keyword("mars", config=config)] == [(12, 23, " pluto mars")]
+    assert await hybrid.keyword("quasar mars", config=config) == ()
+    fragment_config = replace(config, max_tokens=5)
+    await hybrid.create("microelectronics", config=fragment_config)
+    hit = (await hybrid.keyword("micro", config=fragment_config))[0]
+    assert hit.text == "micro" and hit.start == 0 and hit.end == 5
     assert hit.document_version_id != item.version.id
 
 
-async def test_keyword_visibility_and_lifecycle_filter_before_top_k(hybrid,db_engine):
-    h=hybrid
-    shared=await h.create("quasar weak match")
-    alice=await h.create("quasar "*8,owner_id="alice")
-    spoof=replace(alice.version.source,source_id="bob",metadata={"owner_id":"alice"})
-    bob=await h.create("quasar "*10,owner_id="bob",source=spoof)
-    deleted=await h.create("quasar "*20)
-    await h.create("quasar "*18,active=False,store=True)
+async def test_keyword_visibility_and_lifecycle_filter_before_top_k(hybrid, db_engine):
+    h = hybrid
+    shared = await h.create("quasar weak match")
+    alice = await h.create("quasar " * 8, owner_id="alice")
+    spoof = replace(alice.version.source, source_id="bob", metadata={"owner_id": "alice"})
+    bob = await h.create("quasar " * 10, owner_id="bob", source=spoof)
+    deleted = await h.create("quasar " * 20)
+    await h.create("quasar " * 18, active=False, store=True)
     with db_engine.begin() as connection:
-        connection.execute(update(DocumentRow).where(DocumentRow.id==deleted.document.id).values(deleted_at=datetime.now(UTC)))
-    for owner,expected in ((None,shared),("alice",alice),("bob",bob)):
-        hits=await h.keyword("quasar",owner_id=owner,limit=1)
-        assert len(hits)==1 and hits[0].document_id==expected.document.id
-    assert {x.document_id for x in await h.keyword("quasar",owner_id="alice")}=={shared.document.id,alice.document.id}
+        connection.execute(
+            update(DocumentRow).where(DocumentRow.id == deleted.document.id).values(deleted_at=datetime.now(UTC))
+        )
+    for owner, expected in ((None, shared), ("alice", alice), ("bob", bob)):
+        hits = await h.keyword("quasar", owner_id=owner, limit=1)
+        assert len(hits) == 1 and hits[0].document_id == expected.document.id
+    assert {x.document_id for x in await h.keyword("quasar", owner_id="alice")} == {
+        shared.document.id,
+        alice.document.id,
+    }
 
 
-async def test_shared_vector_keyword_ties_and_rrf_keep_independent_provenance(hybrid,db_engine):
-    a=await hybrid.create()
-    b=await hybrid.create()
-    semantic,keyword=await hybrid.evidence.search_channels(vector(),"quasar",hybrid.config,hybrid.provider.configuration,
-        owner_id=None,semantic_limit=10,keyword_limit=10)
-    assert [hit.document_id for hit in keyword]==sorted((a.document.id,b.document.id))
-    assert [hit.rank for hit in keyword]==[1,2]
-    fused=reciprocal_rank_fusion(semantic,keyword,limit=10)
-    assert len(fused)==2 and {hit.source.source_id for hit in fused}=={a.version.source.source_id,b.version.source.source_id}
+async def test_shared_vector_keyword_ties_and_rrf_keep_independent_provenance(hybrid, db_engine):
+    a = await hybrid.create()
+    b = await hybrid.create()
+    semantic, keyword = await hybrid.evidence.search_channels(
+        vector(),
+        "quasar",
+        hybrid.config,
+        hybrid.provider.configuration,
+        owner_id=None,
+        semantic_limit=10,
+        keyword_limit=10,
+    )
+    assert [hit.document_id for hit in keyword] == sorted((a.document.id, b.document.id))
+    assert [hit.rank for hit in keyword] == [1, 2]
+    fused = reciprocal_rank_fusion(semantic, keyword, limit=10)
+    assert len(fused) == 2 and {hit.source.source_id for hit in fused} == {
+        a.version.source.source_id,
+        b.version.source.source_id,
+    }
     with db_engine.connect() as connection:
-        assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow))==1
+        assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 1
 
 
 async def test_keyword_unicode_chunk_keeps_original_intersecting_sentence_locations(hybrid):
@@ -153,81 +195,115 @@ async def test_keyword_unicode_chunk_keeps_original_intersecting_sentence_locati
     assert hit.source_spans[1].end > hit.end  # Retain native bounds, not fabricated clipped locators.
 
 
-async def test_superseded_version_retains_only_current_version_specific_locations(hybrid,sessions):
-    h=hybrid
-    old=await h.create()
-    span=SourceSpan(start=0,end=len(old.version.content.text),locators=(SourceLocator(kind=LocatorKind.PAGE,index=3),))
-    later=replace(old.version,id=uuid7(),version_number=2,source=replace(old.version.source,revision="2"),source_spans=(span,))
+async def test_superseded_version_retains_only_current_version_specific_locations(hybrid, sessions):
+    h = hybrid
+    old = await h.create()
+    span = SourceSpan(
+        start=0, end=len(old.version.content.text), locators=(SourceLocator(kind=LocatorKind.PAGE, index=3),)
+    )
+    later = replace(
+        old.version,
+        id=uuid7(),
+        version_number=2,
+        source=replace(old.version.source, revision="2"),
+        source_spans=(span,),
+    )
     async with sessions() as session:
         async with session.begin():
             session.add(_version_row(later))
-    await h.plans.save(replace(old.plan,document_version_id=later.id))
-    await h.indexing.execute(old.document.id,later.id,h.config,h.provider.configuration)
-    hits=await h.keyword("quasar")
-    assert len(hits)==1 and hits[0].document_version_id==later.id and hits[0].source_spans==(span,)
+    await h.plans.save(replace(old.plan, document_version_id=later.id))
+    await h.indexing.execute(old.document.id, later.id, h.config, h.provider.configuration)
+    hits = await h.keyword("quasar")
+    assert len(hits) == 1 and hits[0].document_version_id == later.id and hits[0].source_spans == (span,)
 
 
-async def test_keyword_excludes_incomplete_selected_embedding_and_chunking_profiles(hybrid,db_engine):
-    h=hybrid
-    config=replace(h.config,strategy=ChunkingStrategy.FIXED_TOKENS,max_tokens=6)
-    partial=await h.create("quasar mars",config=config)
-    h.provider.configuration=replace(h.provider.configuration,model_revision="other")
-    await h.embeddings.save(partial.plan.chunks[0],h.provider.configuration,vector())
-    assert await h.keyword("quasar",config=config)==()
-    complete=await h.create("quasar",config=config)
-    assert [x.document_id for x in await h.keyword("quasar",config=config,limit=1)]==[complete.document.id]
-    assert await h.keyword("quasar",config=replace(config,max_tokens=5))==()
-    assert await h.keyword("quasar",config=config,profile=replace(h.provider.configuration,model_id="absent"))==()
+async def test_keyword_excludes_incomplete_selected_embedding_and_chunking_profiles(hybrid, db_engine):
+    h = hybrid
+    config = replace(h.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=6)
+    partial = await h.create("quasar mars", config=config)
+    h.provider.configuration = replace(h.provider.configuration, model_revision="other")
+    await h.embeddings.save(partial.plan.chunks[0], h.provider.configuration, vector())
+    assert await h.keyword("quasar", config=config) == ()
+    complete = await h.create("quasar", config=config)
+    assert [x.document_id for x in await h.keyword("quasar", config=config, limit=1)] == [complete.document.id]
+    assert await h.keyword("quasar", config=replace(config, max_tokens=5)) == ()
+    assert await h.keyword("quasar", config=config, profile=replace(h.provider.configuration, model_id="absent")) == ()
     with db_engine.begin() as connection:
-        connection.execute(update(VersionChunkPlanRow).where(VersionChunkPlanRow.document_version_id==complete.version.id)
-                           .values(expected_chunk_count=2))
-    assert await h.keyword("quasar",config=config)==()
+        connection.execute(
+            update(VersionChunkPlanRow)
+            .where(VersionChunkPlanRow.document_version_id == complete.version.id)
+            .values(expected_chunk_count=2)
+        )
+    assert await h.keyword("quasar", config=config) == ()
 
 
-async def test_hybrid_reads_both_channels_once_from_same_snapshot_before_concurrent_delete(hybrid,sessions,db_engine):
-    h=hybrid
-    item=await h.create()
-    fired=False
-    statements=[]
+async def test_hybrid_reads_both_channels_once_from_same_snapshot_before_concurrent_delete(hybrid, sessions, db_engine):
+    h = hybrid
+    item = await h.create()
+    fired = False
+    statements = []
 
-    def after(connection,cursor,statement,parameters,context,executemany):
+    def after(connection, cursor, statement, parameters, context, executemany):
         nonlocal fired
         if statement.lstrip().startswith("WITH"):
             statements.append(statement)
             if not fired:
-                fired=True
+                fired = True
                 with db_engine.begin() as writer:
-                    writer.execute(update(DocumentRow).where(DocumentRow.id==item.document.id).values(deleted_at=datetime.now(UTC)))
+                    writer.execute(
+                        update(DocumentRow)
+                        .where(DocumentRow.id == item.document.id)
+                        .values(deleted_at=datetime.now(UTC))
+                    )
 
-    engine=sessions.kw['bind'].sync_engine
-    event.listen(engine,"after_cursor_execute",after)
+    engine = sessions.kw["bind"].sync_engine
+    event.listen(engine, "after_cursor_execute", after)
     try:
-        sem,kw=await h.evidence.search_channels(vector(),"quasar",h.config,h.provider.configuration,
-            owner_id=None,semantic_limit=1,keyword_limit=1)
+        sem, kw = await h.evidence.search_channels(
+            vector(), "quasar", h.config, h.provider.configuration, owner_id=None, semantic_limit=1, keyword_limit=1
+        )
     finally:
-        event.remove(engine,"after_cursor_execute",after)
-    assert len(statements)==1 and "UNION ALL" in statements[0]
-    assert len(sem)==len(kw)==1 and sem[0].identity==kw[0].identity
-    assert await h.evidence.search_channels(vector(),"quasar",h.config,h.provider.configuration,
-        owner_id=None,semantic_limit=1,keyword_limit=1)==((),())
+        event.remove(engine, "after_cursor_execute", after)
+    assert len(statements) == 1 and "UNION ALL" in statements[0]
+    assert len(sem) == len(kw) == 1 and sem[0].identity == kw[0].identity
+    assert await h.evidence.search_channels(
+        vector(), "quasar", h.config, h.provider.configuration, owner_id=None, semantic_limit=1, keyword_limit=1
+    ) == ((), ())
 
 
 async def test_real_rag_hybrid_promotes_keyword_supported_evidence_above_semantic_distractors(hybrid):
-    h=hybrid
-    target="Zephyr Archive catalogue"
-    h.provider.vectors={target:vector(1,1),"weather calendar ocean":vector(1,0),"copper mineral belt":vector(-1,0)}
-    relevant=await h.create(target)
+    h = hybrid
+    target = "Zephyr Archive catalogue"
+    h.provider.vectors = {
+        target: vector(1, 1),
+        "weather calendar ocean": vector(1, 0),
+        "copper mineral belt": vector(-1, 0),
+    }
+    relevant = await h.create(target)
     await h.create("weather calendar ocean")
     await h.create("copper mineral belt")
-    baseline=SearchEvidence(h.evidence,h.provider,h.config,h.provider.configuration)
-    assert (await baseline.execute("Zephyr Archive",1,owner_id=None))[0].text=="weather calendar ocean"
-    search=SearchEvidence(h.evidence,h.provider,h.config,h.provider.configuration,mode="hybrid",hybrid_repository=h.evidence,
-                          semantic_candidates=3,keyword_candidates=1)
-    generator=SimpleNamespace(generate=AsyncMock(return_value=GenerationResult(
-        status=AnswerStatus.ANSWERED,answer="Zephyr Archive has a catalogue.",citations=("E1",))))
-    result=await AnswerQuestion(search,generator,max_evidence=1).execute("Zephyr Archive",owner_id=None)
-    evidence=result.citations[0].evidence
-    assert evidence.document_id==relevant.document.id and evidence.score_kind=="rrf"
-    assert evidence.semantic_rank==2 and evidence.keyword_rank==1
-    assert evidence.semantic_score==pytest.approx(2**-.5) and evidence.keyword_score>0
-    assert generator.generate.await_args.args[0].evidence[0].text==target
+    baseline = SearchEvidence(h.evidence, h.provider, h.config, h.provider.configuration)
+    assert (await baseline.execute("Zephyr Archive", 1, owner_id=None))[0].text == "weather calendar ocean"
+    search = SearchEvidence(
+        h.evidence,
+        h.provider,
+        h.config,
+        h.provider.configuration,
+        mode="hybrid",
+        hybrid_repository=h.evidence,
+        semantic_candidates=3,
+        keyword_candidates=1,
+    )
+    generator = SimpleNamespace(
+        generate=AsyncMock(
+            return_value=GenerationResult(
+                status=AnswerStatus.ANSWERED, answer="Zephyr Archive has a catalogue.", citations=("E1",)
+            )
+        )
+    )
+    result = await AnswerQuestion(search, generator, max_evidence=1).execute("Zephyr Archive", owner_id=None)
+    evidence = result.citations[0].evidence
+    assert evidence.document_id == relevant.document.id and evidence.score_kind == "rrf"
+    assert evidence.semantic_rank == 2 and evidence.keyword_rank == 1
+    assert evidence.semantic_score == pytest.approx(2**-0.5) and evidence.keyword_score > 0
+    assert generator.generate.await_args.args[0].evidence[0].text == target

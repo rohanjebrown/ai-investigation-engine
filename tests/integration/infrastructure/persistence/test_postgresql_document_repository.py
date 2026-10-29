@@ -16,13 +16,21 @@ from investigation_engine.infrastructure.persistence.postgresql_document_reposit
 
 def counts(engine):
     with engine.connect() as connection:
-        return tuple(connection.scalar(select(func.count()).select_from(row)) for row in (DocumentRow, DocumentVersionRow, ContentRow))
+        return tuple(
+            connection.scalar(select(func.count()).select_from(row))
+            for row in (DocumentRow, DocumentVersionRow, ContentRow)
+        )
 
 
-async def test_registration_commits_and_new_repository_resolves_identical_retry(repository, sessions, db_engine, registration):
+async def test_registration_commits_and_new_repository_resolves_identical_retry(
+    repository, sessions, db_engine, registration
+):
     document, version = await repository.register(*registration(owner_id="principal"))
     with db_engine.connect() as connection:
-        assert connection.scalar(select(DocumentVersionRow.document_id).where(DocumentVersionRow.id == version.id)) == document.id
+        assert (
+            connection.scalar(select(DocumentVersionRow.document_id).where(DocumentVersionRow.id == version.id))
+            == document.id
+        )
     retried, repeated = await PostgreSQLDocumentRepository(sessions).register(*registration(owner_id="principal"))
     assert (retried.id, repeated.id) == (document.id, version.id)
     assert document.current_version_id is None and document.owner_id == "principal"
@@ -30,14 +38,14 @@ async def test_registration_commits_and_new_repository_resolves_identical_retry(
     assert counts(db_engine) == (1, 1, 1)
 
 
-async def test_independent_occurrences_share_content_without_merging_sources(repository, sessions, db_engine, registration):
+async def test_independent_occurrences_share_content_without_merging_sources(
+    repository, sessions, db_engine, registration
+):
     structure = tuple(
-        StructuralSpan(kind=StructureKind.SENTENCE, start=start, end=end)
-        for start, end in ((0, 2), (3, 5))
+        StructuralSpan(kind=StructureKind.SENTENCE, start=start, end=end) for start, end in ((0, 2), (3, 5))
     )
     source_spans = tuple(
-        SourceSpan(start=span.start, end=span.end,
-                   locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=i),))
+        SourceSpan(start=span.start, end=span.end, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=i),))
         for i, span in enumerate(structure)
     )
     other_structure = (StructuralSpan(kind=StructureKind.SENTENCE, start=0, end=5),)
@@ -52,12 +60,9 @@ async def test_independent_occurrences_share_content_without_merging_sources(rep
     assert a.content == b.content and a.source.record_locator != b.source.record_locator
     # Retry through new sessions to exercise JSONB serialization/reconstruction,
     # including ordered original locators and distinct layouts over equal text.
-    reloaded = [
-        await PostgreSQLDocumentRepository(sessions).register(*candidate)
-        for candidate in candidates
-    ]
+    reloaded = [await PostgreSQLDocumentRepository(sessions).register(*candidate) for candidate in candidates]
     assert reloaded == [(first, a), (second, b)]
-    assert [a.content.text[s.start:s.end] for s in reloaded[0][1].structure] == ["A😀", "B."]
+    assert [a.content.text[s.start : s.end] for s in reloaded[0][1].structure] == ["A😀", "B."]
     assert reloaded[0][1].source_spans == source_spans
     assert reloaded[1][1].structure == other_structure and reloaded[1][1].source_spans == other_spans
     assert counts(db_engine) == (2, 2, 1)
@@ -70,7 +75,9 @@ async def test_retry_preserves_descriptions_and_defensive_snapshots(repository, 
     saved.source.metadata["labels"].append("mutated")
     retry_doc, retry_version = registration()
     retry_doc.title = "new retry title"
-    retry_version = replace(retry_version, source=replace(retry_version.source, metadata={"changed": True}, display_name="new display"))
+    retry_version = replace(
+        retry_version, source=replace(retry_version.source, metadata={"changed": True}, display_name="new display")
+    )
     retried, repeated = await repository.register(retry_doc, retry_version)
     assert retried.title == "Original title"
     assert repeated.source.metadata == {"labels": ["original"]}
@@ -86,14 +93,19 @@ async def test_conflicting_retries_leave_no_partial_candidates(repository, db_en
     elif change == "structure":
         version = replace(version, structure=(StructuralSpan(kind=StructureKind.SENTENCE, start=0, end=1),))
     else:
-        version = replace(version, source_spans=(SourceSpan(start=0, end=1, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=9),)),))
+        version = replace(
+            version,
+            source_spans=(SourceSpan(start=0, end=1, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=9),)),),
+        )
     with pytest.raises(RegistrationConflict):
         await repository.register(doc, version)
     assert counts(db_engine) == (1, 1, 1)
     assert await repository.register(*registration()) == stored
 
 
-async def test_insert_failure_rolls_back_new_content_and_document_and_releases_sessions(repository, sessions, db_engine, registration):
+async def test_insert_failure_rolls_back_new_content_and_document_and_releases_sessions(
+    repository, sessions, db_engine, registration
+):
     _, saved = await repository.register(*registration())
     doc, version = registration(source_id="independent", body="new content must roll back")
     closed = []
@@ -130,7 +142,11 @@ async def test_deleted_retry_preserves_ownership_and_never_restores(repository, 
     doc, version = await repository.register(*registration(owner_id=owner))
     deleted_at = datetime(2026, 1, 1, tzinfo=UTC)
     with db_engine.begin() as connection:
-        connection.execute(update(DocumentRow).where(DocumentRow.id == doc.id).values(deleted_at=deleted_at, current_version_id=version.id))
+        connection.execute(
+            update(DocumentRow)
+            .where(DocumentRow.id == doc.id)
+            .values(deleted_at=deleted_at, current_version_id=version.id)
+        )
     retried, repeated = await repository.register(*registration(owner_id=owner))
     assert retried.id == doc.id and repeated.id == version.id
     assert retried.deleted_at == deleted_at and retried.owner_id == owner
@@ -139,12 +155,15 @@ async def test_deleted_retry_preserves_ownership_and_never_restores(repository, 
         await repository.register(*registration(owner_id="other", body="changed private text"))
 
 
-@pytest.mark.parametrize("left,right,equal", [
-    ({"a": 1, "b": [None]}, {"b": [None], "a": 1.0}, True),
-    ({"a": True}, {"a": 1}, False),
-    ({}, {"a": None}, False),
-    ({"a": [1, 2]}, {"a": [2, 1]}, False),
-])
+@pytest.mark.parametrize(
+    "left,right,equal",
+    [
+        ({"a": 1, "b": [None]}, {"b": [None], "a": 1.0}, True),
+        ({"a": True}, {"a": 1}, False),
+        ({}, {"a": None}, False),
+        ({"a": [1, 2]}, {"a": [2, 1]}, False),
+    ],
+)
 async def test_actual_jsonb_occurrence_identity(repository, registration, left, right, equal):
     first, _ = await repository.register(*registration(locator=left))
     second, _ = await repository.register(*registration(locator=right))
@@ -169,11 +188,18 @@ async def test_new_registration_requires_initial_inactive_state(repository, regi
         await repository.register(doc, version)
 
 
-@pytest.mark.parametrize("scenario,expected_counts", [
-    ("identical", (1, 1, 1)), ("conflicting", (1, 1, 1)),
-    ("shared_content", (2, 2, 1)), ("different_content", (2, 2, 2)),
-])
-async def test_concurrent_independent_sessions_resolve_unique_constraint_races(sessions, db_engine, registration, scenario, expected_counts):
+@pytest.mark.parametrize(
+    "scenario,expected_counts",
+    [
+        ("identical", (1, 1, 1)),
+        ("conflicting", (1, 1, 1)),
+        ("shared_content", (2, 2, 1)),
+        ("different_content", (2, 2, 2)),
+    ],
+)
+async def test_concurrent_independent_sessions_resolve_unique_constraint_races(
+    sessions, db_engine, registration, scenario, expected_counts
+):
     """Both first lookups finish before either task can issue its INSERTs."""
     both_read = asyncio.Event()
     arrivals = 0
@@ -187,8 +213,7 @@ async def test_concurrent_independent_sessions_resolve_unique_constraint_races(s
             result = await super().execute(statement, *args, **kwargs)
             nonlocal arrivals
             is_occurrence_lookup = any(
-                column.get("entity") is DocumentVersionRow
-                for column in getattr(statement, "column_descriptions", ())
+                column.get("entity") is DocumentVersionRow for column in getattr(statement, "column_descriptions", ())
             )
             if statement.is_select and is_occurrence_lookup and arrivals < 2:
                 backend_pids.add(await super().scalar(text("SELECT pg_backend_pid()")))
@@ -204,11 +229,14 @@ async def test_concurrent_independent_sessions_resolve_unique_constraint_races(s
         source_id="other" if scenario in ("shared_content", "different_content") else "synthetic-source",
         body="changed" if scenario in ("conflicting", "different_content") else "A😀 B.",
     )
-    results = await asyncio.wait_for(asyncio.gather(
-        PostgreSQLDocumentRepository(coordinated).register(*first),
-        PostgreSQLDocumentRepository(coordinated).register(*second),
-        return_exceptions=True,
-    ), timeout=30)
+    results = await asyncio.wait_for(
+        asyncio.gather(
+            PostgreSQLDocumentRepository(coordinated).register(*first),
+            PostgreSQLDocumentRepository(coordinated).register(*second),
+            return_exceptions=True,
+        ),
+        timeout=30,
+    )
     assert arrivals == 2
     assert len(backend_pids) == 2
     if scenario == "conflicting":

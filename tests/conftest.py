@@ -14,8 +14,14 @@ from investigation_engine.domain.provenance import SourceKind, SourceReference
 def pytest_addoption(parser):
     parser.addoption("--run-external", action="store_true", help="Enable live service smoke tests")
     parser.addoption("--run-dataset", action="store_true", help="Enable local pinned-corpus checks")
-    parser.addoption("--dataset-path", default="data/raw/2wiki/dev.parquet", help="Existing pinned dev.parquet; never downloaded")
-    parser.addoption("--tokenizer-path", default="artifacts/tokenizers/voyage-4/tokenizer.json", help="Existing pinned reference tokenizer; never downloaded")
+    parser.addoption(
+        "--dataset-path", default="data/raw/2wiki/dev.parquet", help="Existing pinned dev.parquet; never downloaded"
+    )
+    parser.addoption(
+        "--tokenizer-path",
+        default="artifacts/tokenizers/voyage-4/tokenizer.json",
+        help="Existing pinned reference tokenizer; never downloaded",
+    )
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -42,19 +48,35 @@ def pytest_asyncio_loop_factories(config, item):
 @pytest.fixture
 def registration():
     """Build initial candidates; independent calls have independent UUIDv7 IDs."""
-    def make(*, body="A😀 B.", source_id="synthetic-source", locator=None, owner_id=None,
-             revision=None, structure=(), source_spans=()):
+
+    def make(
+        *,
+        body="A😀 B.",
+        source_id="synthetic-source",
+        locator=None,
+        owner_id=None,
+        revision=None,
+        structure=(),
+        source_spans=(),
+    ):
         document = Document(owner_id=owner_id, title="Original title")
         version = DocumentVersion(
-            document_id=document.id, version_number=1, content=Content(body),
+            document_id=document.id,
+            version_number=1,
+            content=Content(body),
             source=SourceReference(
-                kind=SourceKind.DATASET, source_id=source_id, revision=revision,
+                kind=SourceKind.DATASET,
+                source_id=source_id,
+                revision=revision,
                 record_locator={"record": 1} if locator is None else locator,
-                metadata={"labels": ["original"]}, display_name="Original display",
+                metadata={"labels": ["original"]},
+                display_name="Original display",
             ),
-            structure=structure, source_spans=source_spans,
+            structure=structure,
+            source_spans=source_spans,
         )
         return document, version
+
     return make
 
 
@@ -62,6 +84,7 @@ def registration():
 def synthetic_provider():
     """Deterministic implementation of the real provider port, without IO."""
     from hashlib import sha256
+
     from investigation_engine.application.embeddings import EmbeddingConfig
 
     class SyntheticProvider:
@@ -82,8 +105,11 @@ def synthetic_provider():
                 error = self.failures.pop(0)
                 if error is not None:
                     raise error
-            return tuple((float(sha256((repr(self.configuration) + '|title: none | text: ' + value).encode()).digest()[0] + 1),)
-                         + (0.0,) * 767 for value in texts)
+            return tuple(
+                (float(sha256((repr(self.configuration) + "|title: none | text: " + value).encode()).digest()[0] + 1),)
+                + (0.0,) * 767
+                for value in texts
+            )
 
         async def embed_query(self, query):
             return (await self.embed_documents((query,)))[0]

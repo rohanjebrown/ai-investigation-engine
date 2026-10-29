@@ -8,7 +8,7 @@ def test_txt_preserves_original_newlines_unicode_and_line_locators(tmp_path):
     path.write_bytes("A😀\r\n\r\nlast\n".encode("utf-8"))
     document = extract_txt(path, source_id="upload-1")
     assert document.text == "A😀\r\n\r\nlast\n"
-    assert [document.text[s.start:s.end] for s in document.source_spans] == ["A😀\r\n", "\r\n", "last\n"]
+    assert [document.text[s.start : s.end] for s in document.source_spans] == ["A😀\r\n", "\r\n", "last\n"]
     assert [s.locators[0].index for s in document.source_spans] == [1, 2, 3]
     assert document.source.source_id == "upload-1"
 

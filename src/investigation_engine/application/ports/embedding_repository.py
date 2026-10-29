@@ -8,7 +8,9 @@ from investigation_engine.application.ports.embedding_provider import EmbeddingV
 
 class EmbeddingRepository(Protocol):
     async def find(
-        self, chunks: Sequence[Chunk], config: EmbeddingConfig,
+        self,
+        chunks: Sequence[Chunk],
+        config: EmbeddingConfig,
     ) -> dict[tuple[str, int, int], EmbeddingVector]:
         """Read compatible committed vectors by existing Chunk.identity."""
         ...

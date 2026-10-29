@@ -12,12 +12,15 @@ def sentence(start, end):
     return StructuralSpan(kind=StructureKind.SENTENCE, start=start, end=end)
 
 
-@pytest.mark.parametrize("strategy,budget,overlap,expected", [
-    (ChunkingStrategy.WHOLE_PASSAGE, 20, 0, [(0, 10)]),
-    (ChunkingStrategy.WHOLE_PASSAGE, 4, 0, [(0, 4), (4, 8), (8, 10)]),
-    (ChunkingStrategy.FIXED_TOKENS, 4, 0, [(0, 4), (4, 8), (8, 10)]),
-    (ChunkingStrategy.FIXED_TOKENS, 4, 2, [(0, 4), (2, 6), (4, 8), (6, 10)]),
-])
+@pytest.mark.parametrize(
+    "strategy,budget,overlap,expected",
+    [
+        (ChunkingStrategy.WHOLE_PASSAGE, 20, 0, [(0, 10)]),
+        (ChunkingStrategy.WHOLE_PASSAGE, 4, 0, [(0, 4), (4, 8), (8, 10)]),
+        (ChunkingStrategy.FIXED_TOKENS, 4, 0, [(0, 4), (4, 8), (8, 10)]),
+        (ChunkingStrategy.FIXED_TOKENS, 4, 2, [(0, 4), (2, 6), (4, 8), (6, 10)]),
+    ],
+)
 def test_exact_boundaries_and_overlap(registration, tokenizer, strategy, budget, overlap, expected):
     _, version = registration(body="abcdefghij")
     config = ChunkingConfig(strategy=strategy, tokenizer=tokenizer.identity, max_tokens=budget, overlap=overlap)
@@ -85,7 +88,14 @@ def test_chunk_cannot_reference_an_invalid_content_range(start, end):
         Chunk(content=Content("abc"), start=start, end=end)
 
 
-@pytest.mark.parametrize("budget,overlap,strategy", [(0, 0, ChunkingStrategy.FIXED_TOKENS), (4, 4, ChunkingStrategy.FIXED_TOKENS), (4, 1, ChunkingStrategy.SENTENCE_PACKING)])
+@pytest.mark.parametrize(
+    "budget,overlap,strategy",
+    [
+        (0, 0, ChunkingStrategy.FIXED_TOKENS),
+        (4, 4, ChunkingStrategy.FIXED_TOKENS),
+        (4, 1, ChunkingStrategy.SENTENCE_PACKING),
+    ],
+)
 def test_invalid_chunking_configurations_are_rejected(tokenizer, budget, overlap, strategy):
     with pytest.raises(ValueError):
         ChunkingConfig(strategy=strategy, tokenizer=tokenizer.identity, max_tokens=budget, overlap=overlap)
@@ -93,7 +103,9 @@ def test_invalid_chunking_configurations_are_rejected(tokenizer, budget, overlap
 
 def test_actual_tokenizer_must_match_the_recorded_configuration(registration, tokenizer):
     _, version = registration()
-    config = ChunkingConfig(strategy=ChunkingStrategy.WHOLE_PASSAGE, tokenizer=replace(tokenizer.identity, revision="other"), max_tokens=5)
+    config = ChunkingConfig(
+        strategy=ChunkingStrategy.WHOLE_PASSAGE, tokenizer=replace(tokenizer.identity, revision="other"), max_tokens=5
+    )
     with pytest.raises(ValueError, match="identities differ"):
         chunk_document(version, config=config, tokenizer=tokenizer)
 

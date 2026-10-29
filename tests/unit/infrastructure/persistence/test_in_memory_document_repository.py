@@ -17,12 +17,16 @@ def repository():
     return InMemoryDocumentRepository()
 
 
-async def test_retry_preserves_identity_and_descriptions_while_independent_sources_share_content(repository, registration):
+async def test_retry_preserves_identity_and_descriptions_while_independent_sources_share_content(
+    repository, registration
+):
     document, version = await repository.register(*registration())
     assert version.version_number == 1 and document.current_version_id is None
     retry_doc, retry_version = registration()
     retry_doc.title = "Ignored retry title"
-    retry_version = replace(retry_version, source=replace(retry_version.source, metadata={"changed": True}, display_name="Ignored display"))
+    retry_version = replace(
+        retry_version, source=replace(retry_version.source, metadata={"changed": True}, display_name="Ignored display")
+    )
     retried, repeated = await repository.register(retry_doc, retry_version)
     other, independent = await repository.register(*registration(source_id="independent"))
     assert (document.id, version.id) == (retried.id, repeated.id)
@@ -42,7 +46,10 @@ async def test_same_occurrence_cannot_change_text_or_mappings(repository, regist
     elif change == "structure":
         version = replace(version, structure=(StructuralSpan(kind=StructureKind.SENTENCE, start=0, end=1),))
     else:
-        version = replace(version, source_spans=(SourceSpan(start=0, end=1, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=0),)),))
+        version = replace(
+            version,
+            source_spans=(SourceSpan(start=0, end=1, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=0),)),),
+        )
     with pytest.raises(RegistrationConflict, match="Registration conflict"):
         await repository.register(doc, version)
     assert (await repository.register(*registration())) == original
@@ -74,13 +81,16 @@ async def test_caller_mutations_do_not_change_stored_snapshots(repository, regis
     assert repeated.source.metadata == {"labels": ["original"]}
 
 
-@pytest.mark.parametrize("left,right,equal", [
-    ({"a": 1, "b": [None]}, {"b": [None], "a": 1.0}, True),
-    ({"a": True}, {"a": 1}, False),
-    ({}, {"a": None}, False),
-    ({"a": [1, 2]}, {"a": [2, 1]}, False),
-    ({"a": "é"}, {"a": "e\u0301"}, False),
-])
+@pytest.mark.parametrize(
+    "left,right,equal",
+    [
+        ({"a": 1, "b": [None]}, {"b": [None], "a": 1.0}, True),
+        ({"a": True}, {"a": 1}, False),
+        ({}, {"a": None}, False),
+        ({"a": [1, 2]}, {"a": [2, 1]}, False),
+        ({"a": "é"}, {"a": "e\u0301"}, False),
+    ],
+)
 async def test_locator_comparison_preserves_jsonb_identity_rules(repository, registration, left, right, equal):
     first, _ = await repository.register(*registration(locator=left))
     second, _ = await repository.register(*registration(locator=right))
@@ -147,7 +157,8 @@ async def test_new_registration_requires_version_one_and_inactive_document(repos
 
     # Correcting the same candidates must succeed without leftover IDs/indexes.
     stored, saved = await repository.register(
-        replace(doc, current_version_id=None), replace(version, version_number=1),
+        replace(doc, current_version_id=None),
+        replace(version, version_number=1),
     )
     assert stored.id == doc.id and saved.id == version.id
     assert saved.version_number == 1 and stored.current_version_id is None
@@ -155,7 +166,9 @@ async def test_new_registration_requires_version_one_and_inactive_document(repos
 
 @pytest.mark.parametrize("retry_has_pointer", [False, True])
 async def test_active_registration_retry_is_resolved_before_initial_state_validation(
-    repository, registration, retry_has_pointer,
+    repository,
+    registration,
+    retry_has_pointer,
 ):
     document, version = await repository.register(*registration(owner_id="alice"))
     # Seed a later lifecycle state without adding an activation operation.

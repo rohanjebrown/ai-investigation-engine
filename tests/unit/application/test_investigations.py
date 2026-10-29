@@ -36,29 +36,52 @@ class QuerySearch:
 def make_hit(registration, *, source_id, body):
     document, version = registration(body=body, source_id=source_id)
     return Evidence(
-        document_id=document.id, document_version_id=version.id,
-        content_sha256=version.content.sha256, start=0, end=len(body), text=body,
-        source=version.source, source_spans=(), score=0.9, rank=1,
+        document_id=document.id,
+        document_version_id=version.id,
+        content_sha256=version.content.sha256,
+        start=0,
+        end=len(body),
+        text=body,
+        source=version.source,
+        source_spans=(),
+        score=0.9,
+        rank=1,
     )
 
 
 async def test_two_hop_searches_are_model_directed_and_citations_resolve(registration):
     first = make_hit(registration, source_id="director", body="Move was directed by Stuart Rosenberg.")
     second = make_hit(registration, source_id="nationality", body="Stuart Rosenberg was American.")
-    model = ScriptedModel([
-        SearchEvidenceCall(query="Move 1970 film director", call_id="call-1"),
-        lambda turn: SearchEvidenceCall(
-            query=("Stuart Rosenberg" if "Stuart Rosenberg" in turn.exchanges[0].evidence[0].evidence.text else "unknown") + " nationality",
-            call_id="call-2",
-        ),
-        InvestigationDecision(status=InvestigationStatus.ANSWERED,
-            answer="Stuart Rosenberg was American. [E1] [E2]", citations=("E1", "E2")),
-    ])
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="Move 1970 film director", call_id="call-1"),
+            lambda turn: SearchEvidenceCall(
+                query=(
+                    "Stuart Rosenberg"
+                    if "Stuart Rosenberg" in turn.exchanges[0].evidence[0].evidence.text
+                    else "unknown"
+                )
+                + " nationality",
+                call_id="call-2",
+            ),
+            InvestigationDecision(
+                status=InvestigationStatus.ANSWERED,
+                answer="Stuart Rosenberg was American. [E1] [E2]",
+                citations=("E1", "E2"),
+            ),
+        ]
+    )
     search = QuerySearch({"Move 1970 film director": (first,), "Stuart Rosenberg nationality": (second,)})
     result = await InvestigateQuestion(
-        search, model, max_turns=3, max_search_calls=2, max_results_per_search=5,
-        max_accumulated_evidence=10, max_context_chars=24000,
-        max_generation_requests=3, max_embedding_requests=2,
+        search,
+        model,
+        max_turns=3,
+        max_search_calls=2,
+        max_results_per_search=5,
+        max_accumulated_evidence=10,
+        max_context_chars=24000,
+        max_generation_requests=3,
+        max_embedding_requests=2,
     ).execute("What was the director's nationality?", owner_id=None)
     assert [call[0] for call in search.calls] == ["Move 1970 film director", "Stuart Rosenberg nationality"]
     assert len(model.turns[1].exchanges) == 1 and len(model.turns[2].exchanges) == 2
@@ -77,12 +100,20 @@ async def test_three_hop_search_depends_on_each_previous_result(registration):
         make_hit(registration, source_id="c", body="C is the answer."),
     ]
     queries = ["initial", "B detail", "C detail"]
-    model = ScriptedModel([
-        SearchEvidenceCall(query=queries[0], call_id="1"),
-        lambda turn: SearchEvidenceCall(query=queries[1] if "B" in turn.exchanges[-1].evidence[0].evidence.text else "wrong", call_id="2"),
-        lambda turn: SearchEvidenceCall(query=queries[2] if "C" in turn.exchanges[-1].evidence[0].evidence.text else "wrong", call_id="3"),
-        InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="C is the answer [E3]", citations=("E3",)),
-    ])
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query=queries[0], call_id="1"),
+            lambda turn: SearchEvidenceCall(
+                query=queries[1] if "B" in turn.exchanges[-1].evidence[0].evidence.text else "wrong", call_id="2"
+            ),
+            lambda turn: SearchEvidenceCall(
+                query=queries[2] if "C" in turn.exchanges[-1].evidence[0].evidence.text else "wrong", call_id="3"
+            ),
+            InvestigationDecision(
+                status=InvestigationStatus.ANSWERED, answer="C is the answer [E3]", citations=("E3",)
+            ),
+        ]
+    )
     search = QuerySearch(dict(zip(queries, [(hits[0],), (hits[1],), (hits[2],)])))
     result = await InvestigateQuestion(search, model).execute("Trace the chain", owner_id="trusted-admin")
     assert [query for query, _, owner in search.calls] == queries
@@ -96,14 +127,19 @@ async def test_independent_search_branches_are_combined_in_final_answer(registra
     third = make_hit(registration, source_id="alpha", body="Alpha Person was born in 1900.")
     fourth = make_hit(registration, source_id="beta", body="Beta Person was born in 1980.")
     queries = ("Film A director", "Film B director", "Alpha Person birth", "Beta Person birth")
-    model = ScriptedModel([
-        SearchEvidenceCall(query=queries[0], call_id="1"),
-        SearchEvidenceCall(query=queries[1], call_id="2"),
-        SearchEvidenceCall(query=queries[2], call_id="3"),
-        SearchEvidenceCall(query=queries[3], call_id="4"),
-        InvestigationDecision(status=InvestigationStatus.ANSWERED,
-            answer="Film B's director was born later. [E3] [E4]", citations=("E3", "E4")),
-    ])
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query=queries[0], call_id="1"),
+            SearchEvidenceCall(query=queries[1], call_id="2"),
+            SearchEvidenceCall(query=queries[2], call_id="3"),
+            SearchEvidenceCall(query=queries[3], call_id="4"),
+            InvestigationDecision(
+                status=InvestigationStatus.ANSWERED,
+                answer="Film B's director was born later. [E3] [E4]",
+                citations=("E3", "E4"),
+            ),
+        ]
+    )
     search = QuerySearch(dict(zip(queries, [(first,), (second,), (third,), (fourth,)])))
     result = await InvestigateQuestion(search, model).execute("Compare the two directors", owner_id=None)
     assert [call[0] for call in search.calls] == list(queries)
@@ -114,11 +150,15 @@ async def test_independent_search_branches_are_combined_in_final_answer(registra
 async def test_same_occurrence_reuses_evidence_id_but_same_content_other_occurrence_does_not(registration):
     first = make_hit(registration, source_id="one", body="Same shared passage")
     second = make_hit(registration, source_id="two", body="Same shared passage")
-    model = ScriptedModel([
-        SearchEvidenceCall(query="first", call_id="1"),
-        SearchEvidenceCall(query="second", call_id="2"),
-        InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Supported [E1] [E2]", citations=("E1", "E2")),
-    ])
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="first", call_id="1"),
+            SearchEvidenceCall(query="second", call_id="2"),
+            InvestigationDecision(
+                status=InvestigationStatus.ANSWERED, answer="Supported [E1] [E2]", citations=("E1", "E2")
+            ),
+        ]
+    )
     search = QuerySearch({"first": (first, first), "second": (first, second)})
     result = await InvestigateQuestion(search, model).execute("Compare sources", owner_id=None)
     assert [item.evidence_id for item in result.evidence] == ["E1", "E2"]
@@ -128,9 +168,15 @@ async def test_same_occurrence_reuses_evidence_id_but_same_content_other_occurre
 
 async def test_empty_retrieval_abstention_and_conflicts_are_distinct():
     abstain = InvestigationDecision(status=InvestigationStatus.INSUFFICIENT_EVIDENCE, answer=None, citations=())
-    result = await InvestigateQuestion(QuerySearch({}), ScriptedModel([
-        SearchEvidenceCall(query="nothing", call_id="1"), abstain,
-    ])).execute("Question", owner_id=None)
+    result = await InvestigateQuestion(
+        QuerySearch({}),
+        ScriptedModel(
+            [
+                SearchEvidenceCall(query="nothing", call_id="1"),
+                abstain,
+            ]
+        ),
+    ).execute("Question", owner_id=None)
     assert result.status == InvestigationStatus.INSUFFICIENT_EVIDENCE
     assert result.searches[0].disposition == SearchDisposition.EMPTY
 
@@ -142,42 +188,78 @@ async def test_empty_retrieval_abstention_and_conflicts_are_distinct():
 
     def hit(source_id, text):
         document = Document(owner_id=None)
-        version = DocumentVersion(document_id=document.id, version_number=1, content=Content(text),
-            source=SourceReference(kind=SourceKind.DATASET, source_id=source_id, record_locator={}))
-        return Evidence(document_id=document.id, document_version_id=version.id,
-            content_sha256=version.content.sha256, start=0, end=len(text), text=text,
-            source=version.source, source_spans=(), rank=1, score=1.0)
+        version = DocumentVersion(
+            document_id=document.id,
+            version_number=1,
+            content=Content(text),
+            source=SourceReference(kind=SourceKind.DATASET, source_id=source_id, record_locator={}),
+        )
+        return Evidence(
+            document_id=document.id,
+            document_version_id=version.id,
+            content_sha256=version.content.sha256,
+            start=0,
+            end=len(text),
+            text=text,
+            source=version.source,
+            source_spans=(),
+            rank=1,
+            score=1.0,
+        )
 
-    conflicting = InvestigationDecision(status=InvestigationStatus.CONFLICTING_EVIDENCE,
-        answer=None, citations=(), conflicts=(ConflictClaim(claim="yes", citations=("E1",)),
-                                               ConflictClaim(claim="no", citations=("E2",))))
-    result = await InvestigateQuestion(QuerySearch({"yes": (hit("yes", "The result is yes."),),
-                                                    "no": (hit("no", "The result is no."),)}), ScriptedModel([
-        SearchEvidenceCall(query="yes", call_id="1"),
-        SearchEvidenceCall(query="no", call_id="2"),
-        conflicting,
-    ])).execute("Question", owner_id=None)
+    conflicting = InvestigationDecision(
+        status=InvestigationStatus.CONFLICTING_EVIDENCE,
+        answer=None,
+        citations=(),
+        conflicts=(ConflictClaim(claim="yes", citations=("E1",)), ConflictClaim(claim="no", citations=("E2",))),
+    )
+    result = await InvestigateQuestion(
+        QuerySearch({"yes": (hit("yes", "The result is yes."),), "no": (hit("no", "The result is no."),)}),
+        ScriptedModel(
+            [
+                SearchEvidenceCall(query="yes", call_id="1"),
+                SearchEvidenceCall(query="no", call_id="2"),
+                conflicting,
+            ]
+        ),
+    ).execute("Question", owner_id=None)
     assert result.status == InvestigationStatus.CONFLICTING_EVIDENCE
     assert [claim.citations for claim in result.conflicts] == [("E1",), ("E2",)]
 
 
-@pytest.mark.parametrize("decision", [
-    InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="fabricated [E8]", citations=("E8",)),
-    InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Known [E999]", citations=("E1",)),
-])
+@pytest.mark.parametrize(
+    "decision",
+    [
+        InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="fabricated [E8]", citations=("E8",)),
+        InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Known [E999]", citations=("E1",)),
+    ],
+)
 async def test_unknown_and_unlisted_citations_are_rejected(registration, decision):
     hit = make_hit(registration, source_id="one", body="Known fact")
     with pytest.raises(GenerationResponseError):
-        await InvestigateQuestion(QuerySearch({"q": (hit,)}), ScriptedModel([
-            SearchEvidenceCall(query="q", call_id="1"), decision,
-        ])).execute("Question", owner_id=None)
+        await InvestigateQuestion(
+            QuerySearch({"q": (hit,)}),
+            ScriptedModel(
+                [
+                    SearchEvidenceCall(query="q", call_id="1"),
+                    decision,
+                ]
+            ),
+        ).execute("Question", owner_id=None)
 
 
 async def test_resource_exhaustion_is_incomplete_and_does_not_rewrite_prior_search(registration):
     hit = make_hit(registration, source_id="one", body="Known fact")
-    result = await InvestigateQuestion(QuerySearch({"first": (hit,)}), ScriptedModel([
-        SearchEvidenceCall(query="first", call_id="1"), SearchEvidenceCall(query="second", call_id="2"),
-    ]), max_search_calls=1).execute("Question", owner_id=None)
+    result = await InvestigateQuestion(
+        QuerySearch({"first": (hit,)}),
+        ScriptedModel(
+            [
+                SearchEvidenceCall(query="first", call_id="1"),
+                SearchEvidenceCall(query="second", call_id="2"),
+            ]
+        ),
+        max_search_calls=1,
+    ).execute("Question", owner_id=None)
     assert result.status == InvestigationStatus.INCOMPLETE
     assert result.searches[0].disposition == SearchDisposition.SUCCEEDED
     assert result.searches[1].disposition == SearchDisposition.SEARCH_LIMIT
@@ -186,9 +268,15 @@ async def test_resource_exhaustion_is_incomplete_and_does_not_rewrite_prior_sear
 
 async def test_repeated_query_stops_without_embedding_again():
     search = QuerySearch({})
-    result = await InvestigateQuestion(search, ScriptedModel([
-        SearchEvidenceCall(query="same", call_id="1"), SearchEvidenceCall(query="same", call_id="2"),
-    ])).execute("Question", owner_id=None)
+    result = await InvestigateQuestion(
+        search,
+        ScriptedModel(
+            [
+                SearchEvidenceCall(query="same", call_id="1"),
+                SearchEvidenceCall(query="same", call_id="2"),
+            ]
+        ),
+    ).execute("Question", owner_id=None)
     assert len(search.calls) == 1
     assert result.status == InvestigationStatus.INCOMPLETE
     assert result.searches[-1].disposition == SearchDisposition.REPEATED_QUERY

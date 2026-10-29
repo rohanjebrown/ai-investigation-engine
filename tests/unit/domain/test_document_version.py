@@ -28,8 +28,11 @@ def test_version_numbers_must_be_positive(registration, number):
 @pytest.mark.parametrize("field", ["structure", "source_spans"])
 def test_spans_cannot_reference_characters_beyond_content(registration, field):
     _, version = registration(body="abc")
-    span = (StructuralSpan(kind=StructureKind.SENTENCE, start=0, end=4)
-            if field == "structure" else SourceSpan(start=0, end=4, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=0),)))
+    span = (
+        StructuralSpan(kind=StructureKind.SENTENCE, start=0, end=4)
+        if field == "structure"
+        else SourceSpan(start=0, end=4, locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=0),))
+    )
     with pytest.raises(ValueError, match="exceeds content length"):
         replace(version, **{field: (span,)})
 

@@ -2,7 +2,6 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download
 
-
 DATASET_ID = "xanhho/2WikiMultihopQA"
 DATASET_REVISION = "612bc5039a457880d9e7d84c3b0a4cf154b70e4f"
 DATA_DIRECTORY = Path("data/raw/2wiki")

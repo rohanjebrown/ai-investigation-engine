@@ -7,8 +7,13 @@ from investigation_engine.application.retrieval import Evidence
 
 class EvidenceRepository(Protocol):
     async def search(
-        self, vector: EmbeddingVector, chunking: ChunkingConfig, embedding: EmbeddingConfig,
-        *, owner_id: str | None, limit: int,
+        self,
+        vector: EmbeddingVector,
+        chunking: ChunkingConfig,
+        embedding: EmbeddingConfig,
+        *,
+        owner_id: str | None,
+        limit: int,
     ) -> tuple[Evidence, ...]:
         """Exact ranked search; apply every eligibility restriction BEFORE top-K.
 
@@ -22,8 +27,15 @@ class EvidenceRepository(Protocol):
 
 class HybridEvidenceRepository(Protocol):
     async def search_channels(
-        self, vector: EmbeddingVector, question: str, chunking: ChunkingConfig, embedding: EmbeddingConfig,
-        *, owner_id: str | None, semantic_limit: int, keyword_limit: int,
+        self,
+        vector: EmbeddingVector,
+        question: str,
+        chunking: ChunkingConfig,
+        embedding: EmbeddingConfig,
+        *,
+        owner_id: str | None,
+        semantic_limit: int,
+        keyword_limit: int,
     ) -> tuple[tuple[Evidence, ...], tuple[Evidence, ...]]:
         """Independent ordered channels, fully eligible within ONE read snapshot.
 
