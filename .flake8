@@ -1,0 +1,23 @@
+[flake8]
+select = WPS
+max-line-length = 120
+max-local-variables = 8
+max-name-length = 60
+max-module-members = 14
+max-arguments = 7
+max-raises = 5
+statistics = True
+count = True
+# These moderate limits keep useful checks while accommodating cohesive domain
+# modules, constructor configuration, and distinct validation error paths.
+# This module is a table of explicit environment defaults and accepted bounds.
+# Naming every literal again would duplicate the Settings field names without
+# improving the meaning of these adjacent default/minimum/maximum values.
+# CLI scripts use stdout for user-facing reports; their print calls are part of
+# the command output contract. Avoid masking `__import__` by using normal imports.
+# Tests keep repeated expectations at assertion sites, multiple assertions in
+# behavior-focused cases, and explicit float-valued vector expectations.
+per-file-ignores =
+    src/investigation_engine/infrastructure/config.py: WPS432
+    scripts/*: WPS421
+    tests/*: WPS118, WPS218, WPS226, WPS358, WPS432

@@ -15,5 +15,3 @@ class UnsupportedDocumentError(DocumentExtractionError):
 
 class DocumentLimitExceededError(DocumentExtractionError):
     """A parser exceeded a configured page or extracted-text bound."""
-
-

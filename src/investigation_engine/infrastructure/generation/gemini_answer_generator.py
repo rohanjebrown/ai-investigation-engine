@@ -8,18 +8,31 @@ import random
 import re
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
+from http import HTTPStatus
 
 import httpx
 from google import genai
 from google.genai import errors, types
 
 from investigation_engine.application.answers import (
-    GenerationRequest, GenerationResult, GenerationUsage, MAX_ANSWER_CHARS, generation_result, validate_question,
+    MAX_ANSWER_CHARS,
+    GenerationRequest,
+    GenerationResult,
+    GenerationUsage,
+    generation_result,
+    validate_question,
 )
 from investigation_engine.application.ports.generation_errors import (
-    GenerationProviderError, GenerationRateLimitError, GenerationResponseError, GenerationTimeoutError,
+    GenerationProviderError,
+    GenerationRateLimitError,
+    GenerationResponseError,
+    GenerationTimeoutError,
 )
-from investigation_engine.application.ports.provider_diagnostics import attach_diagnostic, safe_diagnostic, status_category
+from investigation_engine.application.ports.provider_diagnostics import (
+    attach_diagnostic,
+    safe_diagnostic,
+    status_category,
+)
 
 logger = logging.getLogger(__name__)
 MAX_RETRY_DELAY = 10.0
@@ -104,8 +117,12 @@ def _retry_details(error):
                     continue
                 quota_id = violation.get("quotaId", "")
                 unit = violation.get("quotaUnit", "")
-                if (isinstance(quota_id, str) and "perday" in quota_id.casefold()
-                    or isinstance(unit, str) and "/d/" in unit.casefold()):
+                if (
+                    isinstance(quota_id, str)
+                    and "perday" in quota_id.casefold()
+                    or isinstance(unit, str)
+                    and "/d/" in unit.casefold()
+                ):
                     daily = True
         if kind == "type.googleapis.com/google.rpc.RetryInfo":
             delay = entry.get("retryDelay")
@@ -126,7 +143,7 @@ def _retry_details(error):
                     date = parsedate_to_datetime(raw)
                     if date.tzinfo is not None:
                         hints.append((date - datetime.now(UTC)).total_seconds())
-                except (TypeError, ValueError, OverflowError):
+                except TypeError, ValueError, OverflowError:
                     pass
     valid = [max(0.0, hint) for hint in hints if math.isfinite(hint)]
     return daily, max(valid, default=0.0)
@@ -134,8 +151,14 @@ def _retry_details(error):
 
 class GeminiAnswerGenerator:
     def __init__(
-        self, *, api_key: str | None, model: str, timeout_seconds: int = 30,
-        max_attempts: int = 2, max_output_tokens: int = 1024, temperature: float | None = None,
+        self,
+        *,
+        api_key: str | None,
+        model: str,
+        timeout_seconds: int = 30,
+        max_attempts: int = 2,
+        max_output_tokens: int = 1024,
+        temperature: float | None = None,
     ) -> None:
         if not isinstance(api_key, str) or not api_key.strip():
             raise GenerationProviderError("GEMINI_API_KEY is required for answer generation")
@@ -148,8 +171,9 @@ class GeminiAnswerGenerator:
         ):
             if type(value) is not int or not low <= value <= high:
                 raise ValueError(f"{name} must be an integer between {low} and {high}")
-        if temperature is not None and (type(temperature) not in (float, int) or not math.isfinite(temperature)
-                                         or not 0 <= temperature <= 1):
+        if temperature is not None and (
+            type(temperature) not in (float, int) or not math.isfinite(temperature) or not 0 <= temperature <= 1
+        ):
             raise ValueError("temperature must be a finite number between 0 and 1")
         match = re.match(r"^(?:models/)?gemini-(\d+)(?:\.(\d+))?(?:-|$)", model)
         version = (int(match.group(1)), int(match.group(2) or 0)) if match else None
@@ -162,10 +186,13 @@ class GeminiAnswerGenerator:
         self._closed = False
         self._provider_requests = 0
         self._client = genai.Client(
-            api_key=api_key, enterprise=False,
+            api_key=api_key,
+            enterprise=False,
             http_options=types.HttpOptions(
-                base_url="https://generativelanguage.googleapis.com", api_version="v1beta",
-                timeout=timeout_seconds * 1000, retry_options=types.HttpRetryOptions(attempts=1),
+                base_url="https://generativelanguage.googleapis.com",
+                api_version="v1beta",
+                timeout=timeout_seconds * 1000,
+                retry_options=types.HttpRetryOptions(attempts=1),
             ),
         )
 
@@ -203,19 +230,29 @@ class GeminiAnswerGenerator:
                 try:
                     response = await self._request(payload, schema=schema)
                 except GenerationResponseError:
-                    logger.warning("Gemini generation invalid_response attempt=%d reason=sdk_decoding retry=false", attempt + 1)
+                    logger.warning(
+                        "Gemini generation invalid_response attempt=%d reason=sdk_decoding retry=false", attempt + 1
+                    )
                     raise
                 try:
-                    return self._parse(response, allowed_ids={item.evidence_id for item in request.evidence},
-                                       provider_requests=attempt + 1)
+                    return self._parse(
+                        response,
+                        allowed_ids={item.evidence_id for item in request.evidence},
+                        provider_requests=attempt + 1,
+                    )
                 except GenerationResponseError as error:
                     candidates = getattr(response, "candidates", None)
                     candidate = candidates[0] if isinstance(candidates, (list, tuple)) and candidates else None
                     reason = getattr(candidate, "finish_reason", None)
                     usage = getattr(response, "usage_metadata", None)
-                    token_counts = tuple(value if type(value) is int and value >= 0 else None for value in (
-                        getattr(usage, "prompt_token_count", None), getattr(usage, "candidates_token_count", None),
-                        getattr(usage, "thoughts_token_count", None)))
+                    token_counts = tuple(
+                        value if type(value) is int and value >= 0 else None
+                        for value in (
+                            getattr(usage, "prompt_token_count", None),
+                            getattr(usage, "candidates_token_count", None),
+                            getattr(usage, "thoughts_token_count", None),
+                        )
+                    )
                     categories = {
                         "Generation returned malformed JSON": "malformed_json",
                         "Generation cited unknown or malformed evidence": "invalid_citation",
@@ -223,23 +260,37 @@ class GeminiAnswerGenerator:
                         "Generation returned an invalid number of candidates": "invalid_candidates",
                         "Generation did not complete normally": "incomplete_finish",
                     }
-                    logger.warning("Gemini generation invalid_response attempt=%d reason=%s finish_reason=%s "
-                                   "prompt_tokens=%s candidate_tokens=%s thinking_tokens=%s retry=false",
-                                   attempt + 1, categories.get(str(error), "invalid_structure"),
-                                   reason.name if isinstance(reason, types.FinishReason) else "missing_or_invalid",
-                                   *token_counts)
-                    raise attach_diagnostic(error, operation="generate_content", model_id=self._model,
-                        http_status=200, category="invalid_response", request_count=self._provider_requests) from None
+                    logger.warning(
+                        "Gemini generation invalid_response attempt=%d reason=%s finish_reason=%s "
+                        "prompt_tokens=%s candidate_tokens=%s thinking_tokens=%s retry=false",
+                        attempt + 1,
+                        categories.get(str(error), "invalid_structure"),
+                        reason.name if isinstance(reason, types.FinishReason) else "missing_or_invalid",
+                        *token_counts,
+                    )
+                    raise attach_diagnostic(
+                        error,
+                        operation="generate_content",
+                        model_id=self._model,
+                        http_status=HTTPStatus.OK,
+                        category="invalid_response",
+                        request_count=self._provider_requests,
+                    ) from None
             except GenerationProviderError as error:
                 hint = getattr(error, "_retry_after", 0.0)
                 retry = error.retryable and attempt + 1 < self._attempts and hint <= MAX_RETRY_DELAY
-                delay = max(hint, random.uniform(0.0, min(0.5 * (2 ** attempt), MAX_RETRY_DELAY))) if retry else 0.0
+                delay = max(hint, random.uniform(0.0, min(0.5 * (2**attempt), MAX_RETRY_DELAY))) if retry else 0.0
                 diagnostic = safe_diagnostic(error) or {}
-                logger.warning("Gemini generation provider_failure attempt=%d category=%s http_status=%s "
-                               "quota=%s retry=%s delay_seconds=%.3f",
-                               attempt + 1, diagnostic.get("category"), diagnostic.get("http_status"),
-                               "daily" if getattr(error, "_daily_quota", False) else "unknown_or_short_term",
-                               retry, delay)
+                logger.warning(
+                    "Gemini generation provider_failure attempt=%d category=%s http_status=%s "
+                    "quota=%s retry=%s delay_seconds=%.3f",
+                    attempt + 1,
+                    diagnostic.get("category"),
+                    diagnostic.get("http_status"),
+                    "daily" if getattr(error, "_daily_quota", False) else "unknown_or_short_term",
+                    retry,
+                    delay,
+                )
                 if not retry:
                     raise
                 await asyncio.sleep(delay)
@@ -252,10 +303,13 @@ class GeminiAnswerGenerator:
             options = {"temperature": self._temperature} if self._temperature is not None else {}
             async with asyncio.timeout(self._timeout):
                 return await self._client.aio.models.generate_content(
-                    model=self._model, contents=types.Content(role="user", parts=[types.Part(text=payload)]),
+                    model=self._model,
+                    contents=types.Content(role="user", parts=[types.Part(text=payload)]),
                     config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION, response_mime_type="application/json",
-                        response_json_schema=schema, max_output_tokens=self._output_tokens,
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        response_mime_type="application/json",
+                        response_json_schema=schema,
+                        max_output_tokens=self._output_tokens,
                         **options,
                     ),
                 )
@@ -263,15 +317,17 @@ class GeminiAnswerGenerator:
             code = error.code
             status, category = code, status_category(code)
             cause = RuntimeError(f"Generation API request failed (HTTP {code})")
-            if code == 429:
+            if code == HTTPStatus.TOO_MANY_REQUESTS:
                 daily, retry_after = _retry_details(error)
                 failure = GenerationRateLimitError("Generation rate or quota limit exceeded", retryable=not daily)
                 failure._daily_quota, failure._retry_after = daily, retry_after
             else:
-                failure = GenerationProviderError("Generation provider unavailable or rejected request",
-                    retryable=code in (408, 425, 500, 502, 503, 504))
+                failure = GenerationProviderError(
+                    "Generation provider unavailable or rejected request",
+                    retryable=code in (408, 425, 500, 502, 503, 504),
+                )
                 _, failure._retry_after = _retry_details(error)
-        except (TimeoutError, httpx.TimeoutException):
+        except TimeoutError, httpx.TimeoutException:
             category = "timeout"
             cause = RuntimeError("Generation request timed out")
             failure = GenerationTimeoutError("Generation request timed out", retryable=True)
@@ -279,15 +335,21 @@ class GeminiAnswerGenerator:
             category = "transport"
             cause = RuntimeError("Generation transport request failed")
             failure = GenerationProviderError("Generation service could not be reached", retryable=True)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             category = "invalid_response"
             cause = RuntimeError("Generation response decoding failed")
             failure = GenerationResponseError("Generation returned an invalid response")
         # Outside handlers: SDK errors may contain credentials or echoed context.
         # Cancellation is not caught and must propagate through lifespan cleanup.
-        raise attach_diagnostic(failure, operation="generate_content", model_id=self._model,
-            http_status=status, category=category, retryable=getattr(failure, "retryable", False),
-            request_count=self._provider_requests) from cause
+        raise attach_diagnostic(
+            failure,
+            operation="generate_content",
+            model_id=self._model,
+            http_status=status,
+            category=category,
+            retryable=getattr(failure, "retryable", False),
+            request_count=self._provider_requests,
+        ) from cause
 
     @staticmethod
     def _parse(response, *, allowed_ids: set[str], provider_requests: int = 1) -> GenerationResult:
@@ -295,36 +357,26 @@ class GeminiAnswerGenerator:
             candidates = response.candidates
 
             if not candidates or len(candidates) != 1:
-                raise GenerationResponseError(
-                    "Generation returned an invalid number of candidates"
-                )
+                raise GenerationResponseError("Generation returned an invalid number of candidates")
 
             candidate = candidates[0]
             finish_reason = candidate.finish_reason
 
             if finish_reason != types.FinishReason.STOP:
-                raise GenerationResponseError(
-                    "Generation did not complete normally"
-                )
+                raise GenerationResponseError("Generation did not complete normally")
 
             raw = response.text
 
             if not isinstance(raw, str) or not raw.strip():
-                raise GenerationResponseError(
-                    "Generation returned empty response text"
-                )
+                raise GenerationResponseError("Generation returned empty response text")
 
             if len(raw) > MAX_ANSWER_CHARS * 4:
-                raise GenerationResponseError(
-                    "Generation response exceeds size limit"
-                )
+                raise GenerationResponseError("Generation response exceeds size limit")
 
             try:
                 value = json.loads(raw, object_pairs_hook=_unique_object)
-            except (TypeError, ValueError):
-                raise GenerationResponseError(
-                    "Generation returned malformed JSON"
-                ) from None
+            except TypeError, ValueError:
+                raise GenerationResponseError("Generation returned malformed JSON") from None
 
             # Normalize duplicates only after every cited ID is known to this request.
             # The shared application validator remains strict for other providers.
@@ -335,10 +387,8 @@ class GeminiAnswerGenerator:
                 value["citations"] = list(dict.fromkeys(citations))
             result = generation_result(value)
 
-        except (AttributeError, TypeError, ValueError):
-            raise GenerationResponseError(
-                "Generation returned incomplete or malformed structured output"
-            ) from None
+        except AttributeError, TypeError, ValueError:
+            raise GenerationResponseError("Generation returned incomplete or malformed structured output") from None
 
         usage = getattr(response, "usage_metadata", None)
 

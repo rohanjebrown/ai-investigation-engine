@@ -11,13 +11,11 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 
-
 DATASET_PATH = Path("data/raw/2wiki/dev.parquet")
 
+
 def sha256(text: str) -> str:
-    return hashlib.sha256(
-        text.encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def normalize_text(sentences: list[str]) -> str:
@@ -64,26 +62,13 @@ def main() -> None:
                     title_normalized_contents[title].add(normalized_hash)
                     unique_normalized_contents.add(normalized_hash)
 
-    unique_title_content_pairs = sum(
-        len(contents)
-        for contents in title_contents.values()
-    )
+    unique_title_content_pairs = sum(len(contents) for contents in title_contents.values())
 
-    unique_normalized_title_content_pairs = sum(
-        len(contents)
-        for contents in title_normalized_contents.values()
-    )
+    unique_normalized_title_content_pairs = sum(len(contents) for contents in title_normalized_contents.values())
 
-    titles_with_variants = [
-        (title, len(contents))
-        for title, contents in title_contents.items()
-        if len(contents) > 1
-    ]
+    titles_with_variants = [(title, len(contents)) for title, contents in title_contents.items() if len(contents) > 1]
 
-    normalized_titles_with_variants = sum(
-        len(contents) > 1
-        for contents in title_normalized_contents.values()
-    )
+    normalized_titles_with_variants = sum(len(contents) > 1 for contents in title_normalized_contents.values())
 
     print("DATASET AUDIT")
     print(f"Questions: {total_questions:,}")
@@ -92,50 +77,20 @@ def main() -> None:
 
     print("\nEXACT CONTENT ANALYSIS")
     print(f"Unique contents: {len(unique_contents):,}")
-    print(
-        f"Unique title-content combinations: "
-        f"{unique_title_content_pairs:,}"
-    )
-    print(
-        f"Content-only duplicate occurrences: "
-        f"{total_passages - len(unique_contents):,}"
-    )
-    print(
-        f"Title-content duplicate occurrences: "
-        f"{total_passages - unique_title_content_pairs:,}"
-    )
-    print(
-        f"Titles with multiple contents: "
-        f"{len(titles_with_variants):,}"
-    )
+    print(f"Unique title-content combinations: {unique_title_content_pairs:,}")
+    print(f"Content-only duplicate occurrences: {total_passages - len(unique_contents):,}")
+    print(f"Title-content duplicate occurrences: {total_passages - unique_title_content_pairs:,}")
+    print(f"Titles with multiple contents: {len(titles_with_variants):,}")
 
     print("\nNORMALIZED CONTENT ANALYSIS")
-    print(
-        f"Unique normalized contents: "
-        f"{len(unique_normalized_contents):,}"
-    )
-    print(
-        f"Unique normalized title-content combinations: "
-        f"{unique_normalized_title_content_pairs:,}"
-    )
-    print(
-        f"Normalized content-only duplicate occurrences: "
-        f"{total_passages - len(unique_normalized_contents):,}"
-    )
-    print(
-        f"Titles with multiple normalized contents: "
-        f"{normalized_titles_with_variants:,}"
-    )
+    print(f"Unique normalized contents: {len(unique_normalized_contents):,}")
+    print(f"Unique normalized title-content combinations: {unique_normalized_title_content_pairs:,}")
+    print(f"Normalized content-only duplicate occurrences: {total_passages - len(unique_normalized_contents):,}")
+    print(f"Titles with multiple normalized contents: {normalized_titles_with_variants:,}")
 
     print("\nNORMALIZATION IMPACT")
-    print(
-        f"Content variants eliminated: "
-        f"{len(unique_contents) - len(unique_normalized_contents):,}"
-    )
-    print(
-        f"Title-content variants eliminated: "
-        f"{unique_title_content_pairs - unique_normalized_title_content_pairs:,}"
-    )
+    print(f"Content variants eliminated: {len(unique_contents) - len(unique_normalized_contents):,}")
+    print(f"Title-content variants eliminated: {unique_title_content_pairs - unique_normalized_title_content_pairs:,}")
 
     print("\nTOP 10 TITLES WITH CONTENT VARIANTS")
 

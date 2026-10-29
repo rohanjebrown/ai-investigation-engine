@@ -5,10 +5,16 @@ from unittest.mock import AsyncMock
 import pytest
 
 from investigation_engine.application.answers import (
-    AnswerStatus, GenerationResult, INSUFFICIENT_MESSAGE, generation_result,
+    INSUFFICIENT_MESSAGE,
+    AnswerStatus,
+    GenerationResult,
+    generation_result,
 )
 from investigation_engine.application.ports.generation_errors import (
-    EvidenceContextLimitError, GenerationProviderError, GenerationResponseError, GenerationTimeoutError,
+    EvidenceContextLimitError,
+    GenerationProviderError,
+    GenerationResponseError,
+    GenerationTimeoutError,
 )
 from investigation_engine.application.ports.repository_errors import RepositoryError
 from investigation_engine.application.retrieval import Evidence
@@ -21,15 +27,31 @@ def rag(registration):
     def evidence(text="Paris is in France."):
         span = SourceSpan(start=0, end=len(text), locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=0),))
         document, version = registration(body=text, source_spans=(span,))
-        return Evidence(document_id=document.id, document_version_id=version.id,
-                        content_sha256=version.content.sha256, start=0, end=len(text), text=text,
-                        source=version.source, source_spans=version.source_spans, score=1.0, rank=1)
+        return Evidence(
+            document_id=document.id,
+            document_version_id=version.id,
+            content_sha256=version.content.sha256,
+            start=0,
+            end=len(text),
+            text=text,
+            source=version.source,
+            source_spans=version.source_spans,
+            score=1.0,
+            rank=1,
+        )
+
     hits = (evidence(), evidence("France is in Europe."))
     search = SimpleNamespace(execute=AsyncMock(return_value=hits))
-    generator = SimpleNamespace(generate=AsyncMock(return_value=GenerationResult(
-        status=AnswerStatus.ANSWERED, answer="Paris is in France, in Europe. [E1] [E2]", citations=("E1", "E2"))))
-    return SimpleNamespace(search=search, generator=generator, hits=hits, evidence=evidence,
-                           service=AnswerQuestion(search, generator))
+    generator = SimpleNamespace(
+        generate=AsyncMock(
+            return_value=GenerationResult(
+                status=AnswerStatus.ANSWERED, answer="Paris is in France, in Europe. [E1] [E2]", citations=("E1", "E2")
+            )
+        )
+    )
+    return SimpleNamespace(
+        search=search, generator=generator, hits=hits, evidence=evidence, service=AnswerQuestion(search, generator)
+    )
 
 
 async def test_grounded_answer_resolves_only_server_evidence_with_exact_locations(rag):
@@ -55,14 +77,20 @@ async def test_empty_retrieval_abstains_without_generation(rag):
 
 
 async def test_explicit_model_abstention_is_not_forced_into_answer(rag):
-    rag.generator.generate.return_value = GenerationResult(status=AnswerStatus.INSUFFICIENT_EVIDENCE, answer=None, citations=())
+    rag.generator.generate.return_value = GenerationResult(
+        status=AnswerStatus.INSUFFICIENT_EVIDENCE, answer=None, citations=()
+    )
     assert (await rag.service.execute("Unknown?", owner_id=None)).answer is None
 
 
-@pytest.mark.parametrize("citations,answer", [(("E99",), "Unsupported"), (("E2",), "Unknown inline [E99]"),
-                                               (("E1",), "Malformed inline [E01]")])
+@pytest.mark.parametrize(
+    "citations,answer",
+    [(("E99",), "Unsupported"), (("E2",), "Unknown inline [E99]"), (("E1",), "Malformed inline [E01]")],
+)
 async def test_unknown_and_unlisted_inline_citations_are_errors(rag, citations, answer):
-    rag.generator.generate.return_value = GenerationResult(status=AnswerStatus.ANSWERED, answer=answer, citations=citations)
+    rag.generator.generate.return_value = GenerationResult(
+        status=AnswerStatus.ANSWERED, answer=answer, citations=citations
+    )
     with pytest.raises(GenerationResponseError):
         await rag.service.execute("q", owner_id=None)
 
@@ -73,12 +101,20 @@ def test_missing_duplicate_and_malformed_references_are_rejected(citations):
         GenerationResult(status=AnswerStatus.ANSWERED, answer="Claim", citations=citations)
 
 
-@pytest.mark.parametrize("value", [None, [], {}, {"status": "answered", "answer": "Claim", "citations": "E1"},
-    {"status": "answered", "answer": "Claim", "citations": ["E1"], "source": "invented"},
-    {"status": "unknown", "answer": None, "citations": []},
-    {"status": "answered", "answer": " ", "citations": ["E1"]},
-    {"status": "insufficient_evidence", "answer": "guess", "citations": []},
-    {"status": "answered", "answer": "\ud800", "citations": ["E1"]}])
+@pytest.mark.parametrize(
+    "value",
+    [
+        None,
+        [],
+        {},
+        {"status": "answered", "answer": "Claim", "citations": "E1"},
+        {"status": "answered", "answer": "Claim", "citations": ["E1"], "source": "invented"},
+        {"status": "unknown", "answer": None, "citations": []},
+        {"status": "answered", "answer": " ", "citations": ["E1"]},
+        {"status": "insufficient_evidence", "answer": "guess", "citations": []},
+        {"status": "answered", "answer": "\ud800", "citations": ["E1"]},
+    ],
+)
 def test_structured_result_rejects_coercion_extra_metadata_and_inconsistent_states(value):
     with pytest.raises(GenerationResponseError):
         generation_result(value)
@@ -95,8 +131,10 @@ async def test_provider_cannot_bypass_result_validation(rag):
         await rag.service.execute("q", owner_id=None)
 
 
-@pytest.mark.parametrize("error", [GenerationProviderError("Unavailable"), GenerationTimeoutError("Timed out"),
-                                    GenerationResponseError("Malformed")])
+@pytest.mark.parametrize(
+    "error",
+    [GenerationProviderError("Unavailable"), GenerationTimeoutError("Timed out"), GenerationResponseError("Malformed")],
+)
 async def test_generation_failure_never_becomes_insufficient_evidence(rag, error):
     rag.generator.generate.side_effect = error
     with pytest.raises(type(error)):
@@ -111,8 +149,14 @@ async def test_retrieval_failure_never_calls_generator(rag):
 
 
 async def test_context_selection_is_ranked_bounded_and_never_clips_excerpts(rag):
-    rag.search.execute.return_value = (rag.evidence("😀" * 500), rag.evidence(" Exact 😀 text.\n"), rag.evidence("x" * 500))
-    rag.generator.generate.return_value = GenerationResult(status=AnswerStatus.ANSWERED, answer="Claim [E1]", citations=("E1",))
+    rag.search.execute.return_value = (
+        rag.evidence("😀" * 500),
+        rag.evidence(" Exact 😀 text.\n"),
+        rag.evidence("x" * 500),
+    )
+    rag.generator.generate.return_value = GenerationResult(
+        status=AnswerStatus.ANSWERED, answer="Claim [E1]", citations=("E1",)
+    )
     service = AnswerQuestion(rag.search, rag.generator, max_evidence=3, max_context_chars=256)
     result = await service.execute("q", owner_id=None)
     request = rag.generator.generate.await_args.args[0]
@@ -129,7 +173,9 @@ async def test_context_budget_failure_is_distinct_from_no_evidence(rag):
 
 
 async def test_evidence_count_and_exact_question_are_bounded_before_generation(rag):
-    rag.generator.generate.return_value = GenerationResult(status=AnswerStatus.ANSWERED, answer="Claim", citations=("E1",))
+    rag.generator.generate.return_value = GenerationResult(
+        status=AnswerStatus.ANSWERED, answer="Claim", citations=("E1",)
+    )
     await AnswerQuestion(rag.search, rag.generator, max_evidence=1).execute("  q?\n", owner_id="trusted")
     rag.search.execute.assert_awaited_once_with("  q?\n", 1, owner_id="trusted")
     assert len(rag.generator.generate.await_args.args[0].evidence) == 1

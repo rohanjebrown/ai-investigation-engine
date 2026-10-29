@@ -15,8 +15,8 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKeyConstraint,
-    Index,
     Identity,
+    Index,
     Integer,
     MetaData,
     Text,
@@ -35,9 +35,7 @@ class Base(DeclarativeBase):
 class ContentRow(Base):
     __tablename__ = "contents"
     __table_args__ = (
-        CheckConstraint(
-            "octet_length(sha256) = 32", name="ck_contents_sha256_length"
-        ),
+        CheckConstraint("octet_length(sha256) = 32", name="ck_contents_sha256_length"),
         CheckConstraint(
             "sha256 = pg_catalog.sha256(pg_catalog.convert_to(text, 'UTF8'))",
             name="ck_contents_sha256_matches_text",
@@ -67,13 +65,9 @@ class DocumentRow(Base):
     id: Mapped[PythonUUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     owner_id: Mapped[str | None] = mapped_column(Text(collation="C"), nullable=True)
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
-    current_version_id: Mapped[PythonUUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
+    current_version_id: Mapped[PythonUUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     versions: Mapped[list[DocumentVersionRow]] = relationship(
         back_populates="document",
@@ -98,29 +92,20 @@ class DocumentRow(Base):
 class DocumentVersionRow(Base):
     __tablename__ = "document_versions"
     __table_args__ = (
-        ForeignKeyConstraint(
-            ["document_id"], ["documents.id"], name="fk_document_versions_document"
-        ),
-        ForeignKeyConstraint(
-            ["content_sha256"], ["contents.sha256"], name="fk_document_versions_content"
-        ),
+        ForeignKeyConstraint(["document_id"], ["documents.id"], name="fk_document_versions_document"),
+        ForeignKeyConstraint(["content_sha256"], ["contents.sha256"], name="fk_document_versions_content"),
+        UniqueConstraint("document_id", "version_number", name="uq_document_versions_number"),
+        UniqueConstraint("document_id", "id", name="uq_document_versions_owned_id"),
         UniqueConstraint(
-            "document_id", "version_number", name="uq_document_versions_number"
-        ),
-        UniqueConstraint(
-            "document_id", "id", name="uq_document_versions_owned_id"
-        ),
-        UniqueConstraint(
-            "kind", "source_id", "revision", "record_locator",
+            "kind",
+            "source_id",
+            "revision",
+            "record_locator",
             name="uq_document_versions_source_occurrence",
             postgresql_nulls_not_distinct=True,
         ),
-        CheckConstraint(
-            "version_number > 0", name="ck_document_versions_positive_number"
-        ),
-        CheckConstraint(
-            "kind IN ('upload', 'dataset')", name="ck_document_versions_kind"
-        ),
+        CheckConstraint("version_number > 0", name="ck_document_versions_positive_number"),
+        CheckConstraint("kind IN ('upload', 'dataset')", name="ck_document_versions_kind"),
         CheckConstraint(
             "jsonb_typeof(record_locator) = 'object'",
             name="ck_document_versions_record_locator_object",
@@ -153,7 +138,9 @@ class DocumentVersionRow(Base):
     )
     display_name: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_metadata: Mapped[dict[str, Any]] = mapped_column(
-        "metadata", JSONB(none_as_null=True), nullable=False,
+        "metadata",
+        JSONB(none_as_null=True),
+        nullable=False,
         server_default=text("'{}'::jsonb"),
     )
     structure: Mapped[list[dict[str, Any]]] = mapped_column(
@@ -163,9 +150,7 @@ class DocumentVersionRow(Base):
         JSONB(none_as_null=True), nullable=False, server_default=text("'[]'::jsonb")
     )
 
-    document: Mapped[DocumentRow] = relationship(
-        back_populates="versions", foreign_keys=[document_id], lazy="raise"
-    )
+    document: Mapped[DocumentRow] = relationship(back_populates="versions", foreign_keys=[document_id], lazy="raise")
     content: Mapped[ContentRow] = relationship(back_populates="versions", lazy="raise")
 
 
@@ -187,8 +172,7 @@ class ChunkingConfigurationRow(Base):
         ),
         CheckConstraint("max_tokens > 0", name="ck_chunking_configurations_budget"),
         CheckConstraint(
-            "overlap >= 0 AND overlap < max_tokens "
-            "AND (strategy = 'fixed_tokens' OR overlap = 0)",
+            "overlap >= 0 AND overlap < max_tokens AND (strategy = 'fixed_tokens' OR overlap = 0)",
             name="ck_chunking_configurations_overlap",
         ),
     )
@@ -234,15 +218,18 @@ class VersionChunkPlanRow(Base):
     __tablename__ = "version_chunk_plans"
     __table_args__ = (
         ForeignKeyConstraint(
-            ["document_version_id"], ["document_versions.id"],
+            ["document_version_id"],
+            ["document_versions.id"],
             name="fk_version_chunk_plans_version",
         ),
         ForeignKeyConstraint(
-            ["chunking_configuration_id"], ["chunking_configurations.id"],
+            ["chunking_configuration_id"],
+            ["chunking_configurations.id"],
             name="fk_version_chunk_plans_configuration",
         ),
         CheckConstraint(
-            "expected_chunk_count >= 0", name="ck_version_chunk_plans_count",
+            "expected_chunk_count >= 0",
+            name="ck_version_chunk_plans_count",
         ),
     )
 
@@ -254,8 +241,10 @@ class VersionChunkPlanRow(Base):
     version: Mapped[DocumentVersionRow] = relationship(lazy="raise")
     configuration: Mapped[ChunkingConfigurationRow] = relationship(lazy="raise")
     memberships: Mapped[list[ChunkMembershipRow]] = relationship(
-        back_populates="plan", order_by="ChunkMembershipRow.ordinal",
-        passive_deletes="all", lazy="raise",
+        back_populates="plan",
+        order_by="ChunkMembershipRow.ordinal",
+        passive_deletes="all",
+        lazy="raise",
     )
 
 
@@ -268,7 +257,10 @@ class ChunkMembershipRow(Base):
             name="fk_chunk_memberships_plan",
         ),
         UniqueConstraint(
-            "document_version_id", "chunking_configuration_id", "start", "end",
+            "document_version_id",
+            "chunking_configuration_id",
+            "start",
+            "end",
             name="uq_chunk_memberships_range",
         ),
         CheckConstraint("ordinal >= 0", name="ck_chunk_memberships_ordinal"),
@@ -288,11 +280,14 @@ class ChunkEmbeddingRow(Base):
     __tablename__ = "chunk_embeddings"
     __table_args__ = (
         ForeignKeyConstraint(
-            ["embedding_configuration_id"], ["embedding_configurations.id"],
+            ["embedding_configuration_id"],
+            ["embedding_configurations.id"],
             name="fk_chunk_embeddings_configuration",
         ),
         ForeignKeyConstraint(
-            ["content_sha256"], ["contents.sha256"], name="fk_chunk_embeddings_content",
+            ["content_sha256"],
+            ["contents.sha256"],
+            name="fk_chunk_embeddings_content",
         ),
         CheckConstraint('start >= 0 AND "end" > start', name="ck_chunk_embeddings_range"),
         CheckConstraint("vector_norm(embedding) > 0", name="ck_chunk_embeddings_nonzero"),

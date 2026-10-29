@@ -7,7 +7,6 @@ from tokenizers import Tokenizer, __version__
 
 from investigation_engine.application.ports.text_tokenizer import TokenizerIdentity
 
-
 # Experimental reference only; these do not select an embedding provider.
 VOYAGE_REFERENCE_NAME = "MongoDB/voyage-4"
 VOYAGE_REFERENCE_REVISION = "44f3b2ae4ddf33403ed4dd66bec3fa48ff7dbbf9"

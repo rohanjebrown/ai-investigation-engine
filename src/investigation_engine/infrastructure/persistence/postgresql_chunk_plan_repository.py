@@ -14,7 +14,10 @@ from investigation_engine.application.ports.text_tokenizer import TokenizerIdent
 from investigation_engine.domain.content import Content
 from investigation_engine.infrastructure.persistence._document_mapping import _content
 from investigation_engine.infrastructure.persistence.models import (
-    ChunkingConfigurationRow, ChunkMembershipRow, ContentRow, DocumentVersionRow,
+    ChunkingConfigurationRow,
+    ChunkMembershipRow,
+    ContentRow,
+    DocumentVersionRow,
     VersionChunkPlanRow,
 )
 
@@ -27,11 +30,14 @@ def _configuration_values(config: ChunkingConfig) -> dict[str, str | int | bytes
     if config.algorithm_version != "1":
         raise ValueError("Unsupported chunking algorithm version")
     return dict(
-        strategy=config.strategy, algorithm_version=config.algorithm_version,
-        tokenizer_name=config.tokenizer.name, tokenizer_revision=config.tokenizer.revision,
+        strategy=config.strategy,
+        algorithm_version=config.algorithm_version,
+        tokenizer_name=config.tokenizer.name,
+        tokenizer_revision=config.tokenizer.revision,
         tokenizer_artifact_sha256=bytes.fromhex(config.tokenizer.artifact_sha256),
         tokenizer_runtime_version=config.tokenizer.runtime_version,
-        max_tokens=config.max_tokens, overlap=config.overlap,
+        max_tokens=config.max_tokens,
+        overlap=config.overlap,
     )
 
 
@@ -39,11 +45,13 @@ def _configuration(row: ChunkingConfigurationRow) -> ChunkingConfig:
     config = ChunkingConfig(
         strategy=ChunkingStrategy(row.strategy),
         tokenizer=TokenizerIdentity(
-            name=row.tokenizer_name, revision=row.tokenizer_revision,
+            name=row.tokenizer_name,
+            revision=row.tokenizer_revision,
             artifact_sha256=row.tokenizer_artifact_sha256.hex(),
             runtime_version=row.tokenizer_runtime_version,
         ),
-        max_tokens=row.max_tokens, overlap=row.overlap,
+        max_tokens=row.max_tokens,
+        overlap=row.overlap,
     )
     if config.algorithm_version != row.algorithm_version:
         raise ValueError("Unsupported stored chunking algorithm version")
@@ -72,10 +80,10 @@ class PostgreSQLChunkPlanRepository:
                     # concurrent registrations cannot create duplicate rows.
                     await session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": 7_341_902_862})
                     row = await session.scalar(
-                        select(ChunkingConfigurationRow).where(*(
-                            getattr(ChunkingConfigurationRow, key) == value
-                            for key, value in values.items()
-                        )).order_by(ChunkingConfigurationRow.id).limit(1)
+                        select(ChunkingConfigurationRow)
+                        .where(*(getattr(ChunkingConfigurationRow, key) == value for key, value in values.items()))
+                        .order_by(ChunkingConfigurationRow.id)
+                        .limit(1)
                     )
                     if row is None:
                         row = ChunkingConfigurationRow(**values)
@@ -110,10 +118,10 @@ class PostgreSQLChunkPlanRepository:
                             raise ChunkPlanConflict("Chunk plan conflict: ordered ranges differ")
                     else:
                         configuration = await session.scalar(
-                            select(ChunkingConfigurationRow).where(*(
-                                getattr(ChunkingConfigurationRow, key) == value
-                                for key, value in values.items()
-                            )).order_by(ChunkingConfigurationRow.id).limit(1)
+                            select(ChunkingConfigurationRow)
+                            .where(*(getattr(ChunkingConfigurationRow, key) == value for key, value in values.items()))
+                            .order_by(ChunkingConfigurationRow.id)
+                            .limit(1)
                         )
                         if configuration is None:
                             configuration = ChunkingConfigurationRow(**values)
@@ -122,17 +130,25 @@ class PostgreSQLChunkPlanRepository:
                         row = VersionChunkPlanRow(
                             document_version_id=plan.document_version_id,
                             chunking_configuration_id=configuration.id,
-                            expected_chunk_count=len(plan.chunks), created_at=datetime.now(UTC),
+                            expected_chunk_count=len(plan.chunks),
+                            created_at=datetime.now(UTC),
                         )
                         session.add(row)
                         await session.flush()
                         if plan.chunks:
-                            await session.execute(insert(ChunkMembershipRow), [
-                                dict(document_version_id=plan.document_version_id,
-                                     chunking_configuration_id=configuration.id,
-                                     ordinal=index, start=chunk.start, end=chunk.end)
-                                for index, chunk in enumerate(plan.chunks)
-                            ])
+                            await session.execute(
+                                insert(ChunkMembershipRow),
+                                [
+                                    dict(
+                                        document_version_id=plan.document_version_id,
+                                        chunking_configuration_id=configuration.id,
+                                        ordinal=index,
+                                        start=chunk.start,
+                                        end=chunk.end,
+                                    )
+                                    for index, chunk in enumerate(plan.chunks)
+                                ],
+                            )
                         stored = await self._reconstruct(session, row, configuration, content)
             # Return only after commit and session cleanup.
             return stored
@@ -165,16 +181,20 @@ class PostgreSQLChunkPlanRepository:
 
     @staticmethod
     async def _find_plan(
-        session: AsyncSession, version_id: UUID, values: dict[str, str | int | bytes],
+        session: AsyncSession,
+        version_id: UUID,
+        values: dict[str, str | int | bytes],
     ) -> tuple[VersionChunkPlanRow, ChunkingConfigurationRow] | None:
-        found = (await session.execute(
-            select(VersionChunkPlanRow, ChunkingConfigurationRow)
-            .join(ChunkingConfigurationRow)
-            .where(VersionChunkPlanRow.document_version_id == version_id, *(
-                getattr(ChunkingConfigurationRow, key) == value
-                for key, value in values.items()
-            ))
-        )).all()
+        found = (
+            await session.execute(
+                select(VersionChunkPlanRow, ChunkingConfigurationRow)
+                .join(ChunkingConfigurationRow)
+                .where(
+                    VersionChunkPlanRow.document_version_id == version_id,
+                    *(getattr(ChunkingConfigurationRow, key) == value for key, value in values.items()),
+                )
+            )
+        ).all()
         if len(found) > 1:
             raise RepositoryError("Multiple chunk plans match the version/configuration")
         return (found[0][0], found[0][1]) if found else None
@@ -191,22 +211,29 @@ class PostgreSQLChunkPlanRepository:
 
     @staticmethod
     async def _reconstruct(
-        session: AsyncSession, row: VersionChunkPlanRow,
-        configuration: ChunkingConfigurationRow, content: Content,
+        session: AsyncSession,
+        row: VersionChunkPlanRow,
+        configuration: ChunkingConfigurationRow,
+        content: Content,
     ) -> ChunkPlan:
-        members = (await session.scalars(
-            select(ChunkMembershipRow).where(
-                ChunkMembershipRow.document_version_id == row.document_version_id,
-                ChunkMembershipRow.chunking_configuration_id == row.chunking_configuration_id,
-            ).order_by(ChunkMembershipRow.ordinal)
-        )).all()
+        members = (
+            await session.scalars(
+                select(ChunkMembershipRow)
+                .where(
+                    ChunkMembershipRow.document_version_id == row.document_version_id,
+                    ChunkMembershipRow.chunking_configuration_id == row.chunking_configuration_id,
+                )
+                .order_by(ChunkMembershipRow.ordinal)
+            )
+        ).all()
         try:
             if len(members) != row.expected_chunk_count or any(
                 member.ordinal != index for index, member in enumerate(members)
             ):
                 raise ValueError("Incomplete chunk membership count or ordering")
             plan = ChunkPlan(
-                document_version_id=row.document_version_id, config=_configuration(configuration),
+                document_version_id=row.document_version_id,
+                config=_configuration(configuration),
                 chunks=tuple(Chunk(content=content, start=m.start, end=m.end) for m in members),
             )
             validate_chunk_plan(plan, content)

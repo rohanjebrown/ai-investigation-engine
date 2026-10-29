@@ -12,8 +12,10 @@ from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repos
     PostgreSQLChunkPlanRepository,
 )
 from investigation_engine.infrastructure.tokenization.huggingface_tokenizer import (
-    HuggingFaceTokenizer, VOYAGE_REFERENCE_NAME, VOYAGE_REFERENCE_REVISION,
+    VOYAGE_REFERENCE_NAME,
+    VOYAGE_REFERENCE_REVISION,
     VOYAGE_REFERENCE_SHA256,
+    HuggingFaceTokenizer,
 )
 
 
@@ -31,12 +33,16 @@ async def _register(args: argparse.Namespace) -> int:
     if settings.chunking_tokenizer_path is None:
         raise ValueError("CHUNKING_TOKENIZER_PATH must identify the pinned tokenizer artifact")
     tokenizer = HuggingFaceTokenizer(
-        settings.chunking_tokenizer_path, name=VOYAGE_REFERENCE_NAME,
-        revision=VOYAGE_REFERENCE_REVISION, expected_sha256=VOYAGE_REFERENCE_SHA256,
+        settings.chunking_tokenizer_path,
+        name=VOYAGE_REFERENCE_NAME,
+        revision=VOYAGE_REFERENCE_REVISION,
+        expected_sha256=VOYAGE_REFERENCE_SHA256,
     )
     config = ChunkingConfig(
-        strategy=ChunkingStrategy(args.strategy), tokenizer=tokenizer.identity,
-        max_tokens=args.max_tokens, overlap=args.overlap,
+        strategy=ChunkingStrategy(args.strategy),
+        tokenizer=tokenizer.identity,
+        max_tokens=args.max_tokens,
+        overlap=args.overlap,
     )
     engine = create_async_engine(settings.database_url(), poolclass=NullPool, hide_parameters=True)
     try:

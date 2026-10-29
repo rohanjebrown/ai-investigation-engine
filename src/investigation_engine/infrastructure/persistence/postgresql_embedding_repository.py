@@ -1,7 +1,7 @@
 """Short, committed, first-writer-wins embedding operations."""
 
-from datetime import UTC, datetime
 from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,7 +12,9 @@ from investigation_engine.application.embeddings import EmbeddingConfig, storage
 from investigation_engine.application.ports.embedding_provider import EmbeddingVector
 from investigation_engine.application.ports.repository_errors import RepositoryError
 from investigation_engine.infrastructure.persistence._embedding_mapping import (
-    configuration_id, configuration_values, find_embeddings,
+    configuration_id,
+    configuration_values,
+    find_embeddings,
 )
 from investigation_engine.infrastructure.persistence.models import ChunkEmbeddingRow
 
@@ -22,7 +24,9 @@ class PostgreSQLEmbeddingRepository:
         self._sessions = sessions
 
     async def find(
-        self, chunks: Sequence[Chunk], config: EmbeddingConfig,
+        self,
+        chunks: Sequence[Chunk],
+        config: EmbeddingConfig,
     ) -> dict[tuple[str, int, int], EmbeddingVector]:
         chunks = tuple(chunks)
         configuration_values(config)
@@ -45,10 +49,18 @@ class PostgreSQLEmbeddingRepository:
                     existing = await find_embeddings(session, (chunk,), config)
                     if chunk.identity not in existing:
                         key = await configuration_id(session, config)
-                        await session.execute(insert(ChunkEmbeddingRow).values(
-                            embedding_configuration_id=key, content_sha256=bytes.fromhex(chunk.content_sha256),
-                            start=chunk.start, end=chunk.end, embedding=list(vector), created_at=datetime.now(UTC),
-                        ).on_conflict_do_nothing(constraint="pk_chunk_embeddings"))
+                        await session.execute(
+                            insert(ChunkEmbeddingRow)
+                            .values(
+                                embedding_configuration_id=key,
+                                content_sha256=bytes.fromhex(chunk.content_sha256),
+                                start=chunk.start,
+                                end=chunk.end,
+                                embedding=list(vector),
+                                created_at=datetime.now(UTC),
+                            )
+                            .on_conflict_do_nothing(constraint="pk_chunk_embeddings")
+                        )
                         existing = await find_embeddings(session, (chunk,), config)
                     if chunk.identity not in existing:
                         raise RepositoryError("Committed embedding winner could not be resolved")

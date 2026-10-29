@@ -165,7 +165,9 @@ each call owns its session and READ COMMITTED transaction. No settings are loade
 by the repository itself.
 
 ```python
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
 
 # Inside an async application with an already registered version and generated plan:
 plans = PostgreSQLChunkPlanRepository(sessions)
@@ -263,14 +265,22 @@ document format and normalization. A selected configuration must match it.
 
 ```python
 from investigation_engine.application.use_cases.index_document_version import IndexDocumentVersion
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
+    PostgreSQLEmbeddingRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (
+    PostgreSQLDocumentActivationRepository,
+)
 
 # Inside an async application, with a persisted plan and an explicitly supplied provider:
 workflow = IndexDocumentVersion(
-    plans, PostgreSQLEmbeddingRepository(sessions),
-    PostgreSQLDocumentActivationRepository(sessions), provider,
-    max_attempts=3, retry_delay_seconds=1.0, request_timeout_seconds=60.0,
+    plans,
+    PostgreSQLEmbeddingRepository(sessions),
+    PostgreSQLDocumentActivationRepository(sessions),
+    provider,
+    max_attempts=3,
+    retry_delay_seconds=1.0,
+    request_timeout_seconds=60.0,
 )
 outcome = await workflow.execute(document_id, version_id, chunking_config, provider.configuration)
 ```

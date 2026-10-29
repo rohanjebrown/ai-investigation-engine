@@ -1,10 +1,9 @@
 import importlib.util
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-
 
 ENTRYPOINT = Path(__file__).parents[3] / "deploy" / "entrypoint.py"
 SPEC = importlib.util.spec_from_file_location("migration_entrypoint", ENTRYPOINT)

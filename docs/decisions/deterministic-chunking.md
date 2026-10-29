@@ -62,11 +62,15 @@ Example explicit construction (no download or inference):
 ```python
 from pathlib import Path
 from investigation_engine.application.chunking import (
-    ChunkingConfig, ChunkingStrategy, chunk_document,
+    ChunkingConfig,
+    ChunkingStrategy,
+    chunk_document,
 )
 from investigation_engine.infrastructure.tokenization.huggingface_tokenizer import (
-    HuggingFaceTokenizer, VOYAGE_REFERENCE_NAME,
-    VOYAGE_REFERENCE_REVISION, VOYAGE_REFERENCE_SHA256,
+    HuggingFaceTokenizer,
+    VOYAGE_REFERENCE_NAME,
+    VOYAGE_REFERENCE_REVISION,
+    VOYAGE_REFERENCE_SHA256,
 )
 
 tokenizer = HuggingFaceTokenizer(

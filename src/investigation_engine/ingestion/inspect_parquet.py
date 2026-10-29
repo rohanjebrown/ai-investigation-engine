@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 
-
 DATASET_PATH = Path("data/raw/2wiki/dev.parquet")
 
 

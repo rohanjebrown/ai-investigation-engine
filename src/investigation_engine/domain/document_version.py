@@ -19,21 +19,14 @@ class DocumentVersion:
     source_spans: tuple[SourceSpan, ...] = ()
 
     id: UUID = field(default_factory=uuid7)
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(UTC)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         if self.version_number < 1:
-            raise ValueError(
-                "Document version number must be positive"
-            )
+            raise ValueError("Document version number must be positive")
 
         text_length = len(self.content.text)
 
         for span in (*self.structure, *self.source_spans):
             if span.end > text_length:
-                raise ValueError(
-                    f"Span [{span.start}, {span.end}) exceeds "
-                    f"content length {text_length}"
-                )
+                raise ValueError(f"Span [{span.start}, {span.end}) exceeds content length {text_length}")

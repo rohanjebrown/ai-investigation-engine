@@ -33,11 +33,7 @@ class SourceSpan:
             raise ValueError("Start offset cannot be negative")
 
         if self.end <= self.start:
-            raise ValueError(
-                "End offset must be greater than start offset"
-            )
+            raise ValueError("End offset must be greater than start offset")
 
         if not self.locators:
-            raise ValueError(
-                "SourceSpan requires at least one source locator"
-            )
+            raise ValueError("SourceSpan requires at least one source locator")

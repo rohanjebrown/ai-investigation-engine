@@ -2,11 +2,11 @@
 
 import argparse
 import asyncio
-from datetime import UTC, datetime
 import json
 import os
-from pathlib import Path
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 from time import perf_counter
 
 from dotenv import dotenv_values
@@ -18,28 +18,41 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from investigation_engine.application.ingestion.extracted_document import ExtractedDocument  # noqa: E402
-from investigation_engine.application.use_cases.index_document_version import IndexDocumentVersion  # noqa: E402
-from investigation_engine.application.use_cases.register_document import RegisterDocument  # noqa: E402
 from investigation_engine.application.ports.embedding_errors import (  # noqa: E402
-    EmbeddingInputError, EmbeddingProviderError, EmbeddingRateLimitError, EmbeddingResponseError,
+    EmbeddingInputError,
+    EmbeddingProviderError,
+    EmbeddingRateLimitError,
+    EmbeddingResponseError,
 )
 from investigation_engine.application.ports.provider_diagnostics import safe_diagnostic  # noqa: E402
+from investigation_engine.application.use_cases.index_document_version import IndexDocumentVersion  # noqa: E402
+from investigation_engine.application.use_cases.register_document import RegisterDocument  # noqa: E402
 from investigation_engine.domain.provenance import SourceKind, SourceReference  # noqa: E402
 from investigation_engine.domain.source_span import LocatorKind, SourceLocator, SourceSpan  # noqa: E402
 from investigation_engine.domain.structural_span import StructuralSpan, StructureKind  # noqa: E402
 from investigation_engine.evaluation.retrieval import fingerprint, validate_suite  # noqa: E402
 from investigation_engine.infrastructure.embeddings.gemini_provider import GeminiEmbeddingProvider  # noqa: E402
-from investigation_engine.ingestion.corpus_processing import configurations, tokenizer_from_file  # noqa: E402
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository  # noqa: E402
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository  # noqa: E402
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (  # noqa: E402
+    PostgreSQLChunkPlanRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (  # noqa: E402
+    PostgreSQLDocumentActivationRepository,
+)
 from investigation_engine.infrastructure.persistence.postgresql_document_repository import PostgreSQLDocumentRepository  # noqa: E402
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository  # noqa: E402
-
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (  # noqa: E402
+    PostgreSQLEmbeddingRepository,
+)
+from investigation_engine.ingestion.corpus_processing import configurations, tokenizer_from_file  # noqa: E402
 
 DB_NAME, DB_USER, DB_PORT = "ai_investigation_evaluation", "evaluation_engine", 55433
 EXPECTED_MIGRATION = "0002_embedding_storage"
-PROFILE = {"provider": "gemini_developer_api", "model_id": "gemini-embedding-2", "dimensions": 768,
-           "document_format": "gemini_no_title_v1", "normalization": "none"}
+PROFILE = {
+    "provider": "gemini_developer_api",
+    "model_id": "gemini-embedding-2",
+    "dimensions": 768,
+    "document_format": "gemini_no_title_v1",
+    "normalization": "none",
+}
 
 
 class MeasuredGemini(GeminiEmbeddingProvider):
@@ -58,23 +71,45 @@ def database_url():
     password = dotenv_values(ROOT / ".env.evaluation").get("EVALUATION_DB_PASSWORD")
     if not password:
         raise RuntimeError("Missing EVALUATION_DB_PASSWORD in .env.evaluation")
-    return URL.create("postgresql+psycopg", username=DB_USER, password=password,
-                      host="127.0.0.1", port=DB_PORT, database=DB_NAME,
-                      query={"connect_timeout": "5"})
+    return URL.create(
+        "postgresql+psycopg",
+        username=DB_USER,
+        password=password,
+        host="127.0.0.1",
+        port=DB_PORT,
+        database=DB_NAME,
+        query={"connect_timeout": "5"},
+    )
 
 
 def source_document(row: dict) -> ExtractedDocument:
     source = row["source"]
     return ExtractedDocument(
-        text=row["text"], title=row.get("title"),
-        source=SourceReference(kind=SourceKind(source["kind"]), source_id=source["source_id"],
-            revision=source.get("revision"), record_locator=source["record_locator"],
-            display_name=source.get("display_name"), metadata=source.get("metadata", {})),
-        structure=tuple(StructuralSpan(kind=StructureKind(item["kind"]), start=item["start"], end=item["end"])
-                        for item in row.get("structure", [])),
-        source_spans=tuple(SourceSpan(start=item["start"], end=item["end"], locators=tuple(
-            SourceLocator(kind=LocatorKind(locator["kind"]), index=locator["index"])
-            for locator in item["locators"])) for item in row.get("source_spans", [])),
+        text=row["text"],
+        title=row.get("title"),
+        source=SourceReference(
+            kind=SourceKind(source["kind"]),
+            source_id=source["source_id"],
+            revision=source.get("revision"),
+            record_locator=source["record_locator"],
+            display_name=source.get("display_name"),
+            metadata=source.get("metadata", {}),
+        ),
+        structure=tuple(
+            StructuralSpan(kind=StructureKind(item["kind"]), start=item["start"], end=item["end"])
+            for item in row.get("structure", [])
+        ),
+        source_spans=tuple(
+            SourceSpan(
+                start=item["start"],
+                end=item["end"],
+                locators=tuple(
+                    SourceLocator(kind=LocatorKind(locator["kind"]), index=locator["index"])
+                    for locator in item["locators"]
+                ),
+            )
+            for item in row.get("source_spans", [])
+        ),
     )
 
 
@@ -82,12 +117,19 @@ def database_counts(url, chunking_id: int, embedding_id: int) -> dict:
     engine = create_engine(url, hide_parameters=True)
     try:
         with engine.connect() as c:
-            tables = ("documents", "document_versions", "contents", "version_chunk_plans",
-                      "chunk_memberships", "chunk_embeddings")
+            tables = (
+                "documents",
+                "document_versions",
+                "contents",
+                "version_chunk_plans",
+                "chunk_memberships",
+                "chunk_embeddings",
+            )
             counts = {name: c.scalar(text(f"SELECT count(*) FROM {name}")) for name in tables}
             counts.update(
                 active_versions=c.scalar(text("SELECT count(*) FROM documents WHERE current_version_id IS NOT NULL")),
-                active_searchable_occurrences=c.scalar(text("""
+                active_searchable_occurrences=c.scalar(
+                    text("""
                     SELECT count(*) FROM documents d JOIN document_versions v ON v.id=d.current_version_id
                     WHERE d.deleted_at IS NULL AND EXISTS (SELECT 1 FROM version_chunk_plans p
                       WHERE p.document_version_id=v.id AND p.chunking_configuration_id=:chunking_id)
@@ -97,8 +139,11 @@ def database_counts(url, chunking_id: int, embedding_id: int) -> dict:
                           (:embedding_id,v.content_sha256,m.start,m.end)
                         WHERE m.document_version_id=v.id AND m.chunking_configuration_id=:chunking_id
                           AND e.embedding_configuration_id IS NULL)
-                """), {"chunking_id": chunking_id, "embedding_id": embedding_id}),
-                incomplete_planned_versions=c.scalar(text("""
+                """),
+                    {"chunking_id": chunking_id, "embedding_id": embedding_id},
+                ),
+                incomplete_planned_versions=c.scalar(
+                    text("""
                     SELECT count(DISTINCT p.document_version_id) FROM version_chunk_plans p
                     JOIN chunk_memberships m ON (m.document_version_id,m.chunking_configuration_id)=
                       (p.document_version_id,p.chunking_configuration_id)
@@ -106,7 +151,9 @@ def database_counts(url, chunking_id: int, embedding_id: int) -> dict:
                     LEFT JOIN chunk_embeddings e ON (e.embedding_configuration_id,e.content_sha256,e.start,e.end)=
                       (:embedding_id,v.content_sha256,m.start,m.end)
                     WHERE p.chunking_configuration_id=:chunking_id AND e.embedding_configuration_id IS NULL
-                """), {"chunking_id": chunking_id, "embedding_id": embedding_id}),
+                """),
+                    {"chunking_id": chunking_id, "embedding_id": embedding_id},
+                ),
                 database_bytes=c.scalar(text("SELECT pg_database_size(current_database())")),
                 migration=c.scalar(text("SELECT version_num FROM alembic_version")),
                 postgres_version=c.scalar(text("SHOW server_version")),
@@ -122,13 +169,19 @@ def verify_registered_corpus(url, corpus: dict) -> int:
     expected = {}
     for item in corpus["documents"]:
         source = item["source"]
-        key = (source["kind"], source["source_id"], source.get("revision"),
-               json.dumps(source["record_locator"], sort_keys=True, separators=(",", ":")))
+        key = (
+            source["kind"],
+            source["source_id"],
+            source.get("revision"),
+            json.dumps(source["record_locator"], sort_keys=True, separators=(",", ":")),
+        )
         expected[key] = item
     engine = create_engine(url, hide_parameters=True)
     try:
         with engine.connect() as connection:
-            rows = connection.execute(text("""
+            rows = (
+                connection.execute(
+                    text("""
                 SELECT v.kind, v.source_id, v.revision, v.record_locator, v.display_name,
                        v.metadata, v.structure, v.source_spans, d.title, c.text,
                        encode(c.sha256, 'hex') AS content_sha256
@@ -136,16 +189,26 @@ def verify_registered_corpus(url, corpus: dict) -> int:
                 JOIN documents d ON d.id=v.document_id
                 JOIN contents c ON c.sha256=v.content_sha256
                 WHERE v.source_id IN ('xanhho/2WikiMultihopQA','controlled-evaluation')
-            """)).mappings().all()
+            """)
+                )
+                .mappings()
+                .all()
+            )
         actual = {}
         for row in rows:
-            key = (row["kind"], row["source_id"], row["revision"],
-                   json.dumps(row["record_locator"], sort_keys=True, separators=(",", ":")))
+            key = (
+                row["kind"],
+                row["source_id"],
+                row["revision"],
+                json.dumps(row["record_locator"], sort_keys=True, separators=(",", ":")),
+            )
             if key in actual:
                 raise RuntimeError(f"Duplicate persisted source occurrence: {key[:3]}")
             actual[key] = row
         if actual.keys() != expected.keys():
-            raise RuntimeError(f"Persisted source occurrence keys differ: expected {len(expected)}, found {len(actual)}")
+            raise RuntimeError(
+                f"Persisted source occurrence keys differ: expected {len(expected)}, found {len(actual)}"
+            )
         for key, item in expected.items():
             row = actual[key]
             source = item["source"]
@@ -179,7 +242,10 @@ async def run(args) -> dict:
         with sync_engine.connect() as c:
             if not str(c.scalar(text("SHOW server_version_num"))).startswith("180"):
                 raise RuntimeError("Refusing a non-PostgreSQL-18 database")
-            if c.scalar(text("SELECT current_database()")) != DB_NAME or c.scalar(text("SELECT current_user")) != DB_USER:
+            if (
+                c.scalar(text("SELECT current_database()")) != DB_NAME
+                or c.scalar(text("SELECT current_user")) != DB_USER
+            ):
                 raise RuntimeError("Database identity does not match the dedicated evaluation configuration")
             if c.scalar(text("SELECT version_num FROM alembic_version")) != EXPECTED_MIGRATION:
                 raise RuntimeError("Run scripts/migrate_evaluation_database.py before indexing")
@@ -204,39 +270,66 @@ async def run(args) -> dict:
         key = os.environ.get("GEMINI_API_KEY") or dotenv_values(ROOT / ".env").get("GEMINI_API_KEY")
         if not key:
             raise RuntimeError("GEMINI_API_KEY is not configured")
-        provider = MeasuredGemini(api_key=key, batch_size=args.batch_size,
-                                  batch_token_limit=args.batch_token_limit)
+        provider = MeasuredGemini(api_key=key, batch_size=args.batch_size, batch_token_limit=args.batch_token_limit)
         try:
-            indexer = IndexDocumentVersion(plans, vectors, activation, provider,
-                                           embedding_batch_size=args.batch_size)
+            indexer = IndexDocumentVersion(plans, vectors, activation, provider, embedding_batch_size=args.batch_size)
             # Persist every source occurrence and plan before the first provider call.
             for document, version in registered:
                 from investigation_engine.application.chunking import chunk_document
+
                 await plans.save(chunk_document(version, config=chunking, tokenizer=tokenizer))
             sync_engine = create_engine(url, hide_parameters=True)
             with sync_engine.connect() as c:
-                chunking_id = c.scalar(text("SELECT id FROM chunking_configurations WHERE strategy='whole_passage' AND tokenizer_name=:name AND tokenizer_revision=:rev AND tokenizer_artifact_sha256=decode(:digest,'hex') AND tokenizer_runtime_version=:runtime AND max_tokens=32000 AND overlap=0 AND algorithm_version='1'"), {
-                    "name": chunking.tokenizer.name, "rev": chunking.tokenizer.revision,
-                    "digest": chunking.tokenizer.artifact_sha256, "runtime": chunking.tokenizer.runtime_version,
-                })
+                chunking_id = c.scalar(
+                    text(
+                        "SELECT id FROM chunking_configurations WHERE strategy='whole_passage' AND tokenizer_name=:name AND tokenizer_revision=:rev AND tokenizer_artifact_sha256=decode(:digest,'hex') AND tokenizer_runtime_version=:runtime AND max_tokens=32000 AND overlap=0 AND algorithm_version='1'"
+                    ),
+                    {
+                        "name": chunking.tokenizer.name,
+                        "rev": chunking.tokenizer.revision,
+                        "digest": chunking.tokenizer.artifact_sha256,
+                        "runtime": chunking.tokenizer.runtime_version,
+                    },
+                )
                 if chunking_id is None:
                     raise RuntimeError("Persisted whole-passage configuration could not be resolved")
-            report = {"kind": "persistent_gemini_evaluation_corpus_index",
-                "timestamp_utc": datetime.now(UTC).isoformat(), "suite_fingerprint": fingerprint(suite),
-                "corpus_fingerprint": fingerprint(corpus), "source_occurrences": 218,
-                "unique_contents": 197, "questions": 40, "chunking": {
-                    "strategy": chunking.strategy.value, "max_tokens": chunking.max_tokens,
-                    "tokenizer": {"name": chunking.tokenizer.name, "revision": chunking.tokenizer.revision,
-                                  "artifact_sha256": chunking.tokenizer.artifact_sha256,
-                                  "runtime_version": chunking.tokenizer.runtime_version}},
-                "embedding_configuration": PROFILE, "batch_size": args.batch_size,
-                "batch_token_limit": args.batch_token_limit, "max_new_embeddings": args.max_new_embeddings,
-                "provider_request_counts": provider.request_counts}
+            report = {
+                "kind": "persistent_gemini_evaluation_corpus_index",
+                "timestamp_utc": datetime.now(UTC).isoformat(),
+                "suite_fingerprint": fingerprint(suite),
+                "corpus_fingerprint": fingerprint(corpus),
+                "source_occurrences": 218,
+                "unique_contents": 197,
+                "questions": 40,
+                "chunking": {
+                    "strategy": chunking.strategy.value,
+                    "max_tokens": chunking.max_tokens,
+                    "tokenizer": {
+                        "name": chunking.tokenizer.name,
+                        "revision": chunking.tokenizer.revision,
+                        "artifact_sha256": chunking.tokenizer.artifact_sha256,
+                        "runtime_version": chunking.tokenizer.runtime_version,
+                    },
+                },
+                "embedding_configuration": PROFILE,
+                "batch_size": args.batch_size,
+                "batch_token_limit": args.batch_token_limit,
+                "max_new_embeddings": args.max_new_embeddings,
+                "provider_request_counts": provider.request_counts,
+            }
             before = database_counts(url, chunking_id, -1)
             # Configuration identity is written by the first save; resolve it by all immutable fields.
             with sync_engine.connect() as c:
-                embedding_id = c.scalar(text("SELECT id FROM embedding_configurations WHERE provider=:provider AND model_id=:model AND dimensions=768 AND document_format=:format AND normalization='none' AND model_revision IS NULL"), {
-                    "provider": PROFILE["provider"], "model": PROFILE["model_id"], "format": PROFILE["document_format"]})
+                embedding_id = c.scalar(
+                    text(
+                        "SELECT id FROM embedding_configurations WHERE provider=:provider AND model_id=:model AND dimensions=768 AND document_format=:format AND normalization='none' AND model_revision IS NULL"
+                    ),
+                    {
+                        "provider": PROFILE["provider"],
+                        "model": PROFILE["model_id"],
+                        "format": PROFILE["document_format"],
+                    },
+                )
             if embedding_id is None:
                 # No vector exists yet; the indexer will establish this profile on first persist.
                 embedding_id = -1
@@ -244,10 +337,16 @@ async def run(args) -> dict:
             try:
                 reports = await indexer.execute_many(
                     tuple((doc.id, version.id) for doc, version in registered),
-                    chunking, provider.configuration, max_new_embeddings=args.max_new_embeddings,
+                    chunking,
+                    provider.configuration,
+                    max_new_embeddings=args.max_new_embeddings,
                 )
-            except (EmbeddingInputError, EmbeddingProviderError, EmbeddingRateLimitError,
-                    EmbeddingResponseError) as error:
+            except (
+                EmbeddingInputError,
+                EmbeddingProviderError,
+                EmbeddingRateLimitError,
+                EmbeddingResponseError,
+            ) as error:
                 reports = ()
                 failure = safe_diagnostic(error) or {"error_type": type(error).__name__}
             finally:
@@ -255,13 +354,26 @@ async def run(args) -> dict:
             sync_engine = create_engine(url, hide_parameters=True)
             try:
                 with sync_engine.connect() as c:
-                    embedding_id = c.scalar(text("SELECT id FROM embedding_configurations WHERE provider=:provider AND model_id=:model AND dimensions=768 AND document_format=:format AND normalization='none' AND model_revision IS NULL"), {
-                        "provider": PROFILE["provider"], "model": PROFILE["model_id"], "format": PROFILE["document_format"]})
-                    registered_count = c.scalar(text("SELECT count(*) FROM document_versions WHERE source_id='xanhho/2WikiMultihopQA' OR source_id='controlled-evaluation'"))
+                    embedding_id = c.scalar(
+                        text(
+                            "SELECT id FROM embedding_configurations WHERE provider=:provider AND model_id=:model AND dimensions=768 AND document_format=:format AND normalization='none' AND model_revision IS NULL"
+                        ),
+                        {
+                            "provider": PROFILE["provider"],
+                            "model": PROFILE["model_id"],
+                            "format": PROFILE["document_format"],
+                        },
+                    )
+                    registered_count = c.scalar(
+                        text(
+                            "SELECT count(*) FROM document_versions WHERE source_id='xanhho/2WikiMultihopQA' OR source_id='controlled-evaluation'"
+                        )
+                    )
             finally:
                 sync_engine.dispose()
-            report["outcomes"] = {name: sum(r.outcome.value == name for r in reports)
-                                   for name in {r.outcome.value for r in reports}}
+            report["outcomes"] = {
+                name: sum(r.outcome.value == name for r in reports) for name in {r.outcome.value for r in reports}
+            }
             report["eligible_embeddings"] = sum(r.eligible_embeddings for r in reports)
             report["indexed_memberships"] = sum(r.indexed_embeddings for r in reports)
             report["requested_embeddings"] = sum(r.requested_embeddings for r in reports)

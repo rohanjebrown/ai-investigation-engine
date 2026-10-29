@@ -1,13 +1,16 @@
 """Shared process settings, with optional .env loading from the working directory."""
 
+import math
 import os
 import re
-import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy.engine import URL
+
+DB_CONNECTION_MODE_PROXY = "proxy"
+MIN_ADMIN_API_TOKEN_LENGTH = 32
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -17,7 +20,7 @@ class Settings:
     db_name: str
     db_user: str
     db_password: str = field(repr=False)
-    db_connection_mode: str = "proxy"
+    db_connection_mode: str = DB_CONNECTION_MODE_PROXY
     db_pool_size: int = 3
     db_max_overflow: int = 0
     db_pool_timeout_seconds: int = 5
@@ -61,15 +64,23 @@ class Settings:
     def database_url(self) -> URL:
         """Both modes use an authenticated Cloud SQL proxy/attachment for TLS."""
         if self.db_connection_mode == "cloudsql_socket":
-            if self.db_port != 5432 or re.fullmatch(
-                r"/cloudsql/[a-z][a-z0-9-]+:[a-z][a-z0-9-]+:[a-z][a-z0-9-]+", self.db_host
-            ) is None:
+            if (
+                self.db_port != 5432
+                or re.fullmatch(r"/cloudsql/[a-z][a-z0-9-]+:[a-z][a-z0-9-]+:[a-z][a-z0-9-]+", self.db_host) is None
+            ):
                 raise ValueError("Cloud SQL socket mode requires /cloudsql/PROJECT:REGION:INSTANCE and DB_PORT=5432")
-            return URL.create("postgresql+psycopg", username=self.db_user,
-                password=self.db_password, database=self.db_name,
-                query={"host": self.db_host, "sslmode": "disable",
-                       "connect_timeout": str(self.db_connect_timeout_seconds)})
-        if self.db_connection_mode != "proxy":
+            return URL.create(
+                "postgresql+psycopg",
+                username=self.db_user,
+                password=self.db_password,
+                database=self.db_name,
+                query={
+                    "host": self.db_host,
+                    "sslmode": "disable",
+                    "connect_timeout": str(self.db_connect_timeout_seconds),
+                },
+            )
+        if self.db_connection_mode != DB_CONNECTION_MODE_PROXY:
             raise ValueError("DB_CONNECTION_MODE must be proxy or cloudsql_socket")
         if (self.db_host, self.db_port) != ("127.0.0.1", 15432):
             raise ValueError("Expected the Cloud SQL Auth Proxy at 127.0.0.1:15432")
@@ -89,22 +100,22 @@ def _integer_setting(name: str, default: int | None, low: int, high: int) -> int
     if raw is None or (raw == "" and default is None):
         return default
     try:
-        value = int(raw)
+        parsed_integer = int(raw)
     except ValueError:
         raise ValueError(f"{name} must be an integer between {low} and {high}") from None
-    if not low <= value <= high:
+    if not low <= parsed_integer <= high:
         raise ValueError(f"{name} must be an integer between {low} and {high}")
-    return value
+    return parsed_integer
 
 
 def _boolean_setting(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
     if raw is None:
         return default
-    value = raw.strip().casefold()
-    if value in ("1", "true", "yes", "on"):
+    boolean_text = raw.strip().casefold()
+    if boolean_text in ("1", "true", "yes", "on"):
         return True
-    if value in ("0", "false", "no", "off"):
+    if boolean_text in ("0", "false", "no", "off"):
         return False
     raise ValueError(f"{name} must be a boolean value")
 
@@ -114,25 +125,26 @@ def _temperature_setting() -> float | None:
     if raw is None or raw == "":
         return None
     try:
-        value = float(raw)
+        temperature = float(raw)
     except ValueError:
         raise ValueError("GENERATION_TEMPERATURE must be between 0 and 1") from None
-    if not math.isfinite(value) or not 0 <= value <= 1:
+    if not math.isfinite(temperature) or not 0 <= temperature <= 1:
         raise ValueError("GENERATION_TEMPERATURE must be between 0 and 1")
-    return value
+    return temperature
 
 
 def _load_settings() -> Settings:
     """Load local defaults, preserving existing process environment values."""
     load_dotenv(Path.cwd() / ".env", override=False, interpolate=False)
     required = ("DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD")
-    values = {name: os.environ.get(name, "") for name in required}
-    missing = [name for name, value in values.items() if not value]
+    required_values = {name: os.environ.get(name, "") for name in required}
+    missing = [name for name, environment_value in required_values.items() if not environment_value]
     if missing:
-        raise ValueError("Missing required environment variables: " + ", ".join(missing))
+        missing_names = ", ".join(missing)
+        raise ValueError(f"Missing required environment variables: {missing_names}")
 
     try:
-        port = int(values["DB_PORT"])
+        port = int(required_values["DB_PORT"])
     except ValueError:
         raise ValueError("DB_PORT must be an integer between 1 and 65535") from None
     if not 1 <= port <= 65535:
@@ -140,14 +152,19 @@ def _load_settings() -> Settings:
     mode = os.environ.get("RETRIEVAL_MODE", "semantic")
     if mode not in ("semantic", "hybrid"):
         raise ValueError("RETRIEVAL_MODE must be semantic or hybrid")
-    connection_mode = os.environ.get("DB_CONNECTION_MODE", "proxy")
-    if connection_mode not in ("proxy", "cloudsql_socket"):
+    connection_mode = os.environ.get("DB_CONNECTION_MODE", DB_CONNECTION_MODE_PROXY)
+    if connection_mode not in (DB_CONNECTION_MODE_PROXY, "cloudsql_socket"):
         raise ValueError("DB_CONNECTION_MODE must be proxy or cloudsql_socket")
     if os.environ.get("K_SERVICE") and connection_mode != "cloudsql_socket":
-        raise ValueError("Cloud Run requires DB_CONNECTION_MODE=cloudsql_socket; a development loopback proxy is not a production connection")
+        raise ValueError(
+            "Cloud Run requires DB_CONNECTION_MODE=cloudsql_socket; a development loopback proxy is not a production connection"
+        )
 
     admin_token = os.environ.get("ADMIN_API_TOKEN") or None
-    if admin_token is not None and (len(admin_token) < 32 or not admin_token.isascii()):
+    has_valid_admin_token = admin_token is None or (
+        len(admin_token) >= MIN_ADMIN_API_TOKEN_LENGTH and admin_token.isascii()
+    )
+    if not has_valid_admin_token:
         raise ValueError("ADMIN_API_TOKEN must be an ASCII token of at least 32 characters")
     admin_principal = os.environ.get("ADMIN_PRINCIPAL_ID", "administrator")
     if not admin_principal.strip():
@@ -155,11 +172,11 @@ def _load_settings() -> Settings:
     tokenizer_path_value = os.environ.get("CHUNKING_TOKENIZER_PATH", "artifacts/tokenizers/voyage-4/tokenizer.json")
 
     return Settings(
-        db_host=values["DB_HOST"],
+        db_host=required_values["DB_HOST"],
         db_port=port,
-        db_name=values["DB_NAME"],
-        db_user=values["DB_USER"],
-        db_password=values["DB_PASSWORD"],
+        db_name=required_values["DB_NAME"],
+        db_user=required_values["DB_USER"],
+        db_password=required_values["DB_PASSWORD"],
         db_connection_mode=connection_mode,
         db_pool_size=_integer_setting("DB_POOL_SIZE", 3, 1, 20),
         db_max_overflow=_integer_setting("DB_MAX_OVERFLOW", 0, 0, 10),
@@ -195,14 +212,25 @@ def _load_settings() -> Settings:
         admin_api_token=admin_token,
         admin_principal_id=admin_principal,
         admin_require_https=_boolean_setting("ADMIN_REQUIRE_HTTPS", True),
-        max_upload_bytes=_integer_setting("MAX_UPLOAD_BYTES", 10 * 1024 * 1024, 1024, 50 * 1024 * 1024),
+        max_upload_bytes=_integer_setting(
+            "MAX_UPLOAD_BYTES",
+            10 * 1024 * 1024,
+            1024,
+            50 * 1024 * 1024,
+        ),
         max_extracted_text_chars=_integer_setting("MAX_EXTRACTED_TEXT_CHARS", 1_000_000, 1, 5_000_000),
         max_docx_uncompressed_bytes=_integer_setting(
-            "MAX_DOCX_UNCOMPRESSED_BYTES", 50 * 1024 * 1024, 1024 * 1024, 500 * 1024 * 1024,
+            "MAX_DOCX_UNCOMPRESSED_BYTES",
+            50 * 1024 * 1024,
+            1024 * 1024,
+            500 * 1024 * 1024,
         ),
         max_pdf_pages=_integer_setting("MAX_PDF_PAGES", 500, 1, 10_000),
         max_index_embeddings_per_request=_integer_setting(
-            "MAX_INDEX_EMBEDDINGS_PER_REQUEST", 2, 1, 10,
+            "MAX_INDEX_EMBEDDINGS_PER_REQUEST",
+            2,
+            1,
+            10,
         ),
         chunking_tokenizer_path=Path(tokenizer_path_value) if tokenizer_path_value else None,
     )

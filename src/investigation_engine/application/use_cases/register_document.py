@@ -10,7 +10,6 @@ from investigation_engine.domain.document_version import DocumentVersion
 
 
 class RegisterDocument:
-
     def __init__(self, repository: DocumentRepository) -> None:
         self.repository = repository
 

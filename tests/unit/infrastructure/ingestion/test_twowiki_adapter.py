@@ -7,7 +7,13 @@ from investigation_engine.infrastructure.ingestion.twowiki_adapter import DATASE
 
 @pytest.fixture
 def record():
-    return {"_id": "question-7", "context": [["First title", [" A😀 ", "Second."]], ["Other title", [" A😀 ", "Second."]]], "question": "GOLD QUESTION", "answer": "GOLD ANSWER", "supporting_facts": [["First title", 0]]}
+    return {
+        "_id": "question-7",
+        "context": [["First title", [" A😀 ", "Second."]], ["Other title", [" A😀 ", "Second."]]],
+        "question": "GOLD QUESTION",
+        "answer": "GOLD ANSWER",
+        "supporting_facts": [["First title", 0]],
+    }
 
 
 def test_passages_preserve_text_offsets_order_and_independent_provenance(record):
@@ -21,14 +27,17 @@ def test_passages_preserve_text_offsets_order_and_independent_provenance(record)
         assert doc.source.record_locator == {"split": "dev", "example_id": "question-7", "context_position": position}
         assert [(s.start, s.end) for s in doc.structure] == [(0, 4), (5, 12)]
         for index, span in enumerate(doc.source_spans):
-            assert doc.text[span.start:span.end] == record["context"][position][1][index]
+            assert doc.text[span.start : span.end] == record["context"][position][1][index]
             assert span.locators[0].index == index
         assert all(not (s.start <= 4 < s.end) for s in doc.source_spans)
         assert "GOLD" not in doc.text and doc.title not in doc.text
     assert extract_2wiki(record, split="dev", revision="pinned") == documents
 
 
-@pytest.mark.parametrize("passage", [None, ["only title"], ["", ["text"]], ["title", []], ["title", [""]], ["title", [" \t"]], ["title", [7]]])
+@pytest.mark.parametrize(
+    "passage",
+    [None, ["only title"], ["", ["text"]], ["title", []], ["title", [""]], ["title", [" \t"]], ["title", [7]]],
+)
 def test_malformed_passage_fails_with_record_and_position(record, passage):
     record["context"][1] = passage
     with pytest.raises(ValueError, match="question-7.*context position 1"):

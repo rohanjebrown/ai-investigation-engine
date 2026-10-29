@@ -6,27 +6,49 @@ from sqlalchemy import select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from investigation_engine.application.chunking import Chunk
-from investigation_engine.application.embeddings import EmbeddingConfig, EmbeddingVector, embedding_eligible, storage_vector
+from investigation_engine.application.embeddings import (
+    EmbeddingConfig,
+    EmbeddingVector,
+    embedding_eligible,
+    storage_vector,
+)
 from investigation_engine.application.ports.repository_errors import RepositoryError
 from investigation_engine.infrastructure.persistence._document_mapping import _content
-from investigation_engine.infrastructure.persistence.models import ChunkEmbeddingRow, ContentRow, EmbeddingConfigurationRow
+from investigation_engine.infrastructure.persistence.models import (
+    ChunkEmbeddingRow,
+    ContentRow,
+    EmbeddingConfigurationRow,
+)
 
 
 def configuration_values(config: EmbeddingConfig) -> dict[str, str | int | None]:
     if not isinstance(config, EmbeddingConfig):
         raise ValueError("An EmbeddingConfig is required")
     config.__post_init__()
-    return dict(provider=config.provider, model_id=config.model_id, model_revision=config.model_revision,
-                dimensions=config.dimensions, document_format=config.document_format, normalization=config.normalization)
+    return dict(
+        provider=config.provider,
+        model_id=config.model_id,
+        model_revision=config.model_revision,
+        dimensions=config.dimensions,
+        document_format=config.document_format,
+        normalization=config.normalization,
+    )
 
 
 def configuration_filter(config: EmbeddingConfig):
-    return tuple(getattr(EmbeddingConfigurationRow, key).is_not_distinct_from(value)
-                 for key, value in configuration_values(config).items())
+    return tuple(
+        getattr(EmbeddingConfigurationRow, key).is_not_distinct_from(value)
+        for key, value in configuration_values(config).items()
+    )
 
 
 async def configuration_id(session: AsyncSession, config: EmbeddingConfig) -> int:
-    query = select(EmbeddingConfigurationRow.id).where(*configuration_filter(config)).order_by(EmbeddingConfigurationRow.id).limit(1)
+    query = (
+        select(EmbeddingConfigurationRow.id)
+        .where(*configuration_filter(config))
+        .order_by(EmbeddingConfigurationRow.id)
+        .limit(1)
+    )
     found = await session.scalar(query)
     if found is not None:
         return found
@@ -51,9 +73,11 @@ async def validate_chunks(session: AsyncSession, chunks: tuple[Chunk, ...]) -> N
             raise ValueError("Whitespace-only chunks are not embedding eligible")
     if not chunks:
         return
-    rows = (await session.scalars(select(ContentRow).where(
-        ContentRow.sha256.in_({bytes.fromhex(c.content_sha256) for c in chunks})
-    ))).all()
+    rows = (
+        await session.scalars(
+            select(ContentRow).where(ContentRow.sha256.in_({bytes.fromhex(c.content_sha256) for c in chunks}))
+        )
+    ).all()
     try:
         contents = {row.sha256.hex(): _content(row) for row in rows}
     except (TypeError, ValueError) as error:
@@ -63,7 +87,9 @@ async def validate_chunks(session: AsyncSession, chunks: tuple[Chunk, ...]) -> N
 
 
 async def find_embeddings(
-    session: AsyncSession, chunks: tuple[Chunk, ...], config: EmbeddingConfig,
+    session: AsyncSession,
+    chunks: tuple[Chunk, ...],
+    config: EmbeddingConfig,
 ) -> dict[tuple[str, int, int], EmbeddingVector]:
     filters = configuration_filter(config)
     await validate_chunks(session, chunks)
@@ -71,12 +97,19 @@ async def find_embeddings(
     # Bound SQL parameter counts without introducing a batch/job abstraction.
     keys = list(dict.fromkeys((bytes.fromhex(c.content_sha256), c.start, c.end) for c in chunks))
     for offset in range(0, len(keys), 500):
-        rows = (await session.scalars(
-            select(ChunkEmbeddingRow).join(EmbeddingConfigurationRow)
-            .where(*filters, tuple_(ChunkEmbeddingRow.content_sha256, ChunkEmbeddingRow.start,
-                                    ChunkEmbeddingRow.end).in_(keys[offset:offset + 500]))
-            .order_by(ChunkEmbeddingRow.embedding_configuration_id)
-        )).all()
+        rows = (
+            await session.scalars(
+                select(ChunkEmbeddingRow)
+                .join(EmbeddingConfigurationRow)
+                .where(
+                    *filters,
+                    tuple_(ChunkEmbeddingRow.content_sha256, ChunkEmbeddingRow.start, ChunkEmbeddingRow.end).in_(
+                        keys[offset : offset + 500]
+                    ),
+                )
+                .order_by(ChunkEmbeddingRow.embedding_configuration_id)
+            )
+        ).all()
         for row in rows:
             try:
                 vector = storage_vector(tuple(float(value) for value in row.embedding))

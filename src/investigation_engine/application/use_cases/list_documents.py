@@ -10,7 +10,11 @@ class ListDocuments:
         self._repository = repository
 
     async def execute(
-        self, *, actor: DocumentActor, offset: int = 0, limit: int = 50,
+        self,
+        *,
+        actor: DocumentActor,
+        offset: int = 0,
+        limit: int = 50,
         include_deleted: bool = False,
     ) -> DocumentPage:
         if not isinstance(actor, DocumentActor):
@@ -22,6 +26,8 @@ class ListDocuments:
         if type(include_deleted) is not bool:
             raise ValueError("include_deleted must be a boolean")
         return await self._repository.list_documents(
-            actor_id=actor.principal_id, offset=offset, limit=limit,
+            actor_id=actor.principal_id,
+            offset=offset,
+            limit=limit,
             include_deleted=include_deleted,
         )

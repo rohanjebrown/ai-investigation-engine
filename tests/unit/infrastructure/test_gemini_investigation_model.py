@@ -7,10 +7,14 @@ import pytest
 from google.genai import errors, types
 
 from investigation_engine.application.investigations import (
-    IdentifiedEvidence, InvestigationTurn, SearchExchange,
+    IdentifiedEvidence,
+    InvestigationTurn,
+    SearchExchange,
 )
 from investigation_engine.application.ports.generation_errors import (
-    GenerationProviderError, GenerationRateLimitError, GenerationResponseError,
+    GenerationProviderError,
+    GenerationRateLimitError,
+    GenerationResponseError,
 )
 from investigation_engine.application.ports.provider_diagnostics import safe_diagnostic
 from investigation_engine.application.retrieval import Evidence
@@ -22,10 +26,15 @@ from investigation_engine.infrastructure.generation import gemini_investigation_
 
 
 def _response(part, *, usage=None):
-    return types.GenerateContentResponse(candidates=[types.Candidate(
-        finish_reason=types.FinishReason.STOP,
-        content=types.Content(role="model", parts=[part]),
-    )], usage_metadata=usage)
+    return types.GenerateContentResponse(
+        candidates=[
+            types.Candidate(
+                finish_reason=types.FinishReason.STOP,
+                content=types.Content(role="model", parts=[part]),
+            )
+        ],
+        usage_metadata=usage,
+    )
 
 
 @pytest.fixture
@@ -39,13 +48,26 @@ def provider(monkeypatch):
 
 
 def test_native_tool_turn_is_one_bounded_request_and_continuation_is_preserved(provider):
-    tool_content = types.Content(role="model", parts=[types.Part(function_call=types.FunctionCall(
-        name="search_evidence", args={"query": "new query"}, id="call-1"))])
+    tool_content = types.Content(
+        role="model",
+        parts=[
+            types.Part(
+                function_call=types.FunctionCall(name="search_evidence", args={"query": "new query"}, id="call-1")
+            )
+        ],
+    )
     provider.models.generate_content.side_effect = [
-        _response(tool_content.parts[0], usage=types.GenerateContentResponseUsageMetadata(
-            prompt_token_count=21, candidates_token_count=4, thoughts_token_count=7)),
-        _response(types.Part(text=json.dumps({"status": "answered", "answer": "Fact. [E1]",
-            "citations": ["E1"], "conflicts": []}))),
+        _response(
+            tool_content.parts[0],
+            usage=types.GenerateContentResponseUsageMetadata(
+                prompt_token_count=21, candidates_token_count=4, thoughts_token_count=7
+            ),
+        ),
+        _response(
+            types.Part(
+                text=json.dumps({"status": "answered", "answer": "Fact. [E1]", "citations": ["E1"], "conflicts": []})
+            )
+        ),
     ]
     turn = InvestigationTurn(question="Question", exchanges=())
     action = __import__("asyncio").run(provider.provider.next_action(turn))
@@ -53,14 +75,34 @@ def test_native_tool_turn_is_one_bounded_request_and_continuation_is_preserved(p
     assert action.usage.prompt_tokens == 21 and action.usage.thinking_tokens == 7
     assert not hasattr(action, "provider_state")
     document = Document(owner_id=None)
-    version = DocumentVersion(document_id=document.id, version_number=1, content=Content("Fact."),
-        source=SourceReference(kind=SourceKind.DATASET, source_id="src", record_locator={}))
-    evidence = Evidence(document_id=document.id, document_version_id=version.id,
-        content_sha256=version.content.sha256, start=0, end=5, text="Fact.", source=version.source,
-        source_spans=(), rank=1, score=1.0)
-    next_turn = InvestigationTurn(question="Question", exchanges=(SearchExchange(
-        query=action.query, call_id=action.call_id,
-        evidence=(IdentifiedEvidence(evidence_id="E1", evidence=evidence),)),))
+    version = DocumentVersion(
+        document_id=document.id,
+        version_number=1,
+        content=Content("Fact."),
+        source=SourceReference(kind=SourceKind.DATASET, source_id="src", record_locator={}),
+    )
+    evidence = Evidence(
+        document_id=document.id,
+        document_version_id=version.id,
+        content_sha256=version.content.sha256,
+        start=0,
+        end=5,
+        text="Fact.",
+        source=version.source,
+        source_spans=(),
+        rank=1,
+        score=1.0,
+    )
+    next_turn = InvestigationTurn(
+        question="Question",
+        exchanges=(
+            SearchExchange(
+                query=action.query,
+                call_id=action.call_id,
+                evidence=(IdentifiedEvidence(evidence_id="E1", evidence=evidence),),
+            ),
+        ),
+    )
     decision = __import__("asyncio").run(provider.provider.next_action(next_turn))
     assert decision.answer == "Fact. [E1]" and decision.model_version is None
     contents = provider.models.generate_content.await_args.kwargs["contents"]
@@ -77,7 +119,9 @@ def test_native_tool_turn_is_one_bounded_request_and_continuation_is_preserved(p
     assert provider.models.generate_content.await_count == 2
 
 
-@pytest.mark.parametrize("name,args", [("unknown", {"query": "q"}), ("search_evidence", {"query": "q", "owner_id": "x"})])
+@pytest.mark.parametrize(
+    "name,args", [("unknown", {"query": "q"}), ("search_evidence", {"query": "q", "owner_id": "x"})]
+)
 def test_unknown_tools_and_untrusted_arguments_are_rejected(name, args):
     call = types.FunctionCall(name=name, args=args, id="call")
     with pytest.raises(GenerationResponseError):
@@ -86,7 +130,9 @@ def test_unknown_tools_and_untrusted_arguments_are_rejected(name, args):
 
 @pytest.mark.parametrize("status,exception", [(429, GenerationRateLimitError), (503, GenerationProviderError)])
 async def test_provider_errors_are_sanitized_and_never_retried(provider, status, exception):
-    provider.models.generate_content.side_effect = errors.APIError(status, {"error": {"message": "never-print-this-key"}})
+    provider.models.generate_content.side_effect = errors.APIError(
+        status, {"error": {"message": "never-print-this-key"}}
+    )
     with pytest.raises(exception) as caught:
         await provider.provider.next_action(InvestigationTurn(question="Q", exchanges=()))
     assert "never-print-this-key" not in "".join(traceback.format_exception(caught.value))

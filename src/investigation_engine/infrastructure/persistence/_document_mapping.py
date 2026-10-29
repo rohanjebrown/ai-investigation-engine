@@ -18,7 +18,8 @@ from investigation_engine.infrastructure.persistence.models import (
 
 
 def _snapshot(
-    document: Document, version: DocumentVersion,
+    document: Document,
+    version: DocumentVersion,
 ) -> tuple[Document, DocumentVersion]:
     document = replace(document)
     version = replace(version, source=replace(version.source))
@@ -65,17 +66,12 @@ def _version_row(version: DocumentVersion) -> DocumentVersionRow:
         display_name=version.source.display_name,
         record_locator=version.source.record_locator,
         source_metadata=version.source.metadata,
-        structure=[
-            {"kind": span.kind, "start": span.start, "end": span.end}
-            for span in version.structure
-        ],
+        structure=[{"kind": span.kind, "start": span.start, "end": span.end} for span in version.structure],
         source_spans=[
             {
-                "start": span.start, "end": span.end,
-                "locators": [
-                    {"kind": locator.kind, "index": locator.index}
-                    for locator in span.locators
-                ],
+                "start": span.start,
+                "end": span.end,
+                "locators": [{"kind": locator.kind, "index": locator.index} for locator in span.locators],
             }
             for span in version.source_spans
         ],
@@ -90,40 +86,48 @@ def _content(row: ContentRow) -> Content:
 
 
 def _domain_registration(
-    document: DocumentRow, version: DocumentVersionRow, content: Content,
+    document: DocumentRow,
+    version: DocumentVersionRow,
+    content: Content,
 ) -> tuple[Document, DocumentVersion]:
     _validate_json_object(version.record_locator)
     _validate_json_object(version.source_metadata)
-    structure = tuple(
-        StructuralSpan(**{**span, "kind": StructureKind(span["kind"])})
-        for span in version.structure
-    )
+    structure = tuple(StructuralSpan(**{**span, "kind": StructureKind(span["kind"])}) for span in version.structure)
     source_spans = tuple(
-        SourceSpan(**{
-            **span,
-            "locators": tuple(
-                SourceLocator(**{**locator, "kind": LocatorKind(locator["kind"])})
-                for locator in span["locators"]
-            ),
-        })
+        SourceSpan(
+            **{
+                **span,
+                "locators": tuple(
+                    SourceLocator(**{**locator, "kind": LocatorKind(locator["kind"])}) for locator in span["locators"]
+                ),
+            }
+        )
         for span in version.source_spans
     )
     return (
         Document(
-            id=document.id, owner_id=document.owner_id, title=document.title,
+            id=document.id,
+            owner_id=document.owner_id,
+            title=document.title,
             current_version_id=document.current_version_id,
-            created_at=document.created_at, deleted_at=document.deleted_at,
+            created_at=document.created_at,
+            deleted_at=document.deleted_at,
         ),
         DocumentVersion(
-            id=version.id, document_id=version.document_id,
-            version_number=version.version_number, content=content,
+            id=version.id,
+            document_id=version.document_id,
+            version_number=version.version_number,
+            content=content,
             created_at=version.created_at,
             source=SourceReference(
-                kind=SourceKind(version.kind), source_id=version.source_id,
-                revision=version.revision, display_name=version.display_name,
+                kind=SourceKind(version.kind),
+                source_id=version.source_id,
+                revision=version.revision,
+                display_name=version.display_name,
                 record_locator=version.record_locator,
                 metadata=version.source_metadata,
             ),
-            structure=structure, source_spans=source_spans,
+            structure=structure,
+            source_spans=source_spans,
         ),
     )

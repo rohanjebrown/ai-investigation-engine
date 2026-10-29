@@ -8,8 +8,7 @@ import pytest
 from sqlalchemy import event, func, insert, select, text, update
 from sqlalchemy.exc import OperationalError
 
-from investigation_engine.application.chunking import ChunkingConfig, ChunkingStrategy, chunk_document
-from investigation_engine.application.chunking import Chunk
+from investigation_engine.application.chunking import Chunk, ChunkingConfig, ChunkingStrategy, chunk_document
 from investigation_engine.application.embeddings import embedding_eligible, storage_vector
 from investigation_engine.application.ports.embedding_errors import EmbeddingInputError, EmbeddingResponseError
 from investigation_engine.application.ports.repository_errors import ActivationConflict, RepositoryError
@@ -18,11 +17,20 @@ from investigation_engine.application.use_cases.index_document_version import In
 from investigation_engine.domain.content import Content
 from investigation_engine.infrastructure.persistence._document_mapping import _version_row
 from investigation_engine.infrastructure.persistence.models import (
-    ChunkEmbeddingRow, DocumentRow, EmbeddingConfigurationRow, VersionChunkPlanRow,
+    ChunkEmbeddingRow,
+    DocumentRow,
+    EmbeddingConfigurationRow,
+    VersionChunkPlanRow,
 )
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (
+    PostgreSQLDocumentActivationRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
+    PostgreSQLEmbeddingRepository,
+)
 
 
 @pytest.fixture
@@ -30,10 +38,17 @@ def services(sessions, synthetic_provider):
     plans = PostgreSQLChunkPlanRepository(sessions)
     vectors = PostgreSQLEmbeddingRepository(sessions)
     activation = PostgreSQLDocumentActivationRepository(sessions)
-    workflow = IndexDocumentVersion(plans, vectors, activation, synthetic_provider, max_attempts=1,
-                                   embedding_batch_size=1)
-    return SimpleNamespace(plans=plans, vectors=vectors, activation=activation,
-                           workflow=workflow, provider=synthetic_provider, profile=synthetic_provider.configuration)
+    workflow = IndexDocumentVersion(
+        plans, vectors, activation, synthetic_provider, max_attempts=1, embedding_batch_size=1
+    )
+    return SimpleNamespace(
+        plans=plans,
+        vectors=vectors,
+        activation=activation,
+        workflow=workflow,
+        provider=synthetic_provider,
+        profile=synthetic_provider.configuration,
+    )
 
 
 @pytest.fixture
@@ -51,6 +66,7 @@ def registered_plan(repository, registration, services):
         plan = chunk_document(version, config=config, tokenizer=Tokenizer())
         await services.plans.save(plan)
         return SimpleNamespace(document=document, version=version, plan=plan, config=config)
+
     return create
 
 
@@ -65,14 +81,19 @@ def vector_count(engine):
 
 def state(engine, document_id):
     with engine.connect() as connection:
-        return connection.execute(select(DocumentRow.current_version_id, DocumentRow.deleted_at)
-                                  .where(DocumentRow.id == document_id)).one()
+        return connection.execute(
+            select(DocumentRow.current_version_id, DocumentRow.deleted_at).where(DocumentRow.id == document_id)
+        ).one()
 
 
 async def seed_later_version(sessions, services, item, number):
     # Test setup only: production cross-revision registration remains unsupported.
-    version = replace(item.version, id=uuid7(), version_number=number,
-                      source=replace(item.version.source, revision=f"revision-{number}"))
+    version = replace(
+        item.version,
+        id=uuid7(),
+        version_number=number,
+        source=replace(item.version.source, revision=f"revision-{number}"),
+    )
     async with sessions() as session:
         async with session.begin():
             session.add(_version_row(version))
@@ -88,7 +109,10 @@ async def store_complete(services, item, profile=None):
 
 
 async def test_float32_vectors_survive_new_repository_and_retries_never_overwrite(
-    services, registered_plan, sessions, db_engine,
+    services,
+    registered_plan,
+    sessions,
+    db_engine,
 ):
     item = await registered_plan()
     chunk = item.plan.chunks[0]
@@ -101,9 +125,14 @@ async def test_float32_vectors_survive_new_repository_and_retries_never_overwrit
     assert vector_count(db_engine) == 1
 
 
-@pytest.mark.parametrize("changes", [dict(model_revision=None), dict(model_id="other-model"), dict(provider="other-provider")])
+@pytest.mark.parametrize(
+    "changes", [dict(model_revision=None), dict(model_id="other-model"), dict(provider="other-provider")]
+)
 async def test_content_ranges_reuse_across_independent_versions_but_profiles_do_not(
-    services, registered_plan, db_engine, changes,
+    services,
+    registered_plan,
+    db_engine,
+    changes,
 ):
     a, b = await registered_plan(source_id="first"), await registered_plan(source_id="second")
     first = a.plan.chunks[0]
@@ -118,25 +147,45 @@ async def test_content_ranges_reuse_across_independent_versions_but_profiles_do_
 
 
 async def test_legacy_equivalent_configuration_rows_are_reused_without_extra_vectors(
-    services, registered_plan, db_engine,
+    services,
+    registered_plan,
+    db_engine,
 ):
     item = await registered_plan()
     chunk = item.plan.chunks[0]
-    values = dict(provider=services.profile.provider, model_id=services.profile.model_id,
-                  model_revision=services.profile.model_revision, dimensions=768,
-                  document_format=services.profile.document_format, normalization="none", created_at=datetime.now(UTC))
+    values = dict(
+        provider=services.profile.provider,
+        model_id=services.profile.model_id,
+        model_revision=services.profile.model_revision,
+        dimensions=768,
+        document_format=services.profile.document_format,
+        normalization="none",
+        created_at=datetime.now(UTC),
+    )
     with db_engine.begin() as connection:
         connection.execute(insert(EmbeddingConfigurationRow).values(**values))
-        duplicate_id = connection.scalar(insert(EmbeddingConfigurationRow).values(**values).returning(EmbeddingConfigurationRow.id))
-        connection.execute(insert(ChunkEmbeddingRow).values(
-            embedding_configuration_id=duplicate_id, content_sha256=bytes.fromhex(chunk.content_sha256),
-            start=chunk.start, end=chunk.end, embedding=[7.0] + [0.0] * 767, created_at=datetime.now(UTC)))
+        duplicate_id = connection.scalar(
+            insert(EmbeddingConfigurationRow).values(**values).returning(EmbeddingConfigurationRow.id)
+        )
+        connection.execute(
+            insert(ChunkEmbeddingRow).values(
+                embedding_configuration_id=duplicate_id,
+                content_sha256=bytes.fromhex(chunk.content_sha256),
+                start=chunk.start,
+                end=chunk.end,
+                embedding=[7.0] + [0.0] * 767,
+                created_at=datetime.now(UTC),
+            )
+        )
     stored = await services.vectors.save(chunk, services.profile, (9.0,) + (0.0,) * 767)
     assert stored[0] == 7.0 and vector_count(db_engine) == 1
 
 
 async def test_embedding_failure_rolls_back_new_configuration_and_vector(
-    services, registered_plan, sessions, db_engine,
+    services,
+    registered_plan,
+    sessions,
+    db_engine,
 ):
     item = await registered_plan()
     fired = False
@@ -144,7 +193,11 @@ async def test_embedding_failure_rolls_back_new_configuration_and_vector(
     def fail(connection, cursor, statement, parameters, context, executemany):
         nonlocal fired
         compiled = context.compiled
-        if compiled is not None and compiled.statement.is_insert and compiled.statement.table.name == "chunk_embeddings":
+        if (
+            compiled is not None
+            and compiled.statement.is_insert
+            and compiled.statement.table.name == "chunk_embeddings"
+        ):
             fired = True
             raise OperationalError("injected embedding failure", {}, RuntimeError("injected"))
 
@@ -174,8 +227,17 @@ async def test_hash_match_alone_cannot_reuse_or_store_vectors_for_other_text(ser
     assert vector_count(db_engine) == 1
 
 
-@pytest.mark.parametrize("vector", [(1.0,) * 767, (0.0,) * 768, (float("nan"),) + (0.0,) * 767,
-                                     (float("inf"),) + (0.0,) * 767, (1e100,) * 768, (1e-100,) * 768])
+@pytest.mark.parametrize(
+    "vector",
+    [
+        (1.0,) * 767,
+        (0.0,) * 768,
+        (float("nan"),) + (0.0,) * 767,
+        (float("inf"),) + (0.0,) * 767,
+        (1e100,) * 768,
+        (1e-100,) * 768,
+    ],
+)
 async def test_invalid_vectors_leave_no_configuration_or_embedding_rows(services, registered_plan, db_engine, vector):
     item = await registered_plan()
     with pytest.raises(ValueError):
@@ -186,7 +248,10 @@ async def test_invalid_vectors_leave_no_configuration_or_embedding_rows(services
 
 
 async def test_concurrent_identical_saves_use_one_configuration_and_one_vector(
-    services, registered_plan, sessions, db_engine,
+    services,
+    registered_plan,
+    sessions,
+    db_engine,
 ):
     item = await registered_plan()
     chunk = item.plan.chunks[0]
@@ -198,7 +263,10 @@ async def test_concurrent_identical_saves_use_one_configuration_and_one_vector(
         async def scalars(self, statement, *args, **kwargs):
             nonlocal arrivals
             result = await super().scalars(statement, *args, **kwargs)
-            if any(c.get("entity") is ChunkEmbeddingRow for c in getattr(statement, "column_descriptions", ())) and arrivals < 2:
+            if (
+                any(c.get("entity") is ChunkEmbeddingRow for c in getattr(statement, "column_descriptions", ()))
+                and arrivals < 2
+            ):
                 pids.add(await super().scalar(text("SELECT pg_backend_pid()")))
                 arrivals += 1
                 if arrivals == 2:
@@ -208,10 +276,13 @@ async def test_concurrent_identical_saves_use_one_configuration_and_one_vector(
 
     factory = type(sessions)(sessions.kw["bind"], class_=RacingSession, expire_on_commit=False)
     vector = (1.0,) + (0.0,) * 767
-    result = await asyncio.wait_for(asyncio.gather(
-        PostgreSQLEmbeddingRepository(factory).save(chunk, services.profile, vector),
-        PostgreSQLEmbeddingRepository(factory).save(chunk, services.profile, vector),
-    ), 20)
+    result = await asyncio.wait_for(
+        asyncio.gather(
+            PostgreSQLEmbeddingRepository(factory).save(chunk, services.profile, vector),
+            PostgreSQLEmbeddingRepository(factory).save(chunk, services.profile, vector),
+        ),
+        20,
+    )
     assert result == [vector, vector] and len(pids) == 2
     assert vector_count(db_engine) == 1
     with db_engine.connect() as connection:
@@ -219,16 +290,27 @@ async def test_concurrent_identical_saves_use_one_configuration_and_one_vector(
 
 
 async def test_indexing_commits_complete_eligible_coverage_and_restarts_without_generation(
-    services, registered_plan, sessions, db_engine, synthetic_provider,
+    services,
+    registered_plan,
+    sessions,
+    db_engine,
+    synthetic_provider,
 ):
     item = await registered_plan()
     assert await index(services, item) == IndexingOutcome.ACTIVATED
     assert services.provider.calls == ["a", "b"] and vector_count(db_engine) == 2
     assert state(db_engine, item.document.id).current_version_id == item.version.id
     synthetic_provider.calls.clear()
-    restarted = IndexDocumentVersion(PostgreSQLChunkPlanRepository(sessions), PostgreSQLEmbeddingRepository(sessions),
-                                    PostgreSQLDocumentActivationRepository(sessions), synthetic_provider)
-    assert await restarted.execute(item.document.id, item.version.id, item.config, services.profile) == IndexingOutcome.ALREADY_ACTIVE
+    restarted = IndexDocumentVersion(
+        PostgreSQLChunkPlanRepository(sessions),
+        PostgreSQLEmbeddingRepository(sessions),
+        PostgreSQLDocumentActivationRepository(sessions),
+        synthetic_provider,
+    )
+    assert (
+        await restarted.execute(item.document.id, item.version.id, item.config, services.profile)
+        == IndexingOutcome.ALREADY_ACTIVE
+    )
     assert not synthetic_provider.calls
     assert len((await services.plans.get(item.version.id, item.config)).chunks) == 3
 
@@ -241,7 +323,9 @@ async def test_partial_cache_generates_only_missing_chunk(services, registered_p
 
 
 async def test_two_indexers_can_race_without_duplicate_storage_or_invalid_activation(
-    services, registered_plan, db_engine,
+    services,
+    registered_plan,
+    db_engine,
 ):
     item = await registered_plan()
     ready = asyncio.Event()
@@ -273,17 +357,26 @@ async def test_provider_failure_commits_partial_progress_and_retry_resumes(servi
 
 
 async def test_bulk_indexing_persists_unique_shared_vectors_and_resumes_across_documents(
-    services, registered_plan, db_engine,
+    services,
+    registered_plan,
+    db_engine,
 ):
     first, second = await registered_plan(source_id="bulk-first"), await registered_plan(source_id="bulk-second")
     assert first.plan.chunks[0].identity == second.plan.chunks[0].identity
     services.workflow = IndexDocumentVersion(
-        services.plans, services.vectors, services.activation, services.provider,
-        max_attempts=1, embedding_batch_size=25,
+        services.plans,
+        services.vectors,
+        services.activation,
+        services.provider,
+        max_attempts=1,
+        embedding_batch_size=25,
     )
     targets = ((first.document.id, first.version.id), (second.document.id, second.version.id))
     partial = await services.workflow.execute_many(
-        targets, first.config, services.profile, max_new_embeddings=1,
+        targets,
+        first.config,
+        services.profile,
+        max_new_embeddings=1,
     )
     assert {row.outcome for row in partial} == {IndexingOutcome.IN_PROGRESS}
     assert vector_count(db_engine) == 1
@@ -356,8 +449,9 @@ async def test_no_searchable_content_neither_embeds_nor_activates(services, regi
     assert await index(services, item) == IndexingOutcome.NO_SEARCHABLE_CONTENT
     assert not services.provider.calls and vector_count(db_engine) == 0
     with pytest.raises(ActivationConflict, match="eligible"):
-        await services.activation.activate(item.document.id, item.version.id, item.config, services.profile,
-                                           expected_current_version_id=None)
+        await services.activation.activate(
+            item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None
+        )
     assert state(db_engine, item.document.id).current_version_id is None
 
 
@@ -365,13 +459,15 @@ async def test_incompatible_profile_and_incomplete_embeddings_cannot_activate(se
     item = await registered_plan()
     await services.vectors.save(item.plan.chunks[0], services.profile, (1.0,) + (0.0,) * 767)
     with pytest.raises(ActivationConflict):
-        await services.activation.activate(item.document.id, item.version.id, item.config, services.profile,
-                                           expected_current_version_id=None)
+        await services.activation.activate(
+            item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None
+        )
     await store_complete(services, item)
     other = replace(services.profile, model_revision="other")
     with pytest.raises(ActivationConflict):
-        await services.activation.activate(item.document.id, item.version.id, item.config, other,
-                                           expected_current_version_id=None)
+        await services.activation.activate(
+            item.document.id, item.version.id, item.config, other, expected_current_version_id=None
+        )
     with pytest.raises(EmbeddingInputError):
         await services.workflow.execute(item.document.id, item.version.id, item.config, other)
     assert state(db_engine, item.document.id).current_version_id is None
@@ -381,16 +477,23 @@ async def test_deleted_missing_and_wrong_owner_version_are_rejected(services, re
     item = await registered_plan()
     other = await registered_plan(source_id="other")
     await store_complete(services, item)
-    for document_id, version_id in ((uuid7(), item.version.id), (item.document.id, uuid7()),
-                                     (other.document.id, item.version.id)):
+    for document_id, version_id in (
+        (uuid7(), item.version.id),
+        (item.document.id, uuid7()),
+        (other.document.id, item.version.id),
+    ):
         with pytest.raises(ActivationConflict):
-            await services.activation.activate(document_id, version_id, item.config, services.profile,
-                                               expected_current_version_id=None)
+            await services.activation.activate(
+                document_id, version_id, item.config, services.profile, expected_current_version_id=None
+            )
     with db_engine.begin() as connection:
-        connection.execute(update(DocumentRow).where(DocumentRow.id == item.document.id).values(deleted_at=datetime.now(UTC)))
+        connection.execute(
+            update(DocumentRow).where(DocumentRow.id == item.document.id).values(deleted_at=datetime.now(UTC))
+        )
     with pytest.raises(ActivationConflict, match="Deleted"):
-        await services.activation.activate(item.document.id, item.version.id, item.config, services.profile,
-                                           expected_current_version_id=None)
+        await services.activation.activate(
+            item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None
+        )
     assert state(db_engine, item.document.id).current_version_id is None
 
 
@@ -400,8 +503,9 @@ async def test_corrupt_plan_cannot_be_activated(services, registered_plan, db_en
     with db_engine.begin() as connection:
         connection.execute(update(VersionChunkPlanRow).values(expected_chunk_count=999))
     with pytest.raises(RepositoryError, match="incomplete"):
-        await services.activation.activate(item.document.id, item.version.id, item.config, services.profile,
-                                           expected_current_version_id=None)
+        await services.activation.activate(
+            item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None
+        )
     assert state(db_engine, item.document.id).current_version_id is None
 
 
@@ -409,8 +513,9 @@ async def test_missing_selected_plan_cannot_activate(services, registered_plan, 
     sample = await registered_plan()
     document, version = await repository.register(*registration(source_id="no-plan"))
     with pytest.raises(ActivationConflict, match="selected chunk plan"):
-        await services.activation.activate(document.id, version.id, sample.config, services.profile,
-                                           expected_current_version_id=None)
+        await services.activation.activate(
+            document.id, version.id, sample.config, services.profile, expected_current_version_id=None
+        )
     assert state(db_engine, document.id).current_version_id is None
 
 
@@ -432,12 +537,14 @@ async def test_stale_and_older_activations_cannot_replace_newer_version(services
     new = await seed_later_version(sessions, services, old, 2)
     snapshot = await services.activation.current_version(old.document.id, old.version.id)
     await store_complete(services, new)
-    assert await services.activation.activate(new.document.id, new.version.id, new.config, services.profile,
-                                             expected_current_version_id=snapshot)
+    assert await services.activation.activate(
+        new.document.id, new.version.id, new.config, services.profile, expected_current_version_id=snapshot
+    )
     for expected in (snapshot, new.version.id):
         with pytest.raises(ActivationConflict):
-            await services.activation.activate(old.document.id, old.version.id, old.config, services.profile,
-                                               expected_current_version_id=expected)
+            await services.activation.activate(
+                old.document.id, old.version.id, old.config, services.profile, expected_current_version_id=expected
+            )
     assert state(db_engine, old.document.id).current_version_id == new.version.id
 
 
@@ -447,7 +554,9 @@ async def test_deletion_during_generation_prevents_activation(services, register
     async def delete():
         if len(services.provider.calls) == 2:
             with db_engine.begin() as connection:
-                connection.execute(update(DocumentRow).where(DocumentRow.id == item.document.id).values(deleted_at=datetime.now(UTC)))
+                connection.execute(
+                    update(DocumentRow).where(DocumentRow.id == item.document.id).values(deleted_at=datetime.now(UTC))
+                )
 
     services.provider.before_call = delete
     with pytest.raises(ActivationConflict, match="Deleted"):
@@ -460,16 +569,23 @@ async def wait_for_lock(engine, pid):
     async def poll():
         while True:
             with engine.connect() as connection:
-                waiting = connection.scalar(text("SELECT wait_event_type='Lock' FROM pg_stat_activity WHERE pid=:pid"), {"pid": pid})
+                waiting = connection.scalar(
+                    text("SELECT wait_event_type='Lock' FROM pg_stat_activity WHERE pid=:pid"), {"pid": pid}
+                )
             if waiting:
                 return
             await asyncio.sleep(0)
+
     await asyncio.wait_for(poll(), 10)
 
 
 @pytest.mark.parametrize("first", ["delete", "activate"])
 async def test_activation_and_deletion_serialize_on_the_document_row(
-    services, registered_plan, sessions, db_engine, first,
+    services,
+    registered_plan,
+    sessions,
+    db_engine,
+    first,
 ):
     item = await registered_plan()
     await store_complete(services, item)
@@ -496,12 +612,15 @@ async def test_activation_and_deletion_serialize_on_the_document_row(
 
     async def activate():
         return await PostgreSQLDocumentActivationRepository(factory).activate(
-            item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None)
+            item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None
+        )
 
     if first == "delete":
         async with sessions() as deletion:
             async with deletion.begin():
-                await deletion.execute(update(DocumentRow).where(DocumentRow.id == item.document.id).values(deleted_at=datetime.now(UTC)))
+                await deletion.execute(
+                    update(DocumentRow).where(DocumentRow.id == item.document.id).values(deleted_at=datetime.now(UTC))
+                )
                 task = asyncio.create_task(activate())
                 await asyncio.wait_for(reached.wait(), 10)
                 await wait_for_lock(db_engine, pid)
@@ -515,8 +634,13 @@ async def test_activation_and_deletion_serialize_on_the_document_row(
             async with sessions() as deletion:
                 async with deletion.begin():
                     deletion_pid = await deletion.scalar(text("SELECT pg_backend_pid()"))
-                    deleting = asyncio.create_task(deletion.execute(update(DocumentRow)
-                        .where(DocumentRow.id == item.document.id).values(deleted_at=datetime.now(UTC))))
+                    deleting = asyncio.create_task(
+                        deletion.execute(
+                            update(DocumentRow)
+                            .where(DocumentRow.id == item.document.id)
+                            .values(deleted_at=datetime.now(UTC))
+                        )
+                    )
                     try:
                         await wait_for_lock(db_engine, deletion_pid)
                     finally:
@@ -531,7 +655,11 @@ async def test_activation_and_deletion_serialize_on_the_document_row(
 
 @pytest.mark.parametrize("same_version", [True, False])
 async def test_concurrent_activations_are_idempotent_or_reject_stale_snapshot(
-    services, registered_plan, sessions, db_engine, same_version,
+    services,
+    registered_plan,
+    sessions,
+    db_engine,
+    same_version,
 ):
     old = await registered_plan()
     new = old if same_version else await seed_later_version(sessions, services, old, 2)
@@ -552,10 +680,18 @@ async def test_concurrent_activations_are_idempotent_or_reject_stale_snapshot(
 
     factory = type(sessions)(sessions.kw["bind"], class_=RacingActivation, expire_on_commit=False)
     activator = PostgreSQLDocumentActivationRepository(factory)
-    results = await asyncio.wait_for(asyncio.gather(*(
-        activator.activate(item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None)
-        for item in (old, new)
-    ), return_exceptions=True), 20)
+    results = await asyncio.wait_for(
+        asyncio.gather(
+            *(
+                activator.activate(
+                    item.document.id, item.version.id, item.config, services.profile, expected_current_version_id=None
+                )
+                for item in (old, new)
+            ),
+            return_exceptions=True,
+        ),
+        20,
+    )
     assert len(pids) == 2
     assert sum(value is True for value in results) == 1
     if same_version:

@@ -7,7 +7,10 @@ import pytest
 
 from investigation_engine.application.chunking import Chunk, ChunkingConfig, ChunkingStrategy, ChunkPlan
 from investigation_engine.application.ports.embedding_errors import (
-    EmbeddingInputError, EmbeddingProviderError, EmbeddingRateLimitError, EmbeddingResponseError,
+    EmbeddingInputError,
+    EmbeddingProviderError,
+    EmbeddingRateLimitError,
+    EmbeddingResponseError,
 )
 from investigation_engine.application.use_cases.index_document_version import IndexDocumentVersion, IndexingOutcome
 
@@ -16,9 +19,11 @@ from investigation_engine.application.use_cases.index_document_version import In
 def workflow(registration, tokenizer, synthetic_provider):
     document, version = registration(body="a b")
     config = ChunkingConfig(strategy=ChunkingStrategy.FIXED_TOKENS, tokenizer=tokenizer.identity, max_tokens=1)
-    plan = ChunkPlan(document_version_id=version.id, config=config, chunks=tuple(
-        Chunk(content=version.content, start=i, end=i + 1) for i in range(3)
-    ))
+    plan = ChunkPlan(
+        document_version_id=version.id,
+        config=config,
+        chunks=tuple(Chunk(content=version.content, start=i, end=i + 1) for i in range(3)),
+    )
     values = {}
 
     async def find(chunks, configuration):
@@ -30,11 +35,19 @@ def workflow(registration, tokenizer, synthetic_provider):
     plans = SimpleNamespace(get=AsyncMock(return_value=plan))
     store = SimpleNamespace(find=AsyncMock(side_effect=find), save=AsyncMock(side_effect=save))
     activation = SimpleNamespace(current_version=AsyncMock(return_value=None), activate=AsyncMock(return_value=True))
-    usecase = IndexDocumentVersion(plans, store, activation, synthetic_provider, max_attempts=1,
-                                   embedding_batch_size=1)
-    return SimpleNamespace(document=document, version=version, config=config, plan=plan,
-                           provider=synthetic_provider, values=values, plans=plans, store=store,
-                           activation=activation, usecase=usecase)
+    usecase = IndexDocumentVersion(plans, store, activation, synthetic_provider, max_attempts=1, embedding_batch_size=1)
+    return SimpleNamespace(
+        document=document,
+        version=version,
+        config=config,
+        plan=plan,
+        provider=synthetic_provider,
+        values=values,
+        plans=plans,
+        store=store,
+        activation=activation,
+        usecase=usecase,
+    )
 
 
 async def run(w):
@@ -46,14 +59,16 @@ async def test_indexes_only_nonblank_memberships_and_activates_after_full_covera
     assert await run(w) == IndexingOutcome.ACTIVATED
     assert w.provider.calls == ["a", "b"] and len(w.values) == 2
     assert len(w.plan.chunks) == 3
-    w.activation.activate.assert_awaited_once_with(w.document.id, w.version.id, w.config,
-        w.provider.configuration, expected_current_version_id=None)
+    w.activation.activate.assert_awaited_once_with(
+        w.document.id, w.version.id, w.config, w.provider.configuration, expected_current_version_id=None
+    )
 
 
 async def test_indexing_batches_missing_chunks_and_reuses_existing_embeddings(workflow):
     w = workflow
-    w.usecase = IndexDocumentVersion(w.plans, w.store, w.activation, w.provider,
-                                     max_attempts=1, embedding_batch_size=25)
+    w.usecase = IndexDocumentVersion(
+        w.plans, w.store, w.activation, w.provider, max_attempts=1, embedding_batch_size=25
+    )
     w.values[w.plan.chunks[0].identity] = (1.0,) + (0.0,) * 767
     assert await run(w) == IndexingOutcome.ACTIVATED
     assert w.provider.call_batches == [("b",)]
@@ -62,18 +77,24 @@ async def test_indexing_batches_missing_chunks_and_reuses_existing_embeddings(wo
 
 async def test_bulk_indexing_batches_across_documents_and_reuses_equal_content(workflow, registration):
     w = workflow
-    w.usecase = IndexDocumentVersion(w.plans, w.store, w.activation, w.provider,
-                                     max_attempts=1, embedding_batch_size=25)
+    w.usecase = IndexDocumentVersion(
+        w.plans, w.store, w.activation, w.provider, max_attempts=1, embedding_batch_size=25
+    )
     second_document, second_version = registration(body="a b", locator={"record": 2})
-    second_plan = replace(w.plan, document_version_id=second_version.id,
-                          chunks=tuple(Chunk(content=second_version.content, start=c.start, end=c.end)
-                                       for c in w.plan.chunks))
+    second_plan = replace(
+        w.plan,
+        document_version_id=second_version.id,
+        chunks=tuple(Chunk(content=second_version.content, start=c.start, end=c.end) for c in w.plan.chunks),
+    )
+
     async def get_plan(version_id, config):
         return w.plan if version_id == w.version.id else second_plan
+
     w.plans.get.side_effect = get_plan
     reports = await w.usecase.execute_many(
         ((w.document.id, w.version.id), (second_document.id, second_version.id)),
-        w.config, w.provider.configuration,
+        w.config,
+        w.provider.configuration,
     )
     assert w.provider.call_batches == [("a", "b")]
     assert [report.outcome for report in reports] == [IndexingOutcome.ACTIVATED] * 2
@@ -83,25 +104,33 @@ async def test_bulk_indexing_batches_across_documents_and_reuses_equal_content(w
 
 async def test_bulk_indexing_preserves_progress_and_resumes_before_activation(workflow, registration):
     w = workflow
-    w.usecase = IndexDocumentVersion(w.plans, w.store, w.activation, w.provider,
-                                     max_attempts=1, embedding_batch_size=25)
+    w.usecase = IndexDocumentVersion(
+        w.plans, w.store, w.activation, w.provider, max_attempts=1, embedding_batch_size=25
+    )
     second_document, second_version = registration(body="a b", locator={"record": 2})
-    second_plan = replace(w.plan, document_version_id=second_version.id,
-                          chunks=tuple(Chunk(content=second_version.content, start=c.start, end=c.end)
-                                       for c in w.plan.chunks))
+    second_plan = replace(
+        w.plan,
+        document_version_id=second_version.id,
+        chunks=tuple(Chunk(content=second_version.content, start=c.start, end=c.end) for c in w.plan.chunks),
+    )
+
     async def get_plan(version_id, config):
         return w.plan if version_id == w.version.id else second_plan
+
     w.plans.get.side_effect = get_plan
     partial = await w.usecase.execute_many(
         ((w.document.id, w.version.id), (second_document.id, second_version.id)),
-        w.config, w.provider.configuration, max_new_embeddings=1,
+        w.config,
+        w.provider.configuration,
+        max_new_embeddings=1,
     )
     assert all(report.outcome == IndexingOutcome.IN_PROGRESS for report in partial)
     w.activation.activate.assert_not_awaited()
     w.provider.call_batches.clear()
     resumed = await w.usecase.execute_many(
         ((w.document.id, w.version.id), (second_document.id, second_version.id)),
-        w.config, w.provider.configuration,
+        w.config,
+        w.provider.configuration,
     )
     assert w.provider.call_batches == [("b",)]
     assert [report.outcome for report in resumed] == [IndexingOutcome.ACTIVATED] * 2
@@ -153,20 +182,25 @@ async def test_cancellation_preserves_committed_progress_without_activation(work
     w.activation.activate.assert_not_awaited()
 
 
-@pytest.mark.parametrize("error", [EmbeddingInputError("permanent"), EmbeddingResponseError("invalid"),
-                                  EmbeddingProviderError("unauthorized")])
+@pytest.mark.parametrize(
+    "error",
+    [EmbeddingInputError("permanent"), EmbeddingResponseError("invalid"), EmbeddingProviderError("unauthorized")],
+)
 async def test_permanent_errors_are_not_retried(workflow, error):
     w = workflow
     w.provider.failures = [error]
-    w.usecase = IndexDocumentVersion(w.plans, w.store, w.activation, w.provider, max_attempts=3,
-                                     retry_delay_seconds=0, embedding_batch_size=1)
+    w.usecase = IndexDocumentVersion(
+        w.plans, w.store, w.activation, w.provider, max_attempts=3, retry_delay_seconds=0, embedding_batch_size=1
+    )
     with pytest.raises(type(error)):
         await run(w)
     assert w.provider.calls == ["a"] and not w.values
     w.activation.activate.assert_not_awaited()
 
 
-@pytest.mark.parametrize("error", [EmbeddingRateLimitError("quota"), EmbeddingProviderError("unavailable", retryable=True)])
+@pytest.mark.parametrize(
+    "error", [EmbeddingRateLimitError("quota"), EmbeddingProviderError("unavailable", retryable=True)]
+)
 async def test_transient_errors_have_bounded_configurable_retries(workflow, error, monkeypatch):
     w = workflow
     delays = []
@@ -176,8 +210,9 @@ async def test_transient_errors_have_bounded_configurable_retries(workflow, erro
 
     monkeypatch.setattr(asyncio, "sleep", wait)
     w.provider.failures = [error, None]
-    w.usecase = IndexDocumentVersion(w.plans, w.store, w.activation, w.provider, max_attempts=2,
-                                     retry_delay_seconds=0.25, embedding_batch_size=1)
+    w.usecase = IndexDocumentVersion(
+        w.plans, w.store, w.activation, w.provider, max_attempts=2, retry_delay_seconds=0.25, embedding_batch_size=1
+    )
     assert await run(w) == IndexingOutcome.ACTIVATED
     assert w.provider.calls == ["a", "a", "b"] and delays == [0.25]
 
@@ -189,9 +224,16 @@ async def test_timeout_exhausts_attempts_without_activating(workflow):
         await asyncio.Future()
 
     w.provider.before_call = never_returns
-    w.usecase = IndexDocumentVersion(w.plans, w.store, w.activation, w.provider,
-                                    max_attempts=2, retry_delay_seconds=0, request_timeout_seconds=0.001,
-                                    embedding_batch_size=1)
+    w.usecase = IndexDocumentVersion(
+        w.plans,
+        w.store,
+        w.activation,
+        w.provider,
+        max_attempts=2,
+        retry_delay_seconds=0,
+        request_timeout_seconds=0.001,
+        embedding_batch_size=1,
+    )
     with pytest.raises(EmbeddingProviderError, match="timed out"):
         await run(w)
     assert w.provider.calls == ["a", "a"] and not w.values
@@ -213,7 +255,9 @@ async def test_no_searchable_content_is_an_explicit_outcome(workflow, registrati
 async def test_configuration_mismatch_and_missing_plan_are_rejected(workflow):
     w = workflow
     with pytest.raises(EmbeddingInputError, match="configuration"):
-        await w.usecase.execute(w.document.id, w.version.id, w.config, replace(w.provider.configuration, model_revision="other"))
+        await w.usecase.execute(
+            w.document.id, w.version.id, w.config, replace(w.provider.configuration, model_revision="other")
+        )
     w.activation.current_version.assert_not_awaited()
     w.plans.get.return_value = None
     with pytest.raises(ValueError, match="persisted chunk plan"):

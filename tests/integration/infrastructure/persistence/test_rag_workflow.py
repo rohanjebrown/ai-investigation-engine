@@ -18,15 +18,27 @@ from investigation_engine.domain.source_span import LocatorKind, SourceLocator, 
 from investigation_engine.infrastructure.api import bootstrap
 from investigation_engine.infrastructure.api.app import create_app
 from investigation_engine.infrastructure.persistence.models import ChunkingConfigurationRow
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
-from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import PostgreSQLDocumentActivationRepository
-from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import PostgreSQLEmbeddingRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_document_activation_repository import (
+    PostgreSQLDocumentActivationRepository,
+)
+from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
+    PostgreSQLEmbeddingRepository,
+)
 
 
 @pytest.mark.parametrize("include_shared", [True, False])
 @pytest.mark.parametrize("retrieval_mode", ["semantic", "hybrid"])
 async def test_real_registration_through_http_rag_keeps_private_sources_out_and_releases_transactions(
-    repository, registration, sessions, db_engine, monkeypatch, include_shared, retrieval_mode,
+    repository,
+    registration,
+    sessions,
+    db_engine,
+    monkeypatch,
+    include_shared,
+    retrieval_mode,
 ):
     class Tokenizer:
         identity = TokenizerIdentity(name="characters", revision="1", artifact_sha256="0" * 64, runtime_version="test")
@@ -53,11 +65,15 @@ async def test_real_registration_through_http_rag_keeps_private_sources_out_and_
     body = "A😀 is described by the shared source."
     shared = None
     # Include a private occurrence of identical Content and a closer private vector.
-    for text, owner in [(body, None if include_shared else "private-owner"),
-                        (body, "another-owner"), ("PRIVATE details must never reach the LLM", "private-owner")]:
+    for text, owner in [
+        (body, None if include_shared else "private-owner"),
+        (body, "another-owner"),
+        ("PRIVATE details must never reach the LLM", "private-owner"),
+    ]:
         span = SourceSpan(start=0, end=len(text), locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=3),))
-        document, version = await repository.register(*registration(
-            body=text, owner_id=owner, source_id=str(uuid7()), source_spans=(span,)))
+        document, version = await repository.register(
+            *registration(body=text, owner_id=owner, source_id=str(uuid7()), source_spans=(span,))
+        )
         await plans.save(chunk_document(version, config=config, tokenizer=Tokenizer()))
         await index.execute(document.id, version.id, config, embeddings.configuration)
         if owner is None:
@@ -85,16 +101,28 @@ async def test_real_registration_through_http_rag_keeps_private_sources_out_and_
             assert active == 0
             requests.append(request)
             assert len(request.evidence) == 1 and request.evidence[0].text == body
-            return GenerationResult(status=AnswerStatus.ANSWERED, answer="The shared source describes A😀. [E1]", citations=("E1",))
+            return GenerationResult(
+                status=AnswerStatus.ANSWERED, answer="The shared source describes A😀. [E1]", citations=("E1",)
+            )
 
     generator = Generator()
     # Actual production composition/lifespan, but settings and AI constructors
     # are replaced. Every database URL originates in the disposable fixture.
-    settings = SimpleNamespace(database_url=lambda: db_engine.url, gemini_api_key="synthetic-only",
-        gemini_generation_model="synthetic-only", serving_chunking_configuration_id=config_id,
-        generation_timeout_seconds=30, generation_max_attempts=1, generation_max_output_tokens=1024,
-        rag_max_evidence=5, rag_max_context_chars=12000, retrieval_mode=retrieval_mode,
-        semantic_candidate_limit=20, keyword_candidate_limit=20, rrf_k=60)
+    settings = SimpleNamespace(
+        database_url=lambda: db_engine.url,
+        gemini_api_key="synthetic-only",
+        gemini_generation_model="synthetic-only",
+        serving_chunking_configuration_id=config_id,
+        generation_timeout_seconds=30,
+        generation_max_attempts=1,
+        generation_max_output_tokens=1024,
+        rag_max_evidence=5,
+        rag_max_context_chars=12000,
+        retrieval_mode=retrieval_mode,
+        semantic_candidate_limit=20,
+        keyword_candidate_limit=20,
+        rrf_k=60,
+    )
     monkeypatch.setitem(sys.modules, "investigation_engine.infrastructure.config", SimpleNamespace(settings=settings))
     monkeypatch.setattr(bootstrap, "GeminiEmbeddingProvider", lambda **kwargs: embeddings)
     monkeypatch.setattr(bootstrap, "GeminiAnswerGenerator", lambda **kwargs: generator)
@@ -108,8 +136,9 @@ async def test_real_registration_through_http_rag_keeps_private_sources_out_and_
                 page = await client.get("/")
                 assert page.status_code == 200 and "AI Investigation Engine" in page.text
                 assert (await client.get("/static/app.js")).status_code == 200
-                response = await client.post("/questions", json={"question": "What describes A😀?"},
-                                             headers={"X-Owner-ID": "private-owner"})
+                response = await client.post(
+                    "/questions", json={"question": "What describes A😀?"}, headers={"X-Owner-ID": "private-owner"}
+                )
         assert active == 0
     finally:
         event.remove(Pool, "checkout", checkout)
@@ -123,8 +152,8 @@ async def test_real_registration_through_http_rag_keeps_private_sources_out_and_
         assert hit["text"] == body and (hit["start"], hit["end"]) == (0, len(body))
         assert hit["source"]["source_id"] == shared[1].source.source_id
         assert hit["source_spans"][0]["locators"] == [{"kind": "sentence", "index": 3}]
-        assert hit["score_kind"] == ("rrf" if retrieval_mode=="hybrid" else "cosine_similarity")
-        if retrieval_mode=="hybrid":
+        assert hit["score_kind"] == ("rrf" if retrieval_mode == "hybrid" else "cosine_similarity")
+        if retrieval_mode == "hybrid":
             assert hit["semantic_score"] is not None and hit["keyword_score"] is not None
     else:
         assert result["status"] == "insufficient_evidence" and result["answer"] is None

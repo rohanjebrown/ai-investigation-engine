@@ -12,7 +12,6 @@ from investigation_engine.domain.structural_span import (
     StructureKind,
 )
 
-
 DATASET_ID = "xanhho/2WikiMultihopQA"
 
 
@@ -49,17 +48,13 @@ def extract_2wiki(
     for context_position, passage in enumerate(context):
         passage_location = f"{location}, context position {context_position}"
         if not isinstance(passage, list) or len(passage) != 2:
-            raise ValueError(
-                f"{passage_location}: passage must be a [title, sentences] list"
-            )
+            raise ValueError(f"{passage_location}: passage must be a [title, sentences] list")
 
         title, sentences = passage
         if not isinstance(title, str) or not title.strip():
             raise ValueError(f"{passage_location}: title must be a nonblank string")
         if not isinstance(sentences, list) or not sentences:
-            raise ValueError(
-                f"{passage_location}: sentences must be a nonempty list"
-            )
+            raise ValueError(f"{passage_location}: sentences must be a nonempty list")
 
         structure = []
         source_spans = []
@@ -67,21 +62,16 @@ def extract_2wiki(
         for sentence_index, sentence in enumerate(sentences):
             if not isinstance(sentence, str) or not sentence.strip():
                 raise ValueError(
-                    f"{passage_location}, sentence index {sentence_index}: "
-                    "sentence must be a nonblank string"
+                    f"{passage_location}, sentence index {sentence_index}: sentence must be a nonblank string"
                 )
 
             end = offset + len(sentence)
-            structure.append(
-                StructuralSpan(kind=StructureKind.SENTENCE, start=offset, end=end)
-            )
+            structure.append(StructuralSpan(kind=StructureKind.SENTENCE, start=offset, end=end))
             source_spans.append(
                 SourceSpan(
                     start=offset,
                     end=end,
-                    locators=(
-                        SourceLocator(kind=LocatorKind.SENTENCE, index=sentence_index),
-                    ),
+                    locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=sentence_index),),
                 )
             )
             # The inserted ASCII space is outside both adjacent sentence spans.

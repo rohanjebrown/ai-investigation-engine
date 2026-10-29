@@ -11,19 +11,34 @@ def test_float32_conversion_preserves_values_without_normalizing():
     assert isinstance(vector, tuple) and storage_vector(vector) == vector
 
 
-@pytest.mark.parametrize("values", [
-    (1.0,) * 767, (0.0,) * 768, (1e-100,) * 768,
-    (1e100,) + (0.0,) * 767, (float("nan"),) + (0.0,) * 767,
-    (float("inf"),) + (0.0,) * 767, (True,) + (0.0,) * 767,
-    ("1",) + (0.0,) * 767,
-])
+@pytest.mark.parametrize(
+    "values",
+    [
+        (1.0,) * 767,
+        (0.0,) * 768,
+        (1e-100,) * 768,
+        (1e100,) + (0.0,) * 767,
+        (float("nan"),) + (0.0,) * 767,
+        (float("inf"),) + (0.0,) * 767,
+        (True,) + (0.0,) * 767,
+        ("1",) + (0.0,) * 767,
+    ],
+)
 def test_vectors_must_remain_valid_in_float32_storage(values):
     with pytest.raises(ValueError):
         storage_vector(values)
 
 
-@pytest.mark.parametrize("changes", [dict(dimensions=767), dict(document_format="body_only"),
-                                       dict(normalization="l2"), dict(model_revision=" "), dict(provider="")])
+@pytest.mark.parametrize(
+    "changes",
+    [
+        dict(dimensions=767),
+        dict(document_format="body_only"),
+        dict(normalization="l2"),
+        dict(model_revision=" "),
+        dict(provider=""),
+    ],
+)
 def test_only_representable_explicit_profiles_are_accepted(changes):
     with pytest.raises(ValueError):
         replace(EmbeddingConfig(provider="synthetic", model_id="test"), **changes)

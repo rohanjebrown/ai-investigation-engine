@@ -8,11 +8,11 @@ class GenerationProviderError(RuntimeError):
 
 
 class GenerationRateLimitError(GenerationProviderError):
-    pass
+    """Provider rejected a request because of rate or quota limits."""
 
 
 class GenerationTimeoutError(GenerationProviderError):
-    pass
+    """Provider request exceeded its configured time limit."""
 
 
 class GenerationResponseError(RuntimeError):

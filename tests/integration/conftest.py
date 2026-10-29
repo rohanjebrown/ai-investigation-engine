@@ -14,7 +14,6 @@ from testcontainers.community.postgres import PostgresContainer
 
 from investigation_engine.infrastructure.persistence.postgresql_document_repository import PostgreSQLDocumentRepository
 
-
 # Verified through Docker Hub's tag API on 2026-10-27; pin the multi-platform manifest.
 POSTGRES_IMAGE = "pgvector/pgvector@sha256:9d2e61c7352b9e9f4798df5fd9a498f043f4cda1cdacc707de3d198650f4321e"
 
@@ -26,8 +25,12 @@ def postgres_url():
         startup_error = None
         try:
             container = PostgresContainer(
-                POSTGRES_IMAGE, username="engine_tests", password="disposable-test-password",
-                dbname="engine_tests", driver="psycopg", docker_client_kw={"timeout": 10},
+                POSTGRES_IMAGE,
+                username="engine_tests",
+                password="disposable-test-password",
+                dbname="engine_tests",
+                driver="psycopg",
+                docker_client_kw={"timeout": 10},
             )
             container.start()
         except Exception as error:
@@ -39,8 +42,11 @@ def postgres_url():
                 pytrace=False,
             )
         url = URL.create(
-            "postgresql+psycopg", username=container.username, password=container.password,
-            host=container.get_container_host_ip(), port=int(container.get_exposed_port(5432)),
+            "postgresql+psycopg",
+            username=container.username,
+            password=container.password,
+            host=container.get_container_host_ip(),
+            port=int(container.get_exposed_port(5432)),
             database=container.dbname,
         )
         assert url.port not in (5432, 15432), "Refusing a normal application database port"
@@ -59,6 +65,7 @@ def migrate(pytestconfig):
             cfg.attributes["connection"] = connection
             operation = command.downgrade if downgrade else command.upgrade
             operation(cfg, revision)
+
     return run
 
 
@@ -82,11 +89,14 @@ def db_engine(schema_engine):
     def clean():
         with schema_engine.begin() as connection:
             # No other engine/URL can reach this cleanup; every test sees real commits.
-            connection.execute(text(
-                "TRUNCATE chunk_embeddings, chunk_memberships, version_chunk_plans, "
-                "embedding_configurations, chunking_configurations, document_versions, "
-                "documents, contents RESTART IDENTITY CASCADE"
-            ))
+            connection.execute(
+                text(
+                    "TRUNCATE chunk_embeddings, chunk_memberships, version_chunk_plans, "
+                    "embedding_configurations, chunking_configurations, document_versions, "
+                    "documents, contents RESTART IDENTITY CASCADE"
+                )
+            )
+
     clean()
     try:
         yield schema_engine

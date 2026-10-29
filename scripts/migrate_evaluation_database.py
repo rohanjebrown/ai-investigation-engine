@@ -8,7 +8,6 @@ from dotenv import dotenv_values
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DATABASE = "ai_investigation_evaluation"
 USER = "evaluation_engine"
@@ -20,9 +19,15 @@ def main() -> None:
     password = values.get("EVALUATION_DB_PASSWORD")
     if not password:
         raise SystemExit("Set EVALUATION_DB_PASSWORD in the ignored .env.evaluation file")
-    url = URL.create("postgresql+psycopg", username=USER, password=password,
-                     host="127.0.0.1", port=PORT, database=DATABASE,
-                     query={"connect_timeout": "5"})
+    url = URL.create(
+        "postgresql+psycopg",
+        username=USER,
+        password=password,
+        host="127.0.0.1",
+        port=PORT,
+        database=DATABASE,
+        query={"connect_timeout": "5"},
+    )
     engine = create_engine(url, hide_parameters=True)
     try:
         with engine.begin() as connection:

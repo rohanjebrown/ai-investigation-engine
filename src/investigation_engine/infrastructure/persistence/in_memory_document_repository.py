@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
+from investigation_engine.application.document_views import DocumentDetails, DocumentListItem, DocumentPage
 from investigation_engine.application.ports.repository_errors import (
     ContentHashCollision,
     DocumentAccessDenied,
@@ -10,12 +11,10 @@ from investigation_engine.application.ports.repository_errors import (
     DocumentUpdateConflict,
     RegistrationConflict,
 )
-from investigation_engine.application.document_views import DocumentDetails, DocumentListItem, DocumentPage
 from investigation_engine.domain.content import Content
 from investigation_engine.domain.document import Document
 from investigation_engine.domain.document_version import DocumentVersion
-from investigation_engine.domain.provenance import JsonValue
-from investigation_engine.domain.provenance import SourceReference
+from investigation_engine.domain.provenance import JsonValue, SourceReference
 from investigation_engine.domain.source_span import SourceSpan
 from investigation_engine.domain.structural_span import StructuralSpan
 
@@ -79,9 +78,7 @@ class InMemoryDocumentRepository:
         document, version = _copy_registration(document, version)
 
         if version.document_id != document.id:
-            raise ValueError(
-                "DocumentVersion references a different document"
-            )
+            raise ValueError("DocumentVersion references a different document")
 
         source = version.source
         occurrence_key = (
@@ -100,8 +97,7 @@ class InMemoryDocumentRepository:
             if existing_version.content.text != version.content.text:
                 conflict = "extracted text differs"
             elif (
-                existing_version.structure != version.structure
-                or existing_version.source_spans != version.source_spans
+                existing_version.structure != version.structure or existing_version.source_spans != version.source_spans
             ):
                 conflict = "structural or source spans differ"
             if conflict is not None:
@@ -110,9 +106,7 @@ class InMemoryDocumentRepository:
                     f"{source.source_id!r}, revision {source.revision!r}, "
                     f"locator {source.record_locator!r}: {conflict}"
                 )
-            return _copy_registration(
-                existing_document, existing_version
-            )
+            return _copy_registration(existing_document, existing_version)
 
         if version.version_number != 1 or document.current_version_id is not None:
             raise ValueError("New registrations require version 1 and no active version")
@@ -145,8 +139,13 @@ class InMemoryDocumentRepository:
         return result
 
     async def append_version(
-        self, document_id: UUID, *, actor_id: str, expected_current_version_id: UUID,
-        content: Content, source: SourceReference,
+        self,
+        document_id: UUID,
+        *,
+        actor_id: str,
+        expected_current_version_id: UUID,
+        content: Content,
+        source: SourceReference,
         structure: tuple[StructuralSpan, ...] = (),
         source_spans: tuple[SourceSpan, ...] = (),
     ) -> tuple[Document, DocumentVersion]:
@@ -194,8 +193,12 @@ class InMemoryDocumentRepository:
             raise ContentHashCollision("Content hash collision detected")
         saved_content = existing_content or content
         version = DocumentVersion(
-            document_id=document_id, version_number=latest + 1, content=saved_content,
-            source=source, structure=structure, source_spans=source_spans,
+            document_id=document_id,
+            version_number=latest + 1,
+            content=saved_content,
+            source=source,
+            structure=structure,
+            source_spans=source_spans,
         )
         stored = _copy_registration(document, version)[1]
         self._contents[content.sha256] = saved_content
@@ -213,27 +216,35 @@ class InMemoryDocumentRepository:
     async def get_details(self, document_id: UUID, *, actor_id: str) -> DocumentDetails:
         document = self._documents.get(document_id)
         self._authorize_read(document, actor_id)
-        versions = tuple(sorted(
-            (value for value in self._versions.values() if value.document_id == document_id),
-            key=lambda value: value.version_number,
-        ))
+        versions = tuple(
+            sorted(
+                (value for value in self._versions.values() if value.document_id == document_id),
+                key=lambda value: value.version_number,
+            )
+        )
         return DocumentDetails(
             document=replace(document),
             versions=tuple(_copy_registration(document, version)[1] for version in versions),
         )
 
     async def list_documents(
-        self, *, actor_id: str, offset: int, limit: int, include_deleted: bool = False,
+        self,
+        *,
+        actor_id: str,
+        offset: int,
+        limit: int,
+        include_deleted: bool = False,
     ) -> DocumentPage:
         documents = [
-            document for document in self._documents.values()
+            document
+            for document in self._documents.values()
             if (document.owner_id is None or document.owner_id == actor_id)
             and (include_deleted or document.deleted_at is None)
         ]
         documents.sort(key=lambda item: (item.created_at, str(item.id)), reverse=True)
         total = len(documents)
         items = []
-        for document in documents[offset:offset + limit]:
+        for document in documents[offset : offset + limit]:
             versions = [v for v in self._versions.values() if v.document_id == document.id]
             current = next((v for v in versions if v.id == document.current_version_id), None)
             copied_doc = replace(document)

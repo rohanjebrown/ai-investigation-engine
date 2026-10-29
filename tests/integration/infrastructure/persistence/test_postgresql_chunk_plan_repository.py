@@ -12,26 +12,30 @@ from investigation_engine.application.ports.text_tokenizer import TokenizerIdent
 from investigation_engine.domain.content import Content
 from investigation_engine.domain.structural_span import StructuralSpan, StructureKind
 from investigation_engine.infrastructure.persistence.models import (
-    ChunkingConfigurationRow, ChunkMembershipRow, DocumentRow, DocumentVersionRow, VersionChunkPlanRow,
+    ChunkingConfigurationRow,
+    ChunkMembershipRow,
+    DocumentRow,
+    VersionChunkPlanRow,
 )
-from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import PostgreSQLChunkPlanRepository
+from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
+    PostgreSQLChunkPlanRepository,
+)
 
 
 @pytest.fixture
 def tokenizer():
     class CharacterTokenizer:
-        identity = TokenizerIdentity(name="characters", revision="1",
-                                     artifact_sha256="0" * 64, runtime_version="test")
+        identity = TokenizerIdentity(name="characters", revision="1", artifact_sha256="0" * 64, runtime_version="test")
 
         def offsets(self, text):
             return tuple((index, index + 1) for index in range(len(text)))
+
     return CharacterTokenizer()
 
 
 @pytest.fixture
 def config(tokenizer):
-    return ChunkingConfig(strategy=ChunkingStrategy.FIXED_TOKENS,
-                          tokenizer=tokenizer.identity, max_tokens=3, overlap=1)
+    return ChunkingConfig(strategy=ChunkingStrategy.FIXED_TOKENS, tokenizer=tokenizer.identity, max_tokens=3, overlap=1)
 
 
 @pytest.fixture
@@ -41,16 +45,24 @@ def plans(sessions):
 
 def counts(engine):
     with engine.connect() as connection:
-        return tuple(connection.scalar(select(func.count()).select_from(row)) for row in (
-            ChunkingConfigurationRow, VersionChunkPlanRow, ChunkMembershipRow,
-        ))
+        return tuple(
+            connection.scalar(select(func.count()).select_from(row))
+            for row in (
+                ChunkingConfigurationRow,
+                VersionChunkPlanRow,
+                ChunkMembershipRow,
+            )
+        )
 
 
 async def test_configuration_registration_is_idempotent_and_creates_no_documents_or_plans(
-    plans, db_engine, config,
+    plans,
+    db_engine,
+    config,
 ):
     first, concurrent = await asyncio.gather(
-        plans.register_configuration(config), plans.register_configuration(replace(config)),
+        plans.register_configuration(config),
+        plans.register_configuration(replace(config)),
     )
     repeated = await plans.register_configuration(config)
     assert first == concurrent == repeated
@@ -58,7 +70,13 @@ async def test_configuration_registration_is_idempotent_and_creates_no_documents
 
 
 async def test_generated_plan_commits_and_new_instance_reconstructs_unicode_and_overlap(
-    repository, plans, sessions, db_engine, registration, config, tokenizer,
+    repository,
+    plans,
+    sessions,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
 ):
     document, version = await repository.register(*registration())
     plan = chunk_document(version, config=config, tokenizer=tokenizer)
@@ -73,7 +91,12 @@ async def test_generated_plan_commits_and_new_instance_reconstructs_unicode_and_
 
 
 async def test_identical_saves_reuse_rows_without_duplicate_configuration(
-    repository, plans, db_engine, registration, config, tokenizer,
+    repository,
+    plans,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
 ):
     _, version = await repository.register(*registration())
     plan = chunk_document(version, config=config, tokenizer=tokenizer)
@@ -83,15 +106,20 @@ async def test_identical_saves_reuse_rows_without_duplicate_configuration(
 
 
 async def test_conflicting_plan_never_overwrites_the_committed_plan(
-    repository, plans, db_engine, registration, config, tokenizer,
+    repository,
+    plans,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
 ):
     _, version = await repository.register(*registration())
     plan = chunk_document(version, config=config, tokenizer=tokenizer)
     await plans.save(plan)
-    changed = replace(plan, chunks=tuple(
-        Chunk(content=version.content, start=start, end=end)
-        for start, end in ((0, 2), (1, 4), (3, 5))
-    ))
+    changed = replace(
+        plan,
+        chunks=tuple(Chunk(content=version.content, start=start, end=end) for start, end in ((0, 2), (1, 4), (3, 5))),
+    )
     with pytest.raises(ChunkPlanConflict):
         await plans.save(changed)
     assert await plans.get(version.id, config) == plan
@@ -99,7 +127,12 @@ async def test_conflicting_plan_never_overwrites_the_committed_plan(
 
 
 async def test_different_configuration_is_a_separate_plan(
-    repository, plans, db_engine, registration, config, tokenizer,
+    repository,
+    plans,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
 ):
     _, version = await repository.register(*registration())
     for selected in (config, replace(config, max_tokens=4)):
@@ -111,17 +144,23 @@ async def test_different_configuration_is_a_separate_plan(
 
 
 async def test_shared_content_keeps_source_specific_sentence_plans(
-    repository, plans, registration, config, tokenizer,
+    repository,
+    plans,
+    registration,
+    config,
+    tokenizer,
 ):
     sentence_config = replace(config, strategy=ChunkingStrategy.SENTENCE_PACKING, max_tokens=4, overlap=0)
     versions = []
     for source, ranges in (("first", ((0, 2), (3, 5))), ("second", ((0, 5),))):
-        _, version = await repository.register(*registration(
-            source_id=source, structure=tuple(
-                StructuralSpan(kind=StructureKind.SENTENCE, start=start, end=end)
-                for start, end in ranges
-            ),
-        ))
+        _, version = await repository.register(
+            *registration(
+                source_id=source,
+                structure=tuple(
+                    StructuralSpan(kind=StructureKind.SENTENCE, start=start, end=end) for start, end in ranges
+                ),
+            )
+        )
         versions.append(version)
     assert versions[0].content == versions[1].content
     assert versions[0].id != versions[1].id
@@ -131,14 +170,21 @@ async def test_shared_content_keeps_source_specific_sentence_plans(
         await plans.save(plan)
         loaded.append(await plans.get(version.id, sentence_config))
     assert [[(c.start, c.end) for c in p.chunks] for p in loaded] == [
-        [(0, 3), (3, 5)], [(0, 4), (4, 5)],
+        [(0, 3), (3, 5)],
+        [(0, 4), (4, 5)],
     ]
     assert [p.document_version_id for p in loaded] == [v.id for v in versions]
 
 
 @pytest.mark.parametrize("invalid", ["content", "range", "missing_version"])
 async def test_invalid_plan_rolls_back_without_configuration_or_membership_rows(
-    repository, plans, db_engine, registration, config, tokenizer, invalid,
+    repository,
+    plans,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
+    invalid,
 ):
     _, version = await repository.register(*registration())
     plan = chunk_document(version, config=config, tokenizer=tokenizer)
@@ -156,7 +202,13 @@ async def test_invalid_plan_rolls_back_without_configuration_or_membership_rows(
 
 @pytest.mark.parametrize("body", ["", " \t\n ", "a  b"])
 async def test_empty_and_whitespace_plans_remain_complete_without_embedding_filtering(
-    repository, plans, db_engine, registration, config, tokenizer, body,
+    repository,
+    plans,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
+    body,
 ):
     _, version = await repository.register(*registration(body=body))
     selected = replace(config, max_tokens=1, overlap=0)
@@ -173,7 +225,13 @@ async def test_empty_and_whitespace_plans_remain_complete_without_embedding_filt
 
 
 async def test_failure_after_membership_insert_rolls_back_the_entire_plan(
-    repository, plans, db_engine, sessions, registration, config, tokenizer,
+    repository,
+    plans,
+    db_engine,
+    sessions,
+    registration,
+    config,
+    tokenizer,
 ):
     _, version = await repository.register(*registration())
     plan = chunk_document(version, config=config, tokenizer=tokenizer)
@@ -182,7 +240,11 @@ async def test_failure_after_membership_insert_rolls_back_the_entire_plan(
     def fail_after_insert(connection, cursor, statement, parameters, context, executemany):
         nonlocal fired
         compiled = context.compiled
-        if compiled is not None and compiled.statement.is_insert and compiled.statement.table.name == "chunk_memberships":
+        if (
+            compiled is not None
+            and compiled.statement.is_insert
+            and compiled.statement.table.name == "chunk_memberships"
+        ):
             fired = True
             raise OperationalError("injected membership failure", {}, RuntimeError("injected"))
 
@@ -200,7 +262,13 @@ async def test_failure_after_membership_insert_rolls_back_the_entire_plan(
 
 @pytest.mark.parametrize("corruption", ["count", "ordinal", "range"])
 async def test_incomplete_or_corrupt_stored_plan_is_not_returned_or_repaired(
-    repository, plans, db_engine, registration, config, tokenizer, corruption,
+    repository,
+    plans,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
+    corruption,
 ):
     _, version = await repository.register(*registration())
     plan = chunk_document(version, config=config, tokenizer=tokenizer)
@@ -220,16 +288,24 @@ async def test_incomplete_or_corrupt_stored_plan_is_not_returned_or_repaired(
 
 @pytest.mark.parametrize("scenario", ["identical", "conflicting", "different_config"])
 async def test_concurrent_sessions_serialize_same_version_saves(
-    repository, sessions, db_engine, registration, config, tokenizer, scenario,
+    repository,
+    sessions,
+    db_engine,
+    registration,
+    config,
+    tokenizer,
+    scenario,
 ):
     _, version = await repository.register(*registration())
     first = chunk_document(version, config=config, tokenizer=tokenizer)
     second = first
     if scenario == "conflicting":
-        second = replace(first, chunks=tuple(
-            Chunk(content=version.content, start=start, end=end)
-            for start, end in ((0, 2), (1, 4), (3, 5))
-        ))
+        second = replace(
+            first,
+            chunks=tuple(
+                Chunk(content=version.content, start=start, end=end) for start, end in ((0, 2), (1, 4), (3, 5))
+            ),
+        )
     elif scenario == "different_config":
         second = chunk_document(version, config=replace(config, max_tokens=4), tokenizer=tokenizer)
     both_ready = asyncio.Event()
@@ -248,10 +324,14 @@ async def test_concurrent_sessions_serialize_same_version_saves(
             return await super().scalar(statement, *args, **kwargs)
 
     factory = type(sessions)(sessions.kw["bind"], class_=CoordinatedSession, expire_on_commit=False)
-    results = await asyncio.wait_for(asyncio.gather(
-        PostgreSQLChunkPlanRepository(factory).save(first),
-        PostgreSQLChunkPlanRepository(factory).save(second), return_exceptions=True,
-    ), timeout=30)
+    results = await asyncio.wait_for(
+        asyncio.gather(
+            PostgreSQLChunkPlanRepository(factory).save(first),
+            PostgreSQLChunkPlanRepository(factory).save(second),
+            return_exceptions=True,
+        ),
+        timeout=30,
+    )
     assert arrivals == 2 and len(pids) == 2
     reader = PostgreSQLChunkPlanRepository(sessions)
     if scenario == "conflicting":

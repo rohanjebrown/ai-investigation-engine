@@ -11,8 +11,13 @@ class DocumentActivationRepository(Protocol):
         ...
 
     async def activate(
-        self, document_id: UUID, version_id: UUID, chunking: ChunkingConfig,
-        embedding: EmbeddingConfig, *, expected_current_version_id: UUID | None,
+        self,
+        document_id: UUID,
+        version_id: UUID,
+        chunking: ChunkingConfig,
+        embedding: EmbeddingConfig,
+        *,
+        expected_current_version_id: UUID | None,
     ) -> bool:
         """Atomically verify complete eligible embeddings and compare-and-set.
 

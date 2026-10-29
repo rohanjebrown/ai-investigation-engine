@@ -21,6 +21,4 @@ class StructuralSpan:
             raise ValueError("Start offset cannot be negative")
 
         if self.end <= self.start:
-            raise ValueError(
-                "End offset must be greater than start offset"
-            )
+            raise ValueError("End offset must be greater than start offset")
