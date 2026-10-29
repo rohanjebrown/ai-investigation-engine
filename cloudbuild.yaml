@@ -10,7 +10,7 @@ substitutions:
   _SQL_CONNECTION: ai-investigation-engine-512912:europe-west3:investigation-postgres
 steps:
   - id: validate-main-commit
-    name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
+    name: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
     entrypoint: python3
     args: [deploy/cloud_run.py, validate, '--branch=$BRANCH_NAME', '--commit=$COMMIT_SHA']
   - id: build-test-image
