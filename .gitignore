@@ -55,4 +55,5 @@ htmlcov/
 /.cache/
 /output/
 /reports/generated/
+/reports/evaluation/
 *.log

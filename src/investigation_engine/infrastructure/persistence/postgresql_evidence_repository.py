@@ -1,6 +1,6 @@
 """Exact pgvector search with SQL visibility/completeness before LIMIT."""
 
-from sqlalchemy import and_, exists, func, literal, literal_column, or_, select, union_all
+from sqlalchemy import and_, exists, func, literal, literal_column, or_, select, text, union_all
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -26,6 +26,7 @@ from investigation_engine.infrastructure.persistence.models import (
     DocumentRow,
     DocumentVersionRow,
     EmbeddingConfigurationRow,
+    SearchableChunkRow,
     VersionChunkPlanRow,
 )
 from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import _configuration_values
@@ -306,6 +307,41 @@ def _keyword_statement(members, question, limit):
     )
 
 
+def _bm25_statement(members, question, limit):
+    m = members.c
+    bm25_query = func.to_bm25query(question, "searchable_chunks_bm25_idx")
+    score = SearchableChunkRow.text.op("<@>")(bm25_query)
+    matches = (
+        select(
+            SearchableChunkRow.content_sha256,
+            SearchableChunkRow.start,
+            SearchableChunkRow.end,
+            score.label("score"),
+        )
+        .select_from(SearchableChunkRow)
+        .join(
+            members,
+            and_(
+                members.c.content_sha256 == SearchableChunkRow.content_sha256,
+                members.c.start == SearchableChunkRow.start,
+                members.c.end == SearchableChunkRow.end,
+            ),
+        )
+        .order_by(score, SearchableChunkRow.content_sha256, SearchableChunkRow.start, SearchableChunkRow.end)
+        .limit(limit)
+        .cte("bm25_eligible_matches")
+    )
+    return (
+        _candidate_statement(members, matches.c.score, matches.c.score, "keyword_rank")
+        .join(
+            matches,
+            and_(matches.c.content_sha256 == m.content_sha256, matches.c.start == m.start, matches.c.end == m.end),
+        )
+        .order_by(matches.c.score, m.document_id, m.version_id, m.start, m.end)
+        .limit(limit)
+    )
+
+
 def _hydrate(statement):
     """Resolve trusted payloads only for already eligible, ranked candidates.
 
@@ -342,11 +378,17 @@ def _search_statement(vector, chunking, embedding, owner_id, limit):
     return _hydrate(_semantic_statement(members, vector, limit))
 
 
-def _hybrid_statement(vector, question, chunking, embedding, owner_id, semantic_limit, keyword_limit):
+def _hybrid_statement(
+    vector, question, chunking, embedding, owner_id, semantic_limit, keyword_limit, lexical_backend="postgres_fts"
+):
     members = _eligible_memberships(chunking, embedding, owner_id)
     hits = union_all(
         _semantic_statement(members, vector, semantic_limit),
-        _keyword_statement(members, question, keyword_limit),
+        (
+            _bm25_statement(members, question, keyword_limit)
+            if lexical_backend == "bm25"
+            else _keyword_statement(members, question, keyword_limit)
+        ),
     )
     return _hydrate(hits)
 
@@ -405,8 +447,47 @@ def _source_spans(row) -> tuple[SourceSpan, ...]:
 
 
 class PostgreSQLEvidenceRepository:
-    def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(self, sessions: async_sessionmaker[AsyncSession], *, lexical_backend: str = "postgres_fts") -> None:
+        if lexical_backend not in ("postgres_fts", "bm25"):
+            raise ValueError("Unsupported lexical search backend")
         self._sessions = sessions
+        self._lexical_backend = lexical_backend
+
+    async def validate_backend(self) -> None:
+        """Fail closed when BM25 is selected but extension/index/backfill is absent."""
+        if self._lexical_backend != "bm25":
+            return
+        try:
+            async with self._sessions() as session:
+                async with session.begin():
+                    state = (
+                        await session.execute(
+                            text("""
+                        SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname='pg_textsearch'),
+                               pg_catalog.to_regclass('public.searchable_chunks') IS NOT NULL,
+                               pg_catalog.to_regclass('public.searchable_chunks_bm25_idx') IS NOT NULL,
+                               (SELECT count(*) FROM searchable_chunks),
+                               (SELECT count(*) FROM (
+                                  SELECT DISTINCT v.content_sha256, m.start, m.end
+                                  FROM chunk_memberships m
+                                  JOIN document_versions v ON v.id=m.document_version_id
+                               ) expected),
+                               (SELECT count(*) FROM (
+                                  SELECT DISTINCT v.content_sha256, m.start, m.end,
+                                         pg_catalog.substr(c.text, m.start + 1, m.end - m.start) expected_text
+                                  FROM chunk_memberships m
+                                  JOIN document_versions v ON v.id=m.document_version_id
+                                  JOIN contents c ON c.sha256=v.content_sha256
+                               ) expected
+                               LEFT JOIN searchable_chunks s USING (content_sha256, start, "end")
+                               WHERE s.content_sha256 IS NULL OR s.text IS DISTINCT FROM expected.expected_text)
+                    """)
+                        )
+                    ).one()
+            if not state[0] or not state[1] or not state[2] or state[3] != state[4] or state[5]:
+                raise RuntimeError("BM25 requires pg_textsearch, its index, and a complete searchable_chunks backfill")
+        except SQLAlchemyError as error:
+            raise RuntimeError("BM25 backend validation failed; verify migrations and pg_textsearch") from error
 
     async def search(
         self,
@@ -436,7 +517,12 @@ class PostgreSQLEvidenceRepository:
         validate_search_scope(owner_id, limit)
         validate_search_question(question)
         members = _eligible_memberships(chunking, embedding, owner_id)
-        rows = await self._read(_hydrate(_keyword_statement(members, question, limit)), "lexical_sql_roundtrip")
+        statement = (
+            _bm25_statement(members, question, limit)
+            if self._lexical_backend == "bm25"
+            else _keyword_statement(members, question, limit)
+        )
+        rows = await self._read(_hydrate(statement), "lexical_sql_roundtrip")
         with stage_timing("evidence_hydration"):
             return tuple(_evidence(row, index) for index, row in enumerate(rows, 1))
 
@@ -464,6 +550,7 @@ class PostgreSQLEvidenceRepository:
                 owner_id,
                 semantic_limit,
                 keyword_limit,
+                self._lexical_backend,
             ),
             "hybrid_sql_roundtrip",
         )

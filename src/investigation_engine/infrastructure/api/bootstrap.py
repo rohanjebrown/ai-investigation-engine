@@ -138,7 +138,10 @@ async def application_service():
                 max_attempts=1,
                 request_timeout_seconds=60,
             )
-            evidence = PostgreSQLEvidenceRepository(sessions)
+            evidence = PostgreSQLEvidenceRepository(
+                sessions, lexical_backend=getattr(settings, "lexical_search_backend", "postgres_fts")
+            )
+            await evidence.validate_backend()
             search = SearchEvidence(
                 evidence,
                 embedding,
@@ -227,7 +230,10 @@ async def question_service():
                 if row is None:
                     raise ValueError("Selected serving chunking configuration does not exist")
                 chunking = _configuration(row)
-            evidence = PostgreSQLEvidenceRepository(sessions)
+            evidence = PostgreSQLEvidenceRepository(
+                sessions, lexical_backend=getattr(settings, "lexical_search_backend", "postgres_fts")
+            )
+            await evidence.validate_backend()
             search = SearchEvidence(
                 evidence,
                 embedding,

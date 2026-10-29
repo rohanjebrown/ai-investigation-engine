@@ -302,3 +302,16 @@ class ChunkEmbeddingRow(Base):
 
     configuration: Mapped[EmbeddingConfigurationRow] = relationship(lazy="raise")
     content: Mapped[ContentRow] = relationship(lazy="raise")
+
+
+class SearchableChunkRow(Base):
+    __tablename__ = "searchable_chunks"
+    __table_args__ = (
+        CheckConstraint('start >= 0 AND "end" > start', name="ck_searchable_chunks_range"),
+        ForeignKeyConstraint(["content_sha256"], ["contents.sha256"], name="fk_searchable_chunks_content"),
+    )
+
+    content_sha256: Mapped[bytes] = mapped_column(BYTEA, primary_key=True)
+    start: Mapped[int] = mapped_column(Integer, primary_key=True)
+    end: Mapped[int] = mapped_column(Integer, primary_key=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)

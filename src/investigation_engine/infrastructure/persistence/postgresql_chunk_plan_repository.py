@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import insert, select, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -18,6 +19,7 @@ from investigation_engine.infrastructure.persistence.models import (
     ChunkMembershipRow,
     ContentRow,
     DocumentVersionRow,
+    SearchableChunkRow,
     VersionChunkPlanRow,
 )
 
@@ -150,6 +152,23 @@ class PostgreSQLChunkPlanRepository:
                                 ],
                             )
                         stored = await self._reconstruct(session, row, configuration, content)
+                    for chunk in stored.chunks:
+                        text_value = content.text[chunk.start : chunk.end]
+                        await session.execute(
+                            pg_insert(SearchableChunkRow)
+                            .values(
+                                content_sha256=version.content_sha256,
+                                start=chunk.start,
+                                end=chunk.end,
+                                text=text_value,
+                            )
+                            .on_conflict_do_nothing(index_elements=["content_sha256", "start", "end"])
+                        )
+                        search_row = await session.get(
+                            SearchableChunkRow, (version.content_sha256, chunk.start, chunk.end)
+                        )
+                        if search_row is None or search_row.text != text_value:
+                            raise RepositoryError("Canonical searchable chunk text conflicts with Content")
             # Return only after commit and session cleanup.
             return stored
         except SQLAlchemyError as error:

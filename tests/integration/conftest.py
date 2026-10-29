@@ -20,6 +20,22 @@ POSTGRES_IMAGE = "pgvector/pgvector@sha256:9d2e61c7352b9e9f4798df5fd9a498f043f4c
 
 @pytest.fixture(scope="session")
 def postgres_url():
+    if __import__("os").environ.get("AI_ENGINE_BM25_TEST_DB") == "1":
+        from investigation_engine.infrastructure.config import settings
+
+        url = settings.database_url().set(database="investigation_bm25_test")
+        engine = create_engine(url, hide_parameters=True)
+        try:
+            with engine.connect() as connection:
+                if connection.scalar(text("SELECT current_database()")) != "investigation_bm25_test":
+                    pytest.fail("Refusing integration test on a database other than investigation_bm25_test")
+                extensions = set(connection.execute(text("SELECT extname FROM pg_extension")).scalars())
+                if not {"vector", "pg_textsearch"}.issubset(extensions):
+                    pytest.fail("BM25 integration database requires vector and pg_textsearch")
+            yield url
+        finally:
+            engine.dispose()
+        return
     container = None
     try:
         startup_error = None
@@ -75,7 +91,8 @@ def schema_engine(postgres_url, migrate):
     try:
         with engine.begin() as connection:
             # Provision only the disposable fixture database, never inside migrations.
-            connection.execute(text("CREATE EXTENSION vector"))
+            connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            connection.execute(text("CREATE EXTENSION IF NOT EXISTS pg_textsearch"))
             assert connection.dialect.server_version_info[0] == 18
             assert connection.scalar(text("SELECT extversion FROM pg_extension WHERE extname='vector'")) == "0.8.5"
         migrate(engine)
@@ -91,7 +108,7 @@ def db_engine(schema_engine):
             # No other engine/URL can reach this cleanup; every test sees real commits.
             connection.execute(
                 text(
-                    "TRUNCATE chunk_embeddings, chunk_memberships, version_chunk_plans, "
+                    "TRUNCATE searchable_chunks, chunk_embeddings, chunk_memberships, version_chunk_plans, "
                     "embedding_configurations, chunking_configurations, document_versions, "
                     "documents, contents RESTART IDENTITY CASCADE"
                 )

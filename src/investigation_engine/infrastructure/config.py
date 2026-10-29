@@ -48,6 +48,7 @@ class Settings:
     investigation_max_output_tokens: int = 1024
     investigation_timeout_seconds: int = 120
     retrieval_mode: str = "semantic"
+    lexical_search_backend: str = "postgres_fts"
     semantic_candidate_limit: int = 20
     keyword_candidate_limit: int = 20
     rrf_k: int = 60
@@ -152,6 +153,9 @@ def _load_settings() -> Settings:
     mode = os.environ.get("RETRIEVAL_MODE", "semantic")
     if mode not in ("semantic", "hybrid"):
         raise ValueError("RETRIEVAL_MODE must be semantic or hybrid")
+    lexical_backend = os.environ.get("LEXICAL_SEARCH_BACKEND", "postgres_fts")
+    if lexical_backend not in ("postgres_fts", "bm25"):
+        raise ValueError("LEXICAL_SEARCH_BACKEND must be postgres_fts or bm25")
     connection_mode = os.environ.get("DB_CONNECTION_MODE", DB_CONNECTION_MODE_PROXY)
     if connection_mode not in (DB_CONNECTION_MODE_PROXY, "cloudsql_socket"):
         raise ValueError("DB_CONNECTION_MODE must be proxy or cloudsql_socket")
@@ -206,6 +210,7 @@ def _load_settings() -> Settings:
         investigation_max_output_tokens=_integer_setting("INVESTIGATION_MAX_OUTPUT_TOKENS", 1024, 128, 4096),
         investigation_timeout_seconds=_integer_setting("INVESTIGATION_TIMEOUT_SECONDS", 120, 1, 180),
         retrieval_mode=mode,
+        lexical_search_backend=lexical_backend,
         semantic_candidate_limit=_integer_setting("SEMANTIC_CANDIDATE_LIMIT", 20, 1, 100),
         keyword_candidate_limit=_integer_setting("KEYWORD_CANDIDATE_LIMIT", 20, 1, 100),
         rrf_k=_integer_setting("RRF_K", 60, 0, 10000),
