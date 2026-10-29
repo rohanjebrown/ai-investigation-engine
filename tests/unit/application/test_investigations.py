@@ -33,6 +33,45 @@ class QuerySearch:
         return tuple(self.hits_by_query.get(query, ()))[:limit]
 
 
+@pytest.mark.parametrize("corroborated", [False, True])
+async def test_identity_follow_up_retains_role_and_original_source_evidence(registration, corroborated):
+    # Unseen controlled fixtures; the fake's policy tests the workflow, not LLM reasoning.
+    first = make_hit(registration, source_id="work", body="Glass Harbor was directed by Morgan Vale.")
+    other = make_hit(registration, source_id="athlete", body="Morgan Vale, a rower, was born in Canada.")
+    linked = make_hit(
+        registration, source_id="director", body="Morgan Vale, director of Glass Harbor, was born in Norway."
+    )
+    query = "Morgan Vale director Glass Harbor birthplace"
+
+    def decide(turn):
+        assert len(turn.exchanges) == 2
+        assert turn.exchanges[0].evidence[0].evidence.source.source_id == "work"
+        texts = [ref.evidence.text for exchange in turn.exchanges for ref in exchange.evidence]
+        if any("director of Glass Harbor" in text for text in texts):
+            return InvestigationDecision(
+                status=InvestigationStatus.ANSWERED, answer="Norway [E1] [E3]", citations=("E1", "E3")
+            )
+        return InvestigationDecision(status=InvestigationStatus.INSUFFICIENT_EVIDENCE, answer=None, citations=())
+
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="Glass Harbor director", call_id="a"),
+            SearchEvidenceCall(query=query, call_id="b"),
+            decide,
+        ]
+    )
+    search = QuerySearch({"Glass Harbor director": (first, other), query: (linked,) if corroborated else (other,)})
+    result = await InvestigateQuestion(search, model, max_search_calls=2).execute(
+        "Where was the director of Glass Harbor born?", owner_id="trusted-owner"
+    )
+    assert result.status == (
+        InvestigationStatus.ANSWERED if corroborated else InvestigationStatus.INSUFFICIENT_EVIDENCE
+    )
+    assert all(call[2] == "trusted-owner" for call in search.calls)
+    assert result.evidence[1].evidence.source.source_id == "athlete"
+    assert result.searches[1].query == query
+
+
 def make_hit(registration, *, source_id, body):
     document, version = registration(body=body, source_id=source_id)
     return Evidence(

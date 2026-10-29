@@ -42,7 +42,7 @@ def pytest_asyncio_loop_factories(config, item):
     if sys.platform == "win32":
         # psycopg requires selectors; avoid deprecated global loop policies.
         return {"selector": asyncio.SelectorEventLoop}
-    return None
+    return {"asyncio": asyncio.new_event_loop}
 
 
 @pytest.fixture

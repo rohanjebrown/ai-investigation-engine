@@ -36,6 +36,29 @@ AI-assisted verification included PostgreSQL migration and constraint checks, co
 
 I also used a preliminary eight-question retrieval experiment to inform the embedding and chunking design. Its limited scope was considered when interpreting the results rather than treating it as proof of retrieval quality across the complete corpus.
 
-These checks support the current implementation, while the final evaluation and broader automated testing remain separate work.
+These checks were followed by automated unit, disposable PostgreSQL integration,
+browser JavaScript and real Gemini evaluations; their scope and failures are
+recorded in the [consolidated evaluation report](docs/validation/submission-evaluation.md).
 
 The project's architectural direction, technology selections, and acceptance of implementation decisions have been my responsibility. AI has primarily helped me investigate alternatives, implement selected approaches more efficiently, and identify problems requiring further attention.
+
+## Completion milestone (29 October 2026)
+
+ChatGPT assisted with architecture discussions, design review, investigation and
+debugging. Codex assisted with application and provider code, regression tests,
+CI gates, container verification, live trigger inspection/configuration,
+evaluation execution and submission documentation. Gemini supplies application
+embeddings, answers and function-calling decisions; it is not the sole judge of
+its own correctness. Deterministic scoring and separately attributed evidence
+reviews distinguish benchmark matches from semantic support.
+
+The developer supplied requirements, architectural approvals, cloud configuration
+and reported provider limits, and requested revisions during development. This
+account does not assert that the developer independently wrote every generated
+line, ran every check manually or independently verified every AI claim. The
+recorded automated checks were executed with Codex assistance. AI-generated
+changes were tested, but passing tests and valid citation identifiers do not
+prove arbitrary factual entailment, correct entity identity or production safety.
+Provider errors, incomplete measurements and failed test attempts are retained
+in the evaluation evidence rather than silently discarded. No claim of unseen
+benchmark independence or completed production rollout is implied.

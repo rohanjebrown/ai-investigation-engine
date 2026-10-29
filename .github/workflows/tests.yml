@@ -21,7 +21,15 @@ jobs:
           python-version: "3.14.9"
       - name: Install locked dependencies
         run: uv sync --locked --group dev
+      - name: Python format and lint
+        run: |
+          uv run --locked ruff format --check src tests scripts deploy migrations
+          uv run --locked ruff check src tests scripts deploy migrations
+      - name: JavaScript tests
+        run: node --test tests/frontend/test_web.cjs
       - name: Unit tests
         run: uv run --locked --no-env-file pytest tests/unit --cov --cov-report=term-missing
       - name: PostgreSQL and pgvector integration tests
-        run: uv run --locked --no-env-file pytest tests/integration --cov --cov-append --cov-report=term-missing
+        run: |
+          docker build -f deploy/Dockerfile.postgres-test -t investigation-postgres-test:local .
+          uv run --locked --no-env-file pytest tests/integration --cov --cov-append --cov-report=term-missing

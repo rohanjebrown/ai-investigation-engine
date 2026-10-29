@@ -14,28 +14,12 @@ from testcontainers.community.postgres import PostgresContainer
 
 from investigation_engine.infrastructure.persistence.postgresql_document_repository import PostgreSQLDocumentRepository
 
-# Verified through Docker Hub's tag API on 2026-10-27; pin the multi-platform manifest.
-POSTGRES_IMAGE = "pgvector/pgvector@sha256:9d2e61c7352b9e9f4798df5fd9a498f043f4cda1cdacc707de3d198650f4321e"
+# Build deploy/Dockerfile.postgres-test; this tag exists only on the CI/local daemon.
+POSTGRES_IMAGE = "investigation-postgres-test:local"
 
 
 @pytest.fixture(scope="session")
 def postgres_url():
-    if __import__("os").environ.get("AI_ENGINE_BM25_TEST_DB") == "1":
-        from investigation_engine.infrastructure.config import settings
-
-        url = settings.database_url().set(database="investigation_bm25_test")
-        engine = create_engine(url, hide_parameters=True)
-        try:
-            with engine.connect() as connection:
-                if connection.scalar(text("SELECT current_database()")) != "investigation_bm25_test":
-                    pytest.fail("Refusing integration test on a database other than investigation_bm25_test")
-                extensions = set(connection.execute(text("SELECT extname FROM pg_extension")).scalars())
-                if not {"vector", "pg_textsearch"}.issubset(extensions):
-                    pytest.fail("BM25 integration database requires vector and pg_textsearch")
-            yield url
-        finally:
-            engine.dispose()
-        return
     container = None
     try:
         startup_error = None
@@ -48,6 +32,7 @@ def postgres_url():
                 driver="psycopg",
                 docker_client_kw={"timeout": 10},
             )
+            container.with_command("postgres -c shared_preload_libraries=pg_textsearch")
             container.start()
         except Exception as error:
             startup_error = type(error).__name__

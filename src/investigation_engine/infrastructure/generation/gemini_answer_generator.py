@@ -49,6 +49,12 @@ is resolved by the server. If using inline citation markers, use [E1] syntax and
 include those identifiers in the citations array. Each citation must occur once
 in that array. Indicate uncertainty in the answer when supported; do not force
 conflicting or uncertain evidence into a certain conclusion.
+Names alone do not establish identity across passages. Check relevant roles,
+relationships, dates and places before joining facts. If the identity bridge is
+unresolved, abstain. Different roles alone do not prove different entities.
+When sources make incompatible claims about the SAME entity, time and scope,
+describe the disagreement and cite both; do not arbitrarily choose one claim.
+Different dates, entities or scopes may explain apparent disagreements.
 For a compound question, establish EVERY requested fact using the supplied evidence;
 combine separate passages when needed. If any required part remains unsupported,
 abstain instead of presenting a partial answer as a complete answer.

@@ -19,8 +19,20 @@ from investigation_engine.infrastructure.persistence.models import (
 
 def test_migrated_schema_matches_mappings_and_only_essential_indexes(db_engine):
     with db_engine.connect() as connection:
+        # Migration 0004 owns this optional extension index outside ORM metadata.
+        bm25 = connection.scalar(text("SELECT indexdef FROM pg_indexes WHERE indexname='searchable_chunks_bm25_idx'"))
+        assert bm25 and "USING bm25 (text)" in bm25 and "english" in bm25
         assert not compare_metadata(
-            MigrationContext.configure(connection, opts={"compare_type": True, "compare_server_default": True}),
+            MigrationContext.configure(
+                connection,
+                opts={
+                    "compare_type": True,
+                    "compare_server_default": True,
+                    "include_object": lambda obj, name, kind, reflected, compare_to: (
+                        not (kind == "index" and name == "searchable_chunks_bm25_idx" and reflected)
+                    ),
+                },
+            ),
             Base.metadata,
         )
         inspector = inspect(connection)

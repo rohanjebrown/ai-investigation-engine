@@ -1,0 +1,9 @@
+FROM pgvector/pgvector@sha256:9d2e61c7352b9e9f4798df5fd9a498f043f4cda1cdacc707de3d198650f4321e
+# Test-only PostgreSQL 18 + existing application's BM25 extension. No DB data.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl unzip \
+    && curl -fsSL https://github.com/timescale/pg_textsearch/releases/download/v1.5.1/pg-textsearch-v1.5.1-pg18-amd64.zip -o /tmp/extension.zip \
+    && echo '6adc4c390c61109af337c5d5c15239623d6fc8b89e972625de04f52a5771cebf  /tmp/extension.zip' | sha256sum -c - \
+    && unzip /tmp/extension.zip -d /tmp/extension \
+    && dpkg -x /tmp/extension/pg-textsearch-postgresql-18_1.5.1-1_amd64.deb / \
+    && rm -rf /tmp/extension /tmp/extension.zip /var/lib/apt/lists/*
+CMD ["postgres", "-c", "shared_preload_libraries=pg_textsearch"]

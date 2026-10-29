@@ -1,5 +1,7 @@
 # Architectural decision register
 
+> Correction (29 October 2026): The user explicitly confirmed automatic migrations. Normal container startup runs `alembic upgrade head` before starting the API and exits if migration fails. Explicit `--smoke` skips migrations. Earlier statements below describing removal/manual-only startup are superseded. Restoring this code does not execute a production migration.
+
 **Reconciled:** 2026-10-28\
 **Owner of architectural decisions:** the user  
 **Scope:** approved baseline, unresolved decisions, approval evidence, and links to existing ADRs. This register does not authorize implementation of an unresolved choice.
@@ -27,6 +29,17 @@ The U18 trial/provisioning descriptions below are historical. The current Task
 Cloud SQL instance; trial eligibility and zero-cost operation remain unverified.
 
 ## Authority and status rules
+
+The user's consolidated completion brief of 29 October 2026 authorizes focused
+CI quality gates, reliability investigation/regressions, bounded real Gemini
+comparison and submission documentation. This milestone preserves existing
+BM25 schema/backend choices rather than introducing them. It replaces the
+existing trigger's ungated inline build with the repository config and removes
+automatic API-startup migrations to respect the no-production-data-change
+constraint. The operator reported 15 RPM / 250k TPM / 500 RPD for
+gemini-3.5-flash-lite; these are reported limits, not an API-verified remaining
+allowance. No Git commit/push or production runtime/schema change is authorized
+by this evidence. See the current completion verification for observed results.
 
 The user's approval protocol applies to architectural choices of every size, including dependencies, schemas, interfaces, processing, errors/retries, concurrency, APIs, ranking, evaluation, and infrastructure. Routine code details may proceed only when they do not introduce a design choice, change an established design, or alter observable behavior.
 

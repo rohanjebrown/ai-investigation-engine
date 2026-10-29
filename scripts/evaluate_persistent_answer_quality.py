@@ -47,9 +47,9 @@ from investigation_engine.infrastructure.persistence.postgresql_evidence_reposit
 DEFAULT_SELECTION = ROOT / "reports/evaluation/task16-2026-10-28/selection.json"
 DEFAULT_OUTPUT = ROOT / "reports/evaluation/task16c-2026-10-28"
 GENERATION_MODEL = settings.gemini_generation_model or "gemini-3.6-flash"
-MAX_SAMPLE_GENERATION_REQUESTS = 30
-GENERATION_INTERVAL_SECONDS = 12.5  # Below the prior user-reported 5 RPM ceiling.
-MAX_EMBEDDING_INPUTS = 15
+MAX_SAMPLE_GENERATION_REQUESTS = 300
+GENERATION_INTERVAL_SECONDS = 4.2  # Below the current user-reported 15 RPM ceiling.
+MAX_EMBEDDING_INPUTS = 240
 RESERVED_DAILY_REQUESTS = 1
 
 

@@ -46,7 +46,7 @@ def test_full_chain_downgrade_and_reupgrade_preserve_authoritative_data(migratio
         assert connection.scalar(text("SELECT to_regclass('chunk_embeddings')")) is None
     migrate(engine)
     with engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0002_embedding_storage"
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004_searchable_chunks_bm25"
         assert not compare_metadata(MigrationContext.configure(connection), Base.metadata)
 
 
@@ -96,5 +96,5 @@ def test_concurrent_upgrade_attempts_are_serialized(migration_database):
                     process.terminate()
                 process.communicate()
     with migration_database.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0002_embedding_storage"
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004_searchable_chunks_bm25"
         assert connection.scalar(text("SELECT count(*) FROM chunking_configurations")) == 0

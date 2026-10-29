@@ -17,6 +17,12 @@ steps:
     name: gcr.io/cloud-builders/docker
     env: ['DOCKER_BUILDKIT=1']
     args: [build, --target, test, --tag, 'investigation-ci:$COMMIT_SHA', .]
+  - id: python-format-and-lint
+    name: gcr.io/cloud-builders/docker
+    args: [run, --rm, 'investigation-ci:$COMMIT_SHA', bash, -ceu, 'ruff format --check src tests scripts deploy migrations && ruff check src tests scripts deploy migrations']
+  - id: build-disposable-postgres
+    name: gcr.io/cloud-builders/docker
+    args: [build, -f, deploy/Dockerfile.postgres-test, -t, investigation-postgres-test:local, .]
   - id: unit-and-postgresql-tests
     name: gcr.io/cloud-builders/docker
     # Explicit host networking + daemon socket for disposable Testcontainers.

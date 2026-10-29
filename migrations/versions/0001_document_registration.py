@@ -4,10 +4,9 @@ Revision ID: 0001_document_registration
 Revises: None
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "0001_document_registration"
 down_revision = None
@@ -20,9 +19,7 @@ def upgrade() -> None:
         "contents",
         sa.Column("sha256", postgresql.BYTEA(), nullable=False),
         sa.Column("text", sa.Text(), nullable=False),
-        sa.CheckConstraint(
-            "octet_length(sha256) = 32", name="ck_contents_sha256_length"
-        ),
+        sa.CheckConstraint("octet_length(sha256) = 32", name="ck_contents_sha256_length"),
         sa.CheckConstraint(
             "sha256 = pg_catalog.sha256(pg_catalog.convert_to(text, 'UTF8'))",
             name="ck_contents_sha256_matches_text",
@@ -51,20 +48,28 @@ def upgrade() -> None:
         sa.Column("source_id", sa.Text(collation="C"), nullable=False),
         sa.Column("revision", sa.Text(collation="C"), nullable=True),
         sa.Column(
-            "record_locator", postgresql.JSONB(none_as_null=True), nullable=False,
+            "record_locator",
+            postgresql.JSONB(none_as_null=True),
+            nullable=False,
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column("display_name", sa.Text(), nullable=True),
         sa.Column(
-            "metadata", postgresql.JSONB(none_as_null=True), nullable=False,
+            "metadata",
+            postgresql.JSONB(none_as_null=True),
+            nullable=False,
             server_default=sa.text("'{}'::jsonb"),
         ),
         sa.Column(
-            "structure", postgresql.JSONB(none_as_null=True), nullable=False,
+            "structure",
+            postgresql.JSONB(none_as_null=True),
+            nullable=False,
             server_default=sa.text("'[]'::jsonb"),
         ),
         sa.Column(
-            "source_spans", postgresql.JSONB(none_as_null=True), nullable=False,
+            "source_spans",
+            postgresql.JSONB(none_as_null=True),
+            nullable=False,
             server_default=sa.text("'[]'::jsonb"),
         ),
         sa.CheckConstraint("version_number > 0", name="ck_document_versions_positive_number"),
@@ -85,25 +90,27 @@ def upgrade() -> None:
             "jsonb_typeof(source_spans) = 'array'",
             name="ck_document_versions_source_spans_array",
         ),
-        sa.ForeignKeyConstraint(
-            ["document_id"], ["documents.id"], name="fk_document_versions_document"
-        ),
-        sa.ForeignKeyConstraint(
-            ["content_sha256"], ["contents.sha256"], name="fk_document_versions_content"
-        ),
+        sa.ForeignKeyConstraint(["document_id"], ["documents.id"], name="fk_document_versions_document"),
+        sa.ForeignKeyConstraint(["content_sha256"], ["contents.sha256"], name="fk_document_versions_content"),
         sa.PrimaryKeyConstraint("id", name="pk_document_versions"),
         sa.UniqueConstraint("document_id", "version_number", name="uq_document_versions_number"),
         sa.UniqueConstraint("document_id", "id", name="uq_document_versions_owned_id"),
         sa.UniqueConstraint(
-            "kind", "source_id", "revision", "record_locator",
+            "kind",
+            "source_id",
+            "revision",
+            "record_locator",
             name="uq_document_versions_source_occurrence",
             postgresql_nulls_not_distinct=True,
         ),
     )
     op.create_index("ix_document_versions_content_sha256", "document_versions", ["content_sha256"])
     op.create_foreign_key(
-        "fk_documents_current_owned_version", "documents", "document_versions",
-        ["id", "current_version_id"], ["document_id", "id"],
+        "fk_documents_current_owned_version",
+        "documents",
+        "document_versions",
+        ["id", "current_version_id"],
+        ["document_id", "id"],
     )
 
 

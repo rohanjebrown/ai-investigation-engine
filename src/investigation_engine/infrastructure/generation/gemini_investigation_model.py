@@ -32,7 +32,7 @@ from investigation_engine.infrastructure.generation.gemini_diagnostics import er
 TOOL_NAME = "search_evidence"
 MAX_FINAL_CHARS = 12000
 MAX_NATIVE_CALLS = 1024
-INVESTIGATION_GUIDANCE_VERSION = "grounding-v3-fact-coverage"
+INVESTIGATION_GUIDANCE_VERSION = "grounding-v4-scoped-conflicts"
 
 
 @dataclass(frozen=True)
@@ -77,7 +77,10 @@ Return a structured final decision when enough searches have been performed. Use
 answered only when the evidence supports a concise answer; include citations. Use
 insufficient_evidence when the corpus does not establish an answer. Use
 conflicting_evidence when sources support incompatible claims; return at least two
-claims and cite each. Do not silently choose between conflicts. Do not expose hidden
+claims and cite each. Verify that claims concern the same entity, time and scope;
+different contexts are not contradictions. If a necessary fact is still missing
+and a relevant bounded search remains, search before declaring insufficient evidence.
+Do not silently choose between conflicts. Do not expose hidden
 reasoning. Structural citation validity does not prove factual support.
 """
 

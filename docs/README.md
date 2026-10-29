@@ -85,6 +85,9 @@ See the [updated performance checkpoint](validation/hybrid-retrieval-performance
 
 ## Task 17 production deployment
 
+Latest submission evidence: [consolidated evaluation](validation/submission-evaluation.md)
+and [completion verification](validation/completion-verification-2026-10-29.md).
+
 See the [Cloud Run deployment guide](design/cloud-run-deployment.md) for the
 production image, isolated checks, existing-resource inventory, runtime/secret
 activation blockers, main-trigger setup, immutable deployment and rollback.

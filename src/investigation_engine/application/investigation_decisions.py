@@ -80,6 +80,9 @@ class InvestigationDecision:
                 raise GenerationResponseError("Each conflicting claim requires evidence citations")
         for conflict_claim in self.conflicts:
             self._validate_citation_ids(conflict_claim.citations)
+        normalized = {" ".join(item.claim.casefold().split()) for item in self.conflicts}
+        if len(normalized) < 2:
+            raise GenerationResponseError("Conflicting outcome requires distinct claims")
 
 
 def _validate_inline_citations(text: str, citations: tuple[str, ...], error_message: str) -> None:

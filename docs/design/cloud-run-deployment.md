@@ -1,5 +1,51 @@
 # Production container and Cloud Build deployment
 
+> Correction (29 October 2026): The user explicitly confirmed automatic migrations. Normal container startup runs `alembic upgrade head` before starting the API and exits if migration fails. Explicit `--smoke` skips migrations. Earlier statements below describing removal/manual-only startup are superseded. Restoring this code does not execute a production migration.
+
+## Current status — 29 October 2026
+
+The inventory and Task 17 verification below are historical. The existing service
+now runs application revision `ai-investigation-engine-00029-992` from Git commit
+`0157442fd57b594580ec88e44335a78463683e11`, with model
+`gemini-3.5-flash-lite`, socket DB mode and serving profile 1. No runtime settings
+were changed by this completion milestone. The current service has plaintext
+secret environment variables and invoker IAM disabled. The prepared preflight
+deliberately rejects those settings; do not weaken it to deploy. Secret Manager
+references and restricted invocation/aggregate quota protection need operator
+review. Production schema contents were not queried or changed.
+
+The existing global trigger `61c02136-b7c3-4edb-8dc2-7d7c5802d395` was updated
+in place to `cloudbuild.yaml`, retaining GitHub `^main$`, substitutions and the
+existing identity. A readback confirmed the inline build/deploy oneof is gone.
+The gcloud update command initially returned INVALID_ARGUMENT when changing
+that oneof; `deploy/gate_existing_trigger.py` uses the REST field mask to clear
+`build` and set `filename`. It previews by default and applies with `--apply`.
+No build, Git push or deployment was triggered. The main branch still needs an
+authorized commit/push containing the local formatting and lint additions.
+Actual successful gated deployment remains unverified and runtime preflight is
+currently blocked. The old shared build identity remains overprivileged; the
+scoped identity setup below is prepared, not applied.
+
+Cloud Build now includes Ruff format/lint, full unit/integration tests, JavaScript,
+runtime build/smoke and immutable image-only deployment. The disposable database
+image must first be built using `deploy/Dockerfile.postgres-test`; it pins the
+existing pgvector image and checksum-verifies pg_textsearch 1.5.1. No application
+or production database credentials are used by the integration fixture. On
+Docker Desktop, host networking may be disabled: a local nested runner can use
+bridge networking and `TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal`.
+The Cloud Build Linux worker uses host networking/127.0.0.1; an actual cloud run
+is still required to verify that environment. The Linux pytest-asyncio loop hook
+was corrected after collection failed in the first containerized test attempt.
+
+Ordinary API startup no longer executes Alembic. Apply reviewed migrations as an
+explicit operator step only. The current chain is through migration 0004;
+the historical evaluation corpus stays at 0002 and was not migrated.
+The production image built and passed the isolated runtime smoke locally;
+see the [current verification record](../validation/completion-verification-2026-10-29.md)
+for exact results, size, limitations and remaining steps.
+
+## Historical Task 17 record
+
 Task 17, inspected 2026-10-28. Cloud Build configuration is prepared; no Git
 commit/push, image publication, trigger update, or Cloud Run deployment has been
 performed by this task. A real main push and successful production verification
