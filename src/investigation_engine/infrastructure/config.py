@@ -62,6 +62,9 @@ class Settings:
     max_index_embeddings_per_request: int = 2
     chunking_tokenizer_path: Path | None = Path("artifacts/tokenizers/voyage-4/tokenizer.json")
 
+    otel_enabled: bool = False
+    otel_endpoint: str = "http://127.0.0.1:4318/v1/traces"
+
     def database_url(self) -> URL:
         """Both modes use an authenticated Cloud SQL proxy/attachment for TLS."""
         if self.db_connection_mode == "cloudsql_socket":
@@ -238,6 +241,11 @@ def _load_settings() -> Settings:
             10,
         ),
         chunking_tokenizer_path=Path(tokenizer_path_value) if tokenizer_path_value else None,
+        otel_enabled=_boolean_setting("OTEL_ENABLED", False),
+        otel_endpoint=os.environ.get(
+            "OTEL_ENDPOINT",
+            "http://127.0.0.1:4318/v1/traces",
+        ),
     )
 
 

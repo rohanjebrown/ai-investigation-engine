@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from uuid import uuid7
 
 import pytest
-from sqlalchemy import event, func, insert, select, text, update
+from sqlalchemy import delete, event, func, insert, select, text, update
 from sqlalchemy.exc import OperationalError
 
 from investigation_engine.application.chunking import Chunk, ChunkingConfig, ChunkingStrategy, chunk_document
@@ -18,6 +18,8 @@ from investigation_engine.domain.content import Content
 from investigation_engine.infrastructure.persistence._document_mapping import _version_row
 from investigation_engine.infrastructure.persistence.models import (
     ChunkEmbeddingRow,
+    ChunkMembershipRow,
+    ChunkPlanReadinessRow,
     DocumentRow,
     EmbeddingConfigurationRow,
     VersionChunkPlanRow,
@@ -167,18 +169,30 @@ async def test_legacy_equivalent_configuration_rows_are_reused_without_extra_vec
         duplicate_id = connection.scalar(
             insert(EmbeddingConfigurationRow).values(**values).returning(EmbeddingConfigurationRow.id)
         )
-        connection.execute(
-            insert(ChunkEmbeddingRow).values(
-                embedding_configuration_id=duplicate_id,
-                content_sha256=bytes.fromhex(chunk.content_sha256),
-                start=chunk.start,
-                end=chunk.end,
-                embedding=[7.0] + [0.0] * 767,
-                created_at=datetime.now(UTC),
-            )
-        )
+        for eligible in item.plan.chunks:
+            if embedding_eligible(eligible):
+                connection.execute(
+                    insert(ChunkEmbeddingRow).values(
+                        embedding_configuration_id=duplicate_id,
+                        content_sha256=bytes.fromhex(eligible.content_sha256),
+                        start=eligible.start,
+                        end=eligible.end,
+                        embedding=[7.0] + [0.0] * 767,
+                        created_at=datetime.now(UTC),
+                    )
+                )
     stored = await services.vectors.save(chunk, services.profile, (9.0,) + (0.0,) * 767)
-    assert stored[0] == 7.0 and vector_count(db_engine) == 1
+    assert stored[0] == 7.0 and vector_count(db_engine) == 2
+    await services.activation.activate(
+        item.document.id,
+        item.version.id,
+        item.config,
+        services.profile,
+        expected_current_version_id=None,
+    )
+    with db_engine.connect() as connection:
+        marker = connection.execute(select(ChunkPlanReadinessRow)).one()
+        assert marker.embedding_configuration_id < duplicate_id
 
 
 async def test_embedding_failure_rolls_back_new_configuration_and_vector(
@@ -300,6 +314,13 @@ async def test_indexing_commits_complete_eligible_coverage_and_restarts_without_
     assert await index(services, item) == IndexingOutcome.ACTIVATED
     assert services.provider.calls == ["a", "b"] and vector_count(db_engine) == 2
     assert state(db_engine, item.document.id).current_version_id == item.version.id
+    with db_engine.connect() as connection:
+        readiness = connection.execute(
+            select(ChunkPlanReadinessRow).where(
+                ChunkPlanReadinessRow.document_version_id == item.version.id,
+            )
+        ).all()
+    assert len(readiness) == 1
     synthetic_provider.calls.clear()
     restarted = IndexDocumentVersion(
         PostgreSQLChunkPlanRepository(sessions),
@@ -312,7 +333,25 @@ async def test_indexing_commits_complete_eligible_coverage_and_restarts_without_
         == IndexingOutcome.ALREADY_ACTIVE
     )
     assert not synthetic_provider.calls
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 1
     assert len((await services.plans.get(item.version.id, item.config)).chunks) == 3
+
+
+async def test_activation_failure_rolls_back_readiness(services, registered_plan, db_engine):
+    item = await registered_plan()
+    await store_complete(services, item)
+    with pytest.raises(ActivationConflict, match="active version changed"):
+        await services.activation.activate(
+            item.document.id,
+            item.version.id,
+            item.config,
+            services.profile,
+            expected_current_version_id=uuid7(),
+        )
+    assert state(db_engine, item.document.id).current_version_id is None
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
 
 
 async def test_partial_cache_generates_only_missing_chunk(services, registered_plan):
@@ -320,6 +359,91 @@ async def test_partial_cache_generates_only_missing_chunk(services, registered_p
     await services.vectors.save(item.plan.chunks[0], services.profile, (1.0,) + (0.0,) * 767)
     assert await index(services, item) == IndexingOutcome.ACTIVATED
     assert services.provider.calls == ["b"]
+
+
+async def test_shared_embedding_mutation_invalidates_readiness_and_explicit_backfill_revalidates(
+    services, registered_plan, db_engine
+):
+    item = await registered_plan()
+    assert await index(services, item) == IndexingOutcome.ACTIVATED
+    chunk = next(chunk for chunk in item.plan.chunks if embedding_eligible(chunk))
+    with db_engine.begin() as connection:
+        connection.execute(
+            delete(ChunkEmbeddingRow).where(
+                ChunkEmbeddingRow.content_sha256 == bytes.fromhex(chunk.content_sha256),
+                ChunkEmbeddingRow.start == chunk.start,
+                ChunkEmbeddingRow.end == chunk.end,
+            )
+        )
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
+    await services.vectors.save(chunk, services.profile, (1.0,) + (0.0,) * 767)
+    report = await services.activation.backfill_active(item.config, services.profile)
+    assert len(report) == 1 and report[0]["status"] == "verified"
+    assert report[0]["document_version_id"] == str(item.version.id)
+    assert (await services.activation.backfill_active(item.config, services.profile)) == report
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 1
+
+
+async def test_membership_mutation_invalidates_readiness(services, registered_plan, db_engine):
+    item = await registered_plan()
+    assert await index(services, item) == IndexingOutcome.ACTIVATED
+    with db_engine.begin() as connection:
+        connection.execute(
+            update(ChunkMembershipRow)
+            .where(ChunkMembershipRow.document_version_id == item.version.id)
+            .values(ordinal=ChunkMembershipRow.ordinal + 1000)
+        )
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
+
+
+async def test_readiness_is_specific_to_chunking_and_embedding_profiles(services, registered_plan, db_engine):
+    item = await registered_plan()
+    assert await index(services, item) == IndexingOutcome.ACTIVATED
+
+    class Tokenizer:
+        identity = item.config.tokenizer
+
+        def offsets(self, text):
+            return tuple((index, index + 1) for index in range(len(text)))
+
+    alternate_chunking = replace(item.config, max_tokens=2)
+    alternate_plan = chunk_document(item.version, config=alternate_chunking, tokenizer=Tokenizer())
+    await services.plans.save(alternate_plan)
+    for chunk in alternate_plan.chunks:
+        if embedding_eligible(chunk):
+            await services.vectors.save(chunk, services.profile, (2.0,) + (0.0,) * 767)
+    await services.activation.activate(
+        item.document.id,
+        item.version.id,
+        alternate_chunking,
+        services.profile,
+        expected_current_version_id=item.version.id,
+    )
+
+    alternate_embedding = replace(services.profile, model_revision="alternate-profile")
+    for chunk in alternate_plan.chunks:
+        if embedding_eligible(chunk):
+            await services.vectors.save(chunk, alternate_embedding, (3.0,) + (0.0,) * 767)
+    await services.activation.activate(
+        item.document.id,
+        item.version.id,
+        alternate_chunking,
+        alternate_embedding,
+        expected_current_version_id=item.version.id,
+    )
+
+    with db_engine.connect() as connection:
+        rows = connection.execute(
+            select(
+                ChunkPlanReadinessRow.document_version_id,
+                ChunkPlanReadinessRow.chunking_configuration_id,
+                ChunkPlanReadinessRow.embedding_configuration_id,
+            ).where(ChunkPlanReadinessRow.document_version_id == item.version.id)
+        ).all()
+    assert len(rows) == 3
+    assert len({row.chunking_configuration_id for row in rows}) == 2
+    assert len({row.embedding_configuration_id for row in rows}) == 2
 
 
 async def test_two_indexers_can_race_without_duplicate_storage_or_invalid_activation(
@@ -343,6 +467,8 @@ async def test_two_indexers_can_race_without_duplicate_storage_or_invalid_activa
     assert set(results) == {IndexingOutcome.ACTIVATED, IndexingOutcome.ALREADY_ACTIVE}
     assert vector_count(db_engine) == 2
     assert state(db_engine, item.document.id).current_version_id == item.version.id
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 1
 
 
 async def test_provider_failure_commits_partial_progress_and_retry_resumes(services, registered_plan, db_engine):
@@ -351,6 +477,8 @@ async def test_provider_failure_commits_partial_progress_and_retry_resumes(servi
     with pytest.raises(EmbeddingResponseError):
         await index(services, item)
     assert vector_count(db_engine) == 1 and state(db_engine, item.document.id).current_version_id is None
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
     services.provider.calls.clear()
     assert await index(services, item) == IndexingOutcome.ACTIVATED
     assert services.provider.calls == ["b"] and vector_count(db_engine) == 2
@@ -390,6 +518,11 @@ async def test_bulk_indexing_persists_unique_shared_vectors_and_resumes_across_d
     assert vector_count(db_engine) == 2
     assert state(db_engine, first.document.id).current_version_id == first.version.id
     assert state(db_engine, second.document.id).current_version_id == second.version.id
+    with db_engine.connect() as connection:
+        assert set(connection.scalars(select(ChunkPlanReadinessRow.document_version_id))) == {
+            first.version.id,
+            second.version.id,
+        }
 
 
 async def test_no_connection_is_checked_out_during_provider_calls(services, registered_plan, sessions):

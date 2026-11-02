@@ -3,6 +3,7 @@
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 
+from investigation_engine.infrastructure.observability.tracing import instrument_database
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from investigation_engine.application.chunking import ChunkingConfig
@@ -85,6 +86,10 @@ async def application_service():
         async with AsyncExitStack() as resources:
             engine = create_async_engine(settings.database_url(), **_engine_options(settings))
             resources.push_async_callback(engine.dispose)
+
+            if settings.otel_enabled:
+                instrument_database(engine)
+
             sessions = async_sessionmaker(engine, expire_on_commit=False)
             embedding = GeminiEmbeddingProvider(
                 api_key=settings.gemini_api_key,

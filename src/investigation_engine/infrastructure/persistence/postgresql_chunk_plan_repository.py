@@ -203,17 +203,20 @@ class PostgreSQLChunkPlanRepository:
         session: AsyncSession,
         version_id: UUID,
         values: dict[str, str | int | bytes],
+        *,
+        lock: bool = False,
     ) -> tuple[VersionChunkPlanRow, ChunkingConfigurationRow] | None:
-        found = (
-            await session.execute(
-                select(VersionChunkPlanRow, ChunkingConfigurationRow)
-                .join(ChunkingConfigurationRow)
-                .where(
-                    VersionChunkPlanRow.document_version_id == version_id,
-                    *(getattr(ChunkingConfigurationRow, key) == value for key, value in values.items()),
-                )
+        query = (
+            select(VersionChunkPlanRow, ChunkingConfigurationRow)
+            .join(ChunkingConfigurationRow)
+            .where(
+                VersionChunkPlanRow.document_version_id == version_id,
+                *(getattr(ChunkingConfigurationRow, key) == value for key, value in values.items()),
             )
-        ).all()
+        )
+        if lock:
+            query = query.with_for_update(of=(VersionChunkPlanRow, ChunkingConfigurationRow))
+        found = (await session.execute(query)).all()
         if len(found) > 1:
             raise RepositoryError("Multiple chunk plans match the version/configuration")
         return (found[0][0], found[0][1]) if found else None

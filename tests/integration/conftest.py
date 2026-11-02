@@ -93,7 +93,7 @@ def db_engine(schema_engine):
             # No other engine/URL can reach this cleanup; every test sees real commits.
             connection.execute(
                 text(
-                    "TRUNCATE searchable_chunks, chunk_embeddings, chunk_memberships, version_chunk_plans, "
+                    "TRUNCATE searchable_chunks, chunk_plan_readiness, chunk_embeddings, chunk_memberships, version_chunk_plans, "
                     "embedding_configurations, chunking_configurations, document_versions, "
                     "documents, contents RESTART IDENTITY CASCADE"
                 )

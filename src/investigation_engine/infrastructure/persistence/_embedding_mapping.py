@@ -90,6 +90,8 @@ async def find_embeddings(
     session: AsyncSession,
     chunks: tuple[Chunk, ...],
     config: EmbeddingConfig,
+    *,
+    lock: bool = False,
 ) -> dict[tuple[str, int, int], EmbeddingVector]:
     filters = configuration_filter(config)
     await validate_chunks(session, chunks)
@@ -97,19 +99,20 @@ async def find_embeddings(
     # Bound SQL parameter counts without introducing a batch/job abstraction.
     keys = list(dict.fromkeys((bytes.fromhex(c.content_sha256), c.start, c.end) for c in chunks))
     for offset in range(0, len(keys), 500):
-        rows = (
-            await session.scalars(
-                select(ChunkEmbeddingRow)
-                .join(EmbeddingConfigurationRow)
-                .where(
-                    *filters,
-                    tuple_(ChunkEmbeddingRow.content_sha256, ChunkEmbeddingRow.start, ChunkEmbeddingRow.end).in_(
-                        keys[offset : offset + 500]
-                    ),
-                )
-                .order_by(ChunkEmbeddingRow.embedding_configuration_id)
+        query = (
+            select(ChunkEmbeddingRow)
+            .join(EmbeddingConfigurationRow)
+            .where(
+                *filters,
+                tuple_(ChunkEmbeddingRow.content_sha256, ChunkEmbeddingRow.start, ChunkEmbeddingRow.end).in_(
+                    keys[offset : offset + 500]
+                ),
             )
-        ).all()
+            .order_by(ChunkEmbeddingRow.embedding_configuration_id)
+        )
+        if lock:
+            query = query.with_for_update(of=ChunkEmbeddingRow)
+        rows = (await session.scalars(query)).all()
         for row in rows:
             try:
                 vector = storage_vector(tuple(float(value) for value in row.embedding))

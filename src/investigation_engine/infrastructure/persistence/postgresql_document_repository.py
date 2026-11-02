@@ -345,7 +345,7 @@ class PostgreSQLDocumentRepository:
         limit: int,
         include_deleted: bool = False,
     ) -> DocumentPage:
-        visibility = or_(DocumentRow.owner_id.is_(None), DocumentRow.owner_id == actor_id)
+        visibility = (DocumentRow.owner_id == actor_id)
         filters = [visibility]
         if not include_deleted:
             filters.append(DocumentRow.deleted_at.is_(None))

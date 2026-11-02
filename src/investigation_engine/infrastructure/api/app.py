@@ -3,6 +3,7 @@
 import asyncio
 import hmac
 import logging
+import traceback
 from contextlib import asynccontextmanager
 from dataclasses import asdict, is_dataclass
 from http import HTTPStatus
@@ -50,6 +51,8 @@ from investigation_engine.domain.provenance import SourceReference
 from investigation_engine.infrastructure.api.bootstrap import application_service
 from investigation_engine.infrastructure.api.uploads import extract_upload
 from investigation_engine.infrastructure.ingestion.extraction_errors import DocumentExtractionError
+from investigation_engine.infrastructure.config import settings
+from investigation_engine.infrastructure.observability.tracing import configure_tracing
 
 logger = logging.getLogger(__name__)
 
@@ -121,10 +124,10 @@ def _authorized_actor(request: Request) -> DocumentActor:
             detail={"code": "admin_disabled", "message": "Document management is not configured."},
         )
     if config.admin_require_https and request.url.scheme != "https":
-        raise HTTPException(
-            HTTPStatus.BAD_REQUEST,
-            detail={"code": "https_required", "message": "Use HTTPS for administrator operations."},
-        )
+            raise HTTPException(
+                HTTPStatus.BAD_REQUEST,
+                detail={"code": "https_required", "message": "Use HTTPS for administrator operations."},
+            )
     scheme, _, supplied = header.partition(" ")
     if scheme.casefold() != "bearer" or not supplied or not hmac.compare_digest(supplied, config.admin_api_token):
         raise HTTPException(
@@ -225,6 +228,12 @@ def create_app(*, service_factory=application_service) -> FastAPI:
     # Absolute cap is the highest configurable file limit plus multipart overhead.
     # The smaller per-file cap is applied after parsing from the active Settings.
     app.add_middleware(UploadBodyLimitMiddleware, max_bytes=MAX_UPLOAD_FILE_BYTES)
+
+    if settings.otel_enabled:
+        configure_tracing(
+            app,
+            endpoint=settings.otel_endpoint,
+        )
 
     @app.middleware("http")
     async def measure_request(request, call_next):
@@ -351,7 +360,8 @@ def create_app(*, service_factory=application_service) -> FastAPI:
             status, code = 503, "generation_unavailable"
         except GenerationResponseError, EmbeddingResponseError, EmbeddingInputError:
             status, code = 502, "invalid_provider_response"
-        except Exception:
+        except Exception as e:
+            print(traceback.format_exc())
             status, code = 500, "investigation_failed"
         return JSONResponse(
             status_code=status,

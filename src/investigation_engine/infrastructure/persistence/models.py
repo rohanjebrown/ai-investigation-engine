@@ -304,6 +304,30 @@ class ChunkEmbeddingRow(Base):
     content: Mapped[ContentRow] = relationship(lazy="raise")
 
 
+class ChunkPlanReadinessRow(Base):
+    """A validated plan/profile pair; structural eligibility remains checked by retrieval."""
+
+    __tablename__ = "chunk_plan_readiness"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["document_version_id", "chunking_configuration_id"],
+            ["version_chunk_plans.document_version_id", "version_chunk_plans.chunking_configuration_id"],
+            name="fk_chunk_plan_readiness_plan",
+            ondelete="CASCADE",
+        ),
+        ForeignKeyConstraint(
+            ["embedding_configuration_id"],
+            ["embedding_configurations.id"],
+            name="fk_chunk_plan_readiness_embedding_configuration",
+            ondelete="CASCADE",
+        ),
+    )
+
+    document_version_id: Mapped[PythonUUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    chunking_configuration_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    embedding_configuration_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+
 class SearchableChunkRow(Base):
     __tablename__ = "searchable_chunks"
     __table_args__ = (
