@@ -213,6 +213,10 @@ class EmbeddingConfigurationRow(Base):
     normalization: Mapped[str] = mapped_column(Text(collation="C"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
+    membership_embeddings: Mapped[list[MembershipChunkEmbeddingRow]] = relationship(
+        back_populates="configuration", passive_deletes="all", lazy="raise"
+    )
+
 
 class VersionChunkPlanRow(Base):
     __tablename__ = "version_chunk_plans"
@@ -274,6 +278,12 @@ class ChunkMembershipRow(Base):
     end: Mapped[int] = mapped_column(Integer, nullable=False)
 
     plan: Mapped[VersionChunkPlanRow] = relationship(back_populates="memberships", lazy="raise")
+    embeddings: Mapped[list[MembershipChunkEmbeddingRow]] = relationship(
+        back_populates="membership",
+        order_by="MembershipChunkEmbeddingRow.embedding_configuration_id",
+        passive_deletes="all",
+        lazy="raise",
+    )
 
 
 class ChunkEmbeddingRow(Base):
@@ -291,6 +301,13 @@ class ChunkEmbeddingRow(Base):
         ),
         CheckConstraint('start >= 0 AND "end" > start', name="ck_chunk_embeddings_range"),
         CheckConstraint("vector_norm(embedding) > 0", name="ck_chunk_embeddings_nonzero"),
+        Index(
+            "ix_chunk_embeddings_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+            postgresql_with={"m": 16, "ef_construction": 64},
+        ),
     )
 
     embedding_configuration_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -302,6 +319,48 @@ class ChunkEmbeddingRow(Base):
 
     configuration: Mapped[EmbeddingConfigurationRow] = relationship(lazy="raise")
     content: Mapped[ContentRow] = relationship(lazy="raise")
+
+
+class MembershipChunkEmbeddingRow(Base):
+    """Membership-owned vectors; the legacy shared-vector table remains during rollout."""
+
+    __tablename__ = "membership_chunk_embeddings"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["document_version_id", "chunking_configuration_id", "ordinal"],
+            [
+                "chunk_memberships.document_version_id",
+                "chunk_memberships.chunking_configuration_id",
+                "chunk_memberships.ordinal",
+            ],
+            name="fk_membership_chunk_embeddings_membership",
+        ),
+        ForeignKeyConstraint(
+            ["embedding_configuration_id"],
+            ["embedding_configurations.id"],
+            name="fk_membership_chunk_embeddings_configuration",
+        ),
+        CheckConstraint("vector_norm(embedding) > 0", name="ck_membership_chunk_embeddings_nonzero"),
+        Index(
+            "ix_membership_chunk_embeddings_configuration_membership",
+            "embedding_configuration_id",
+            "document_version_id",
+            "chunking_configuration_id",
+            "ordinal",
+        ),
+    )
+
+    document_version_id: Mapped[PythonUUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    chunking_configuration_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    embedding_configuration_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    embedding: Mapped[list[float]] = mapped_column(VECTOR(768), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    membership: Mapped[ChunkMembershipRow] = relationship(back_populates="embeddings", lazy="raise")
+    configuration: Mapped[EmbeddingConfigurationRow] = relationship(
+        back_populates="membership_embeddings", lazy="raise"
+    )
 
 
 class ChunkPlanReadinessRow(Base):

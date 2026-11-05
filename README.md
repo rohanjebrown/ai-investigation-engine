@@ -1,6 +1,6 @@
 # AI Investigation Engine
 
-> Correction (29 October 2026): The user explicitly confirmed automatic migrations. Normal container startup runs `alembic upgrade head` before starting the API and exits if migration fails. Explicit `--smoke` skips migrations. Earlier statements below describing removal/manual-only startup are superseded. Restoring this code does not execute a production migration.
+Normal container startup runs `alembic upgrade head` before starting the API and exits if migration fails. Explicit `--smoke` skips migrations and requires no provider/database settings. Long-running migrations should be reviewed and pre-applied before a rollout.
 
 An evidence-based investigation application built for the Upgaming Applied AI
 Engineer assignment. Upload documents, retrieve passages, ask a quick question,
@@ -43,11 +43,11 @@ reuse includes exact-text verification; similar text is not semantically merged.
 Whole-passage chunking fits the short dataset passages, while fixed-token and
 sentence-aware alternatives retain offsets for longer documents.
 
-Semantic search uses exact pgvector ranking. Lexical retrieval supports native
+Semantic search defaults to exact pgvector ranking. Existing HNSW cosine retrieval is an explicit `SEMANTIC_SEARCH_BACKEND=hnsw` opt-in shared by Quick Answer and Investigation; exact remains available for evaluation and fallback. Lexical retrieval supports native
 PostgreSQL full-text search and the existing optional `pg_textsearch` BM25 backend;
 hybrid search combines channels using application-owned Reciprocal Rank Fusion.
 These are configurations, not a claim that hybrid always beats semantic search.
-No ANN/HNSW index or additional vector database is introduced by this milestone.
+HNSW remains approximate and is not the production default; its recall must be evaluated for the actual corpus and authorization scope. No additional vector database is used.
 
 Quick Answer retrieves bounded evidence before a single generation. Investigation
 can search again using information returned by earlier searches, with stable
@@ -101,10 +101,7 @@ uv run alembic upgrade head
 uv run python -m investigation_engine.infrastructure.api.server
 ```
 
-Migrations are explicit operator work, never ordinary API startup. The current
-chain includes canonical search chunks and optional BM25 indexing in migrations
-0003/0004. Do not apply it to production just to run tests. `/health` is process
-liveness; production lifespan validates the configured serving profile.
+Normal container startup applies pending migrations before accepting requests. Operators should pre-apply reviewed long-running changes, especially concurrent HNSW creation. The chain includes readiness guards (0006), additive membership-owned vectors (0007), and cosine HNSW (0008); no large backfill is automatic. Do not migrate production to run tests. `/health` is process liveness; production lifespan validates the configured serving profile.
 
 For a credential-free UI/packaging check, run with `--smoke`. Questions and
 management deliberately return unavailable in this explicit mode.
@@ -143,16 +140,12 @@ The image uses locked production dependencies, a non-root UID, one Uvicorn
 process, `0.0.0.0:$PORT`, ephemeral temporary files and graceful SIGTERM handling.
 The existing Cloud Run service and GitHub main trigger are reused. Cloud Build
 runs required checks before publishing a commit-tagged image and deploying its
-immutable digest. No schema migration runs in CI or API startup.
+immutable digest. CI migrations run only in disposable test databases; the normal container entrypoint applies reviewed pending migrations to its configured database.
 
 The trigger's inline deployment path was replaced with `cloudbuild.yaml` on
 29 October. **A successful push-triggered execution of the new gates is still
 unverified.** Changes in this checkout have not been committed or pushed by
-Codex. The current runtime is public and uses plaintext secret environment
-variables; the prepared deployment preflight rejects these settings. Secret
-Manager references, invocation protection/aggregate quota controls and scoped
-build IAM still need operator attention before activation. Existing runtime
-settings were not altered to bypass those checks.
+Codex. The 5 November release review confirmed private service IAM, plaintext runtime secret environment values, and traffic pinned to an older revision. The deployment preflight rejects plaintext secrets and pinned/split traffic. Secret Manager references, intentional traffic policy and migration/startup budget require operator review before activation. Existing runtime settings were not changed to bypass the guard.
 
 See the [deployment guide](docs/design/cloud-run-deployment.md) for exact resource
 IDs, environment settings, IAM, test-container networking, verification, costs

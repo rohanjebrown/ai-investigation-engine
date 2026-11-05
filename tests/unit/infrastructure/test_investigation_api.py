@@ -164,3 +164,23 @@ async def test_investigation_disabled_and_provider_failure_are_not_abstentions()
             response = await client.post("/investigations", json={"question": "Question"})
     assert response.status_code == 503 and response.json()["error"]["code"] == "generation_unavailable"
     assert "secret" not in response.text
+
+
+async def test_unexpected_investigation_error_does_not_print_private_exception(capsys, caplog):
+    class Broken:
+        async def execute(self, *args, **kwargs):
+            raise RuntimeError("private-document-exception-marker")
+
+    services = SimpleNamespace(settings=SimpleNamespace(investigation_enabled=True), investigations=Broken())
+
+    @asynccontextmanager
+    async def factory():
+        yield services
+
+    app = create_app(service_factory=factory)
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post("/investigations", json={"question": "Question"})
+    assert response.status_code == 500 and response.json()["error"]["code"] == "investigation_failed"
+    output = capsys.readouterr()
+    assert "private-document-exception-marker" not in output.out + output.err + caplog.text + response.text

@@ -20,6 +20,7 @@ COPY data/samples/ data/samples/
 COPY migrations/ migrations/
 COPY deploy/ deploy/
 COPY alembic.ini .env.example .python-version ./
+COPY Dockerfile cloudbuild.yaml .dockerignore ./
 ENV PATH="/opt/app/.venv/bin:$PATH"
 CMD ["pytest", "tests/unit", "tests/integration", "-q"]
 

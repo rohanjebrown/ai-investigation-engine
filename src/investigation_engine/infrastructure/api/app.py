@@ -3,7 +3,6 @@
 import asyncio
 import hmac
 import logging
-import traceback
 from contextlib import asynccontextmanager
 from dataclasses import asdict, is_dataclass
 from http import HTTPStatus
@@ -51,7 +50,6 @@ from investigation_engine.domain.provenance import SourceReference
 from investigation_engine.infrastructure.api.bootstrap import application_service
 from investigation_engine.infrastructure.api.uploads import extract_upload
 from investigation_engine.infrastructure.ingestion.extraction_errors import DocumentExtractionError
-from investigation_engine.infrastructure.config import settings
 from investigation_engine.infrastructure.observability.tracing import configure_tracing
 
 logger = logging.getLogger(__name__)
@@ -124,10 +122,10 @@ def _authorized_actor(request: Request) -> DocumentActor:
             detail={"code": "admin_disabled", "message": "Document management is not configured."},
         )
     if config.admin_require_https and request.url.scheme != "https":
-            raise HTTPException(
-                HTTPStatus.BAD_REQUEST,
-                detail={"code": "https_required", "message": "Use HTTPS for administrator operations."},
-            )
+        raise HTTPException(
+            HTTPStatus.BAD_REQUEST,
+            detail={"code": "https_required", "message": "Use HTTPS for administrator operations."},
+        )
     scheme, _, supplied = header.partition(" ")
     if scheme.casefold() != "bearer" or not supplied or not hmac.compare_digest(supplied, config.admin_api_token):
         raise HTTPException(
@@ -229,11 +227,11 @@ def create_app(*, service_factory=application_service) -> FastAPI:
     # The smaller per-file cap is applied after parsing from the active Settings.
     app.add_middleware(UploadBodyLimitMiddleware, max_bytes=MAX_UPLOAD_FILE_BYTES)
 
-    if settings.otel_enabled:
-        configure_tracing(
-            app,
-            endpoint=settings.otel_endpoint,
-        )
+    if service_factory is application_service:
+        from investigation_engine.infrastructure.config import settings
+
+        if getattr(settings, "otel_enabled", False):
+            configure_tracing(app, endpoint=settings.otel_endpoint)
 
     @app.middleware("http")
     async def measure_request(request, call_next):
@@ -360,8 +358,8 @@ def create_app(*, service_factory=application_service) -> FastAPI:
             status, code = 503, "generation_unavailable"
         except GenerationResponseError, EmbeddingResponseError, EmbeddingInputError:
             status, code = 502, "invalid_provider_response"
-        except Exception as e:
-            print(traceback.format_exc())
+        except Exception:
+            logger.error("Investigation failed", extra={"error_category": "internal"})
             status, code = 500, "investigation_failed"
         return JSONResponse(
             status_code=status,
@@ -424,15 +422,40 @@ def create_app(*, service_factory=application_service) -> FastAPI:
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 detail={"code": "document_management_disabled", "message": "Document management is unavailable."},
             )
+        if services.ingest_document is None:
+            raise HTTPException(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                detail={"code": "indexing_unavailable", "message": "Document indexing is not configured."},
+            )
         key = upload_id(idempotency_key)
         source_id = f"admin-upload:{key}"
         extracted = await extract_upload(await form_upload(request), source_id=source_id, settings=services.settings)
         try:
-            document, version = await services.register_document.execute(extracted, owner_id=trusted.principal_id)
+            document, version = await services.ingest_document.create(
+                extracted, actor=DocumentActor(trusted.principal_id)
+            )
+        except TimeoutError:
+            raise HTTPException(
+                HTTPStatus.GATEWAY_TIMEOUT,
+                detail={"code": "indexing_timeout", "message": "Indexing timed out; retry with the same key."},
+            ) from None
+        except EmbeddingProviderError, EmbeddingRateLimitError:
+            raise HTTPException(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                detail={"code": "provider_unavailable", "message": "Indexing provider unavailable; retry."},
+            ) from None
+        except EmbeddingResponseError:
+            raise HTTPException(
+                HTTPStatus.BAD_GATEWAY,
+                detail={
+                    "code": "provider_response_invalid",
+                    "message": "Embedding provider returned an invalid response.",
+                },
+            ) from None
         except Exception as error:
             return _document_error(error)
         return {
-            "status": "deleted" if document.deleted_at is not None else "registered_not_indexed",
+            "status": "indexed",
             "document": _serial(document),
             "version": _serial(version),
             "original_retained": False,
@@ -523,6 +546,11 @@ def create_app(*, service_factory=application_service) -> FastAPI:
                 detail={"code": "if_match_required", "message": "Provide the active version in If-Match."},
             )
         services = request.app.state.services
+        if services.ingest_document is None:
+            raise HTTPException(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                detail={"code": "indexing_unavailable", "message": "Document indexing is not configured."},
+            )
         try:
             details = await services.get_document.execute(document_id, actor=trusted)
             document = details.document
@@ -550,15 +578,36 @@ def create_app(*, service_factory=application_service) -> FastAPI:
             from dataclasses import replace
 
             extracted = replace(extracted, source=source)
-            stored, version = await services.update_document.execute(
-                document_id, extracted, actor=trusted, expected_current_version_id=expected
+            stored, version = await services.ingest_document.replace(
+                document_id,
+                extracted,
+                actor=DocumentActor(trusted.principal_id),
+                expected_current_version_id=expected,
             )
             return {
-                "status": "pending_replacement",
+                "status": "indexed",
                 "document": _serial(stored),
                 "version": _serial(version),
                 "original_retained": False,
             }
+        except TimeoutError:
+            raise HTTPException(
+                HTTPStatus.GATEWAY_TIMEOUT,
+                detail={"code": "indexing_timeout", "message": "Indexing timed out; retry with the same key."},
+            ) from None
+        except EmbeddingProviderError, EmbeddingRateLimitError:
+            raise HTTPException(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                detail={"code": "provider_unavailable", "message": "Indexing provider unavailable; retry."},
+            ) from None
+        except EmbeddingResponseError:
+            raise HTTPException(
+                HTTPStatus.BAD_GATEWAY,
+                detail={
+                    "code": "provider_response_invalid",
+                    "message": "Embedding provider returned an invalid response.",
+                },
+            ) from None
         except Exception as error:
             return _document_error(error)
 

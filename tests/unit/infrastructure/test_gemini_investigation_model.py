@@ -145,3 +145,32 @@ async def test_close_is_idempotent(provider):
     await provider.provider.aclose()
     await provider.provider.aclose()
     provider.client.aio.aclose.assert_awaited_once()
+
+
+async def test_numeric_latency_diagnostics_do_not_log_question_or_response(provider, caplog):
+    caplog.set_level("DEBUG", logger="investigation_engine.application.timing")
+    provider.models.generate_content.return_value = _response(
+        types.Part(
+            text=json.dumps(
+                {"status": "answered", "answer": "private-response-marker", "citations": ["E1"], "conflicts": []}
+            )
+        ),
+        usage=types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=123, candidates_token_count=15, thoughts_token_count=8
+        ),
+    )
+    await provider.provider.next_action(InvestigationTurn(question="private-question-marker", exchanges=()))
+    stages = {getattr(record, "stage", None) for record in caplog.records}
+    assert {
+        "gemini.investigation.provider_total",
+        "gemini.investigation.prepare_history",
+        "gemini.investigation.prepare_config",
+        "gemini.investigation.api_request",
+        "gemini.investigation.parse_validate",
+    } <= stages
+    usage = next(record for record in caplog.records if getattr(record, "event", None) == "gemini.investigation.usage")
+    assert (usage.prompt_tokens, usage.candidate_tokens, usage.thinking_tokens) == (123, 15, 8)
+    assert all(
+        word not in caplog.text
+        for word in ("private-question-marker", "private-response-marker", "never-print-this-key")
+    )

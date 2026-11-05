@@ -11,6 +11,13 @@ jobs:
   tests:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # Import-time settings only; PostgreSQL fixtures use their own disposable URLs.
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "15432"
+      DB_NAME: ci_unused
+      DB_USER: ci_unused
+      DB_PASSWORD: ci-unused-placeholder
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -32,12 +39,6 @@ jobs:
       - name: JavaScript tests
         run: node --test tests/frontend/test_web.cjs
       - name: Unit tests
-        env:
-          DB_HOST: localhost
-          DB_PORT: "5432"
-          DB_NAME: test_db
-          DB_USER: test_user
-          DB_PASSWORD: test_password
         run: uv run --locked --no-env-file pytest tests/unit --cov --cov-report=term-missing
       - name: PostgreSQL and pgvector integration tests
         run: |

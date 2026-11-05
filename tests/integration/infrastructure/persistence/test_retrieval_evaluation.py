@@ -136,10 +136,25 @@ async def test_fixed_40_question_suite_compares_real_postgresql_modes_with_fake_
         )
         for mode in ("semantic", "keyword", "hybrid")
     ]
+    hnsw_evidence = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw")
+    runs.append(
+        (
+            RetrievalRun(
+                name="semantic-hnsw",
+                mode="semantic",
+                chunking=asdict(config),
+                embedding=asdict(provider.configuration),
+            ),
+            SearchEvidence(hnsw_evidence, provider, config, provider.configuration),
+        )
+    )
     report = await evaluate(suite, corpus, runs, indexed_corpus_fingerprint=fingerprint(corpus))
-    assert provider.query_count == 80
+    assert provider.query_count == 120
     assert all(run["aggregate"]["status_counts"] == {"ok": 40} for run in report["runs"])
     assert all(run["aggregate"]["scored_cases"] == 34 for run in report["runs"])
+    exact_metrics = {key: value for key, value in report["runs"][0]["aggregate"].items() if key != "mean_latency_ms"}
+    hnsw_metrics = {key: value for key, value in report["runs"][3]["aggregate"].items() if key != "mean_latency_ms"}
+    assert exact_metrics == hnsw_metrics
     assert report["comparisons"][0]["paired_cases"] == 34
     export(report, tmp_path)
     assert len(json.loads((tmp_path / "retrieval.json").read_text(encoding="utf8"))["runs"][0]["questions"]) == 40

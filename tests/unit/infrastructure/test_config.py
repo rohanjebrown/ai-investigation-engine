@@ -206,3 +206,70 @@ def test_invalid_retrieval_configuration_is_rejected_by_name(load_settings, dote
     monkeypatch.setenv(name, value)
     with pytest.raises(ValueError, match=name):
         load_settings()
+
+
+def test_membership_owned_retrieval_backend_is_opt_in(load_settings, dotenv_file, monkeypatch):
+    assert load_settings().retrieval_embedding_backend == "legacy_shared"
+    monkeypatch.setenv("RETRIEVAL_EMBEDDING_BACKEND", "membership_owned")
+    assert load_settings().retrieval_embedding_backend == "membership_owned"
+    monkeypatch.setenv("RETRIEVAL_EMBEDDING_BACKEND", "unknown")
+    with pytest.raises(ValueError, match="RETRIEVAL_EMBEDDING_BACKEND"):
+        load_settings()
+
+
+def test_hnsw_retrieval_is_opt_in_with_bounded_retry_settings(load_settings, dotenv_file, monkeypatch):
+    initial = load_settings()
+    assert initial.semantic_search_backend == "exact"
+    assert initial.hnsw_ef_search == 400
+    assert initial.hnsw_candidate_limits == (400,)
+    assert initial.hnsw_iterative_scan is False
+    monkeypatch.setenv("SEMANTIC_SEARCH_BACKEND", "hnsw")
+    monkeypatch.setenv("HNSW_EF_SEARCH", "600")
+    monkeypatch.setenv("HNSW_CANDIDATE_LIMITS", "200,400,800")
+    monkeypatch.setenv("HNSW_ITERATIVE_SCAN", "true")
+    configured = load_settings()
+    assert configured.semantic_search_backend == "hnsw"
+    assert configured.hnsw_ef_search == 600
+    assert configured.hnsw_candidate_limits == (200, 400, 800)
+    assert configured.hnsw_iterative_scan is True
+
+
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("SEMANTIC_SEARCH_BACKEND", "approximate"),
+        ("HNSW_EF_SEARCH", "0"),
+        ("HNSW_EF_SEARCH", "1001"),
+        ("HNSW_CANDIDATE_LIMITS", "400,200"),
+        ("HNSW_CANDIDATE_LIMITS", "1,1"),
+        ("HNSW_ITERATIVE_SCAN", "sometimes"),
+    ],
+)
+def test_invalid_hnsw_settings_are_rejected_by_name(load_settings, dotenv_file, monkeypatch, name, value):
+    monkeypatch.setenv(name, value)
+    with pytest.raises(ValueError, match=name):
+        load_settings()
+
+
+@pytest.mark.parametrize("ef", [100, 200, 400])
+def test_hnsw_independent_ef_with_constant_candidates(ef):
+    from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import (
+        PostgreSQLEvidenceRepository,
+    )
+
+    repo = PostgreSQLEvidenceRepository(None, semantic_backend="hnsw", hnsw_ef_search=ef, hnsw_candidate_limits=(100,))
+    assert repo._hnsw_ef_search == ef
+    assert repo._hnsw_candidate_limits == (100,)
+
+
+def test_hnsw_candidate_schedule_rejects_unreachable_and_duplicate_budgets():
+    from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import (
+        PostgreSQLEvidenceRepository,
+    )
+
+    with pytest.raises(ValueError, match="cannot exceed"):
+        PostgreSQLEvidenceRepository(
+            None, semantic_backend="hnsw", hnsw_ef_search=100, hnsw_candidate_limits=(100, 200)
+        )
+    with pytest.raises(ValueError, match="strictly increasing"):
+        PostgreSQLEvidenceRepository(None, semantic_backend="hnsw", hnsw_candidate_limits=(100, 100))

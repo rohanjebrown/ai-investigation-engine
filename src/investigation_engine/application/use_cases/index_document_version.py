@@ -1,6 +1,7 @@
 """Resumable synchronous-in-request indexing, without provider or database types."""
 
 import asyncio
+import random
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -136,18 +137,21 @@ class IndexDocumentVersion:
         *,
         max_attempts: int = 3,
         retry_delay_seconds: float = 1.0,
+        max_retry_delay_seconds: float = 30.0,
         request_timeout_seconds: float = 60.0,
         embedding_batch_size: int = 25,
     ) -> None:
         if type(max_attempts) is not int or max_attempts < 1:
             raise ValueError("max_attempts must be a positive integer")
-        for retry_setting in (retry_delay_seconds, request_timeout_seconds):
+        for retry_setting in (retry_delay_seconds, max_retry_delay_seconds, request_timeout_seconds):
             if type(retry_setting) not in (int, float):  # noqa: WPS516 - accept only built-in int/float values
                 raise ValueError("Retry delay and timeout must be finite nonnegative numbers")
             if not isfinite(retry_setting) or retry_setting < 0:
                 raise ValueError("Retry delay and timeout must be finite nonnegative numbers")
         if request_timeout_seconds == 0:
             raise ValueError("Request timeout must be positive")
+        if max_retry_delay_seconds < retry_delay_seconds:
+            raise ValueError("Maximum retry delay must be at least the base retry delay")
         if type(embedding_batch_size) is not int or embedding_batch_size < 1:
             raise ValueError("embedding_batch_size must be a positive integer")
         self._plans = plans
@@ -156,8 +160,39 @@ class IndexDocumentVersion:
         self._provider = provider
         self._attempts = max_attempts
         self._delay = retry_delay_seconds
+        self._max_delay = max_retry_delay_seconds
         self._timeout = request_timeout_seconds
         self._batch_size = embedding_batch_size
+
+    async def prepare_plan(
+        self,
+        plan,
+        embedding: EmbeddingConfig,
+    ) -> dict[tuple[str, int, int], EmbeddingVector]:
+        """Prepare complete vectors without writing or retaining a DB transaction."""
+        if embedding != self._provider.configuration:
+            raise EmbeddingInputError("Selected embedding configuration does not match the provider")
+        eligible = tuple(chunk for chunk in plan.chunks if embedding_eligible(chunk))
+        if not eligible:
+            raise EmbeddingInputError("Document has no searchable content")
+        existing = await self._embeddings.find_reusable(eligible, embedding)
+        missing = tuple(chunk for chunk in eligible if chunk.identity not in existing)
+        generated = await self._generate_missing(missing, embedding, self._embeddings.find_reusable)
+        result = {**existing, **generated}
+        if set(result) != {chunk.identity for chunk in eligible}:
+            raise EmbeddingResponseError("Prepared embedding coverage is incomplete")
+        return result
+
+    def maximum_retry_budget_seconds(self, chunk_count: int) -> float:
+        """Upper bound for provider timeouts and retry delays across batches."""
+        if type(chunk_count) is not int or chunk_count < 0:
+            raise ValueError("Chunk count must be a nonnegative integer")
+        batches = (chunk_count + self._batch_size - 1) // self._batch_size
+        if not batches:
+            return 0.0
+        # A provider Retry-After may use the full delay cap on every retry.
+        per_batch = self._attempts * self._timeout + (self._attempts - 1) * self._max_delay
+        return batches * per_batch
 
     async def execute(
         self,
@@ -297,14 +332,38 @@ class IndexDocumentVersion:
         embedding: EmbeddingConfig,
         requested: list[tuple[str, int, int]],
     ) -> None:
+        vectors, generated = await self._generate_batch(batch, embedding, self._embeddings.find)
+        for chunk in batch:
+            if chunk.identity in generated:
+                await self._save_vectors((chunk,), (vectors[chunk.identity],), embedding, requested)
+
+    async def _generate_missing(self, missing, embedding, lookup):
+        generated = {}
+        for start in range(0, len(missing), self._batch_size):
+            values, _ = await self._generate_batch(missing[start : start + self._batch_size], embedding, lookup)
+            generated.update(values)
+        return generated
+
+    async def _generate_batch(self, chunks, embedding, lookup):
+        pending = tuple(chunks)
+        results = {}
+        generated = set()
         for attempt in range(self._attempts):
             if attempt:
-                existing = await self._embeddings.find(batch, embedding)
-                batch = tuple(chunk for chunk in batch if chunk.identity not in existing)
-                if not batch:
-                    return
+                existing = await lookup(pending, embedding)
+                results.update(existing)
+                pending = tuple(chunk for chunk in pending if chunk.identity not in existing)
+                if not pending:
+                    return results, generated
             try:
-                vectors = await self._request_batch(batch, embedding)
+                vectors = await self._request_batch(pending, embedding)
+                for chunk, vector in zip(pending, vectors, strict=True):
+                    try:
+                        results[chunk.identity] = storage_vector(vector)
+                        generated.add(chunk.identity)
+                    except ValueError:
+                        raise EmbeddingResponseError("Provider vector is incompatible with embedding storage") from None
+                return results, generated
             except TimeoutError:
                 failure = EmbeddingProviderError("Embedding request timed out", retryable=True)
             except EmbeddingRateLimitError as error:
@@ -313,12 +372,24 @@ class IndexDocumentVersion:
                 if not error.retryable:
                     raise
                 failure = error
-            else:
-                await self._save_vectors(batch, vectors, embedding, requested)
-                return
             if attempt + 1 == self._attempts:
                 raise failure
-            await asyncio.sleep(self._delay)
+            delay = self._retry_delay(failure, attempt)
+            if delay is None:
+                raise failure
+            await asyncio.sleep(delay)
+        return results, generated
+
+    def _retry_delay(self, failure: Exception, attempt: int) -> float | None:
+        exponential = self._delay * (2**attempt)
+        retry_after = getattr(failure, "retry_after_seconds", None)
+        if retry_after is not None:
+            requested = max(exponential, retry_after)
+            if requested > self._max_delay:
+                return None
+            return requested
+        delay = random.uniform(exponential * 0.5, exponential * 1.5)
+        return min(delay, self._max_delay)
 
     async def _request_batch(self, batch: Sequence[Chunk], embedding: EmbeddingConfig) -> tuple[EmbeddingVector, ...]:
         if embedding != self._provider.configuration:

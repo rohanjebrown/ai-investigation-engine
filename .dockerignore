@@ -52,3 +52,9 @@ output
 **/*.gguf
 # tests/scripts/data/samples/migrations are needed by the isolated CI stage.
 # The runtime stage copies only the installed production environment + tokenizer.
+
+# Local SQL plans and experiment archives are not build inputs.
+/*.sql
+/*.jsonl
+/*.zip
+/*_plan.json

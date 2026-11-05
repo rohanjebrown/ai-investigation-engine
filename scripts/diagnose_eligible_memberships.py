@@ -93,10 +93,7 @@ def main():
         pool_size=1,
         max_overflow=0,
         connect_args={
-            "options": (
-                "-c default_transaction_read_only=on "
-                f"-c statement_timeout={settings.db_statement_timeout_ms}"
-            ),
+            "options": (f"-c default_transaction_read_only=on -c statement_timeout={settings.db_statement_timeout_ms}"),
         },
     )
     try:
@@ -107,11 +104,15 @@ def main():
                 if connection.scalar(text("SHOW transaction_read_only")) != "on":
                     raise RuntimeError("Database transaction is not read-only")
 
-                config_row = connection.execute(
-                    select(ChunkingConfigurationRow.__table__).where(
-                        ChunkingConfigurationRow.id == settings.serving_chunking_configuration_id
+                config_row = (
+                    connection.execute(
+                        select(ChunkingConfigurationRow.__table__).where(
+                            ChunkingConfigurationRow.id == settings.serving_chunking_configuration_id
+                        )
                     )
-                ).mappings().one_or_none()
+                    .mappings()
+                    .one_or_none()
+                )
                 if config_row is None:
                     raise RuntimeError("Configured serving chunking profile was not found")
                 chunking = _configuration(SimpleNamespace(**config_row))

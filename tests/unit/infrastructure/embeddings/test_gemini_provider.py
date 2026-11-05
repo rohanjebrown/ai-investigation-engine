@@ -19,6 +19,11 @@ from investigation_engine.application.ports.embedding_provider import EmbeddingP
 from investigation_engine.infrastructure.embeddings import gemini_provider as module
 
 
+def test_retry_after_header_is_exposed_as_seconds():
+    error = SimpleNamespace(response=SimpleNamespace(headers={"Retry-After": "7.5"}))
+    assert module._retry_after_seconds(error) == 7.5
+
+
 def response(first=2.0):
     return types.EmbedContentResponse(embeddings=[types.ContentEmbedding(values=[first] + [0.0] * 767)])
 

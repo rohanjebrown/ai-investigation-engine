@@ -1,6 +1,6 @@
 # Production container and Cloud Build deployment
 
-> Correction (29 October 2026): The user explicitly confirmed automatic migrations. Normal container startup runs `alembic upgrade head` before starting the API and exits if migration fails. Explicit `--smoke` skips migrations. Earlier statements below describing removal/manual-only startup are superseded. Restoring this code does not execute a production migration.
+> Release review (5 November 2026): normal container startup runs `alembic upgrade head` before the API and exits on failure. Explicit `--smoke` skips migrations and database/provider settings. Review and pre-apply long migrations, particularly 0008, before the rollout. The current deployment is NOT READY: operator action is needed for secret references, pinned traffic and startup/migration budget; see `docs/validation/release-readiness.md`.
 
 ## Current status — 29 October 2026
 
@@ -37,9 +37,7 @@ The Cloud Build Linux worker uses host networking/127.0.0.1; an actual cloud run
 is still required to verify that environment. The Linux pytest-asyncio loop hook
 was corrected after collection failed in the first containerized test attempt.
 
-Ordinary API startup no longer executes Alembic. Apply reviewed migrations as an
-explicit operator step only. The current chain is through migration 0004;
-the historical evaluation corpus stays at 0002 and was not migrated.
+Normal container startup executes Alembic. The current chain extends through 0008 (readiness guards, additive membership-owned embeddings and concurrent HNSW). Review the exact target and pre-apply long-running revisions as an operator step before deployment; historical evaluation databases must not be migrated incidentally.
 The production image built and passed the isolated runtime smoke locally;
 see the [current verification record](../validation/completion-verification-2026-10-29.md)
 for exact results, size, limitations and remaining steps.

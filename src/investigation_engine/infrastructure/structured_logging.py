@@ -16,6 +16,8 @@ class TimingJsonFormatter(logging.Formatter):
         if record.duration_ms is not None:
             payload["duration_ms"] = round(record.duration_ms, 3)
         for field in (
+            "model_id",
+            "attempts",
             "mode",
             "semantic_count",
             "lexical_count",

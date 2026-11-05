@@ -68,3 +68,24 @@ def test_tokenizer_fetch_verifies_before_writing(monkeypatch, tmp_path):
     destination = tmp_path / "nested" / "tokenizer.json"
     fetch_runtime.fetch(destination)
     assert destination.read_bytes() == content
+
+
+def test_smoke_import_and_lifespan_need_no_database_environment(tmp_path):
+    import os
+    import subprocess
+    import sys
+
+    env = {key: value for key, value in os.environ.items() if not key.startswith(("DB_", "GEMINI_", "ADMIN_"))}
+    program = """
+from fastapi.testclient import TestClient
+from investigation_engine.infrastructure.api.server import create_app, smoke_services
+with TestClient(create_app(service_factory=smoke_services)) as client:
+    assert client.get('/health').status_code == 200
+    assert client.post('/questions', json={'question':'smoke'}).status_code == 503
+print('isolated smoke passed')
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", program], cwd=tmp_path, env=env, capture_output=True, text=True, timeout=20
+    )
+    assert result.returncode == 0, result.stderr
+    assert "isolated smoke passed" in result.stdout

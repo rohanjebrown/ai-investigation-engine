@@ -1,3 +1,4 @@
+import logging
 from dataclasses import replace
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -21,10 +22,12 @@ from investigation_engine.infrastructure.persistence.models import (
     ChunkEmbeddingRow,
     ChunkingConfigurationRow,
     ChunkMembershipRow,
+    ChunkPlanReadinessRow,
     ContentRow,
     DocumentRow,
     DocumentVersionRow,
     EmbeddingConfigurationRow,
+    MembershipChunkEmbeddingRow,
     VersionChunkPlanRow,
 )
 from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
@@ -136,7 +139,91 @@ async def test_end_to_end_known_cosine_order_limits_ties_and_restarted_search(re
         assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 5
 
 
-async def test_filter_before_top_k_with_owner_metadata_deletion_and_inactive_versions(retrieval, db_engine):
+async def test_hnsw_retries_candidates_without_bypassing_authorization_or_provenance(
+    retrieval, sessions, db_engine, caplog
+):
+    r = retrieval
+    r.provider.vectors = {
+        "bob nearest": vector(1),
+        "alice private": vector(1, 1),
+        "shared eligible": vector(0, 1),
+    }
+    bob = await r.create("bob nearest", owner_id="principal:bob")
+    alice = await r.create("alice private", owner_id="principal:alice")
+    shared = await r.create("shared eligible")
+    exact = await r.evidence.search(vector(), r.config, r.provider.configuration, owner_id="principal:alice", limit=1)
+    hnsw = PostgreSQLEvidenceRepository(
+        sessions,
+        semantic_backend="hnsw",
+        hnsw_ef_search=3,
+        hnsw_candidate_limits=(1, 2, 3),
+    )
+    statements = []
+
+    def capture(connection, cursor, statement, parameters, context, executemany):
+        if "set_config('hnsw.ef_search'" in statement:
+            statements.append(parameters["value"])
+
+    engine = sessions.kw["bind"].sync_engine
+    from sqlalchemy import event
+
+    event.listen(engine, "before_cursor_execute", capture)
+    try:
+        actual = await hnsw.search(vector(), r.config, r.provider.configuration, owner_id="principal:alice", limit=1)
+    finally:
+        event.remove(engine, "before_cursor_execute", capture)
+    assert actual == exact
+    assert actual[0].document_id == alice.document.id
+    assert actual[0].source == alice.version.source
+    assert bob.document.id not in {hit.document_id for hit in actual}
+    assert shared.document.id not in {hit.document_id for hit in actual}
+    assert statements == ["3", "3"]
+
+    with db_engine.connect() as connection:
+        with connection.begin():
+            connection.execute(text("SET LOCAL enable_seqscan = off"))
+            query_vector = "[" + ",".join(str(value) for value in vector()) + "]"
+            plan = (
+                connection.execute(
+                    text(
+                        "EXPLAIN SELECT embedding FROM chunk_embeddings ORDER BY embedding <=> CAST(:query AS vector) LIMIT 1"
+                    ),
+                    {"query": query_vector},
+                )
+                .scalars()
+                .all()
+            )
+            assert any("ix_chunk_embeddings_embedding_hnsw" in line for line in plan)
+
+
+async def test_hnsw_candidate_exhaustion_returns_only_eligible_available_hits(retrieval, sessions, caplog, monkeypatch):
+    repository_logger = logging.getLogger(
+        "investigation_engine.infrastructure.persistence.postgresql_evidence_repository"
+    )
+    monkeypatch.setattr(repository_logger, "disabled", False)
+    caplog.set_level("WARNING", logger="investigation_engine.infrastructure.persistence.postgresql_evidence_repository")
+    r = retrieval
+    r.provider.vectors = {
+        "bob nearest": vector(1),
+        "alice eligible": vector(1, 1),
+        "shared eligible": vector(0, 1),
+    }
+    bob = await r.create("bob nearest", owner_id="principal:bob")
+    await r.create("alice eligible", owner_id="principal:alice")
+    await r.create("shared eligible")
+    hnsw = PostgreSQLEvidenceRepository(
+        sessions,
+        semantic_backend="hnsw",
+        hnsw_ef_search=3,
+        hnsw_candidate_limits=(1, 2, 3),
+    )
+    hits = await hnsw.search(vector(), r.config, r.provider.configuration, owner_id="principal:alice", limit=3)
+    assert len(hits) == 2
+    assert bob.document.id not in {hit.document_id for hit in hits}
+    assert any("HNSW candidate retries exhausted" in record.message for record in caplog.records)
+
+
+async def test_filter_before_top_k_with_owner_metadata_deletion_and_inactive_versions(retrieval, db_engine, sessions):
     r = retrieval
     r.provider.vectors["eligible farther"] = vector(1, 2)
     shared = await r.create("eligible farther")
@@ -162,6 +249,16 @@ async def test_filter_before_top_k_with_owner_metadata_deletion_and_inactive_ver
         shared.document.id,
         bob.document.id,
     }
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    for owner in (None, "principal:alice", "principal:bob"):
+        assert await ready.search(
+            vector(), r.config, r.provider.configuration, owner_id=owner, limit=1
+        ) == await r.evidence.search(vector(), r.config, r.provider.configuration, owner_id=owner, limit=1)
+    hnsw = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw")
+    for owner in (None, "principal:alice", "principal:bob"):
+        assert await hnsw.search(
+            vector(), r.config, r.provider.configuration, owner_id=owner, limit=10
+        ) == await r.evidence.search(vector(), r.config, r.provider.configuration, owner_id=owner, limit=10)
 
 
 async def test_shared_vector_retains_independent_source_occurrences_and_exact_provenance(retrieval, db_engine):
@@ -183,6 +280,135 @@ async def test_shared_vector_retains_independent_source_occurrences_and_exact_pr
         assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 1
     hits[0].source.metadata["modified"] = True
     assert all("modified" not in hit.source.metadata for hit in await r.search().execute("q", owner_id=None))
+
+
+async def test_readiness_semantic_results_match_reference_with_visibility_and_duplicate_content(retrieval, sessions):
+    r = retrieval
+    shared = await r.create("same indexed passage")
+    await r.create("same indexed passage", owner_id="alice")
+    await r.create("alice-only indexed passage", owner_id="alice")
+    await r.create("bob-only indexed passage", owner_id="bob")
+    reference = PostgreSQLEvidenceRepository(sessions)
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+
+    for owner in (None, "alice", "bob"):
+        expected = await reference.search(vector(), r.config, r.provider.configuration, owner_id=owner, limit=10)
+        actual = await ready.search(vector(), r.config, r.provider.configuration, owner_id=owner, limit=10)
+        assert actual == expected
+    assert any(
+        hit.document_version_id == shared.version.id
+        for hit in await ready.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
+    )
+
+
+async def _copy_legacy_vectors_to_memberships(sessions):
+    async with sessions() as session, session.begin():
+        await session.execute(
+            text(
+                """
+                INSERT INTO membership_chunk_embeddings (
+                    document_version_id, chunking_configuration_id, ordinal,
+                    embedding_configuration_id, embedding, created_at
+                )
+                SELECT m.document_version_id, m.chunking_configuration_id, m.ordinal,
+                       ce.embedding_configuration_id, ce.embedding, now()
+                  FROM chunk_memberships m
+                  JOIN document_versions v ON v.id = m.document_version_id
+                  JOIN contents c ON c.sha256 = v.content_sha256
+                  JOIN chunk_embeddings ce
+                    ON ce.content_sha256 = v.content_sha256
+                   AND ce.start = m.start AND ce."end" = m."end"
+                 WHERE btrim(substr(c.text, m.start + 1, m."end" - m.start), :whitespace) <> ''
+                ON CONFLICT DO NOTHING
+                """
+            ),
+            {
+                "whitespace": "\t\n\v\f\r\x1c\x1d\x1e\x1f \x85\xa0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000"
+            },
+        )
+
+
+async def test_membership_owned_semantic_matches_legacy_for_authorized_duplicates_and_provenance(
+    retrieval, sessions, db_engine
+):
+    r = retrieval
+    duplicate = await r.create("same indexed passage", owner_id="alice")
+    shared = await r.create("same indexed passage")
+    alice = await r.create("alice-only indexed passage", owner_id="alice")
+    await r.create("bob-only indexed passage", owner_id="bob")
+    deleted = await r.create("deleted indexed passage")
+    with db_engine.begin() as connection:
+        connection.execute(
+            update(DocumentRow).where(DocumentRow.id == deleted.document.id).values(deleted_at=datetime.now(UTC))
+        )
+    await _copy_legacy_vectors_to_memberships(sessions)
+    legacy = PostgreSQLEvidenceRepository(sessions)
+    owned = PostgreSQLEvidenceRepository(sessions, embedding_backend="membership_owned")
+
+    for owner in (None, "alice", "bob"):
+        expected = await legacy.search(vector(), r.config, r.provider.configuration, owner_id=owner, limit=10)
+        actual = await owned.search(vector(), r.config, r.provider.configuration, owner_id=owner, limit=10)
+        assert actual == expected
+    shared_only = await owned.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
+    assert any(hit.document_id == shared.document.id for hit in shared_only)
+    assert all(hit.document_id != duplicate.document.id for hit in shared_only)
+    actual = await owned.search(vector(), r.config, r.provider.configuration, owner_id="alice", limit=10)
+    assert {hit.document_id for hit in actual} == {duplicate.document.id, alice.document.id}
+    assert all(hit.document_id != deleted.document.id for hit in actual)
+
+
+async def test_membership_owned_backend_fails_closed_for_incomplete_plan(retrieval, sessions):
+    r = retrieval
+    item = await r.create("incomplete owned vector")
+    await _copy_legacy_vectors_to_memberships(sessions)
+    async with sessions() as session, session.begin():
+        await session.execute(
+            delete(MembershipChunkEmbeddingRow).where(
+                MembershipChunkEmbeddingRow.document_version_id == item.version.id
+            )
+        )
+    legacy = PostgreSQLEvidenceRepository(sessions)
+    owned = PostgreSQLEvidenceRepository(sessions, embedding_backend="membership_owned")
+    assert any(
+        hit.document_version_id == item.version.id
+        for hit in await legacy.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
+    )
+    assert all(
+        hit.document_version_id != item.version.id
+        for hit in await owned.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
+    )
+
+
+async def test_membership_owned_backend_supports_a_second_embedding_configuration(retrieval, sessions):
+    r = retrieval
+    item = await r.create("alternate compatible profile")
+    alternative = EmbeddingConfig(provider="synthetic", model_id="known-cosine-alternative", model_revision="1")
+    r.provider.configuration = alternative
+    await r.workflow.execute(item.document.id, item.version.id, r.config, alternative)
+    await _copy_legacy_vectors_to_memberships(sessions)
+    legacy = PostgreSQLEvidenceRepository(sessions)
+    owned = PostgreSQLEvidenceRepository(sessions, embedding_backend="membership_owned")
+    expected = await legacy.search(vector(), r.config, alternative, owner_id=None, limit=10)
+    actual = await owned.search(vector(), r.config, alternative, owner_id=None, limit=10)
+    assert actual == expected and [hit.document_version_id for hit in actual] == [item.version.id]
+
+
+async def test_readiness_search_exposes_unbackfilled_active_version_as_coverage_gap(retrieval, sessions):
+    r = retrieval
+    item = await r.create("active but marker removed")
+    async with sessions() as session:
+        async with session.begin():
+            marker = await session.scalar(
+                select(ChunkPlanReadinessRow).where(ChunkPlanReadinessRow.document_version_id == item.version.id)
+            )
+            assert marker is not None
+            await session.delete(marker)
+    reference = PostgreSQLEvidenceRepository(sessions)
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    expected = await reference.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
+    actual = await ready.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
+    assert any(hit.document_version_id == item.version.id for hit in expected)
+    assert all(hit.document_version_id != item.version.id for hit in actual)
 
 
 async def test_unicode_ranges_resolve_multiple_original_partial_spans(retrieval):
@@ -237,12 +463,36 @@ async def test_superseded_version_and_old_locations_are_excluded(retrieval, sess
             session.add(_version_row(version))
     await r.plans.save(replace(old.plan, document_version_id=version.id))
     await r.workflow.execute(old.document.id, version.id, old.config, r.provider.configuration)
+    await _copy_legacy_vectors_to_memberships(sessions)
     hits = await r.search().execute("q", owner_id=None)
+    owned = PostgreSQLEvidenceRepository(sessions, embedding_backend="membership_owned")
+    owned_hits = await owned.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
+    hnsw = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw")
+    hnsw_hits = await hnsw.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
     assert len(hits) == 1 and hits[0].document_version_id == version.id
+    assert owned_hits == hits
+    assert hnsw_hits == hits
     assert hits[0].source_spans == (span,) and hits[0].source.revision == "2"
 
 
-async def test_selected_embedding_profile_requires_every_eligible_vector_before_top_k(retrieval):
+async def test_membership_owned_keeps_chunking_profiles_separate(retrieval, sessions):
+    r = retrieval
+    pairs = (
+        replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=2),
+        replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=1),
+    )
+    await r.create("abcd", config=pairs[0])
+    await r.create("abcd", config=pairs[1])
+    await _copy_legacy_vectors_to_memberships(sessions)
+    legacy = PostgreSQLEvidenceRepository(sessions)
+    owned = PostgreSQLEvidenceRepository(sessions, embedding_backend="membership_owned")
+    for config, expected_chunk_count in zip(pairs, (2, 4), strict=True):
+        expected = await legacy.search(vector(), config, r.provider.configuration, owner_id=None, limit=10)
+        actual = await owned.search(vector(), config, r.provider.configuration, owner_id=None, limit=10)
+        assert actual == expected and len(actual) == expected_chunk_count
+
+
+async def test_selected_embedding_profile_requires_every_eligible_vector_before_top_k(retrieval, sessions):
     r = retrieval
     config = replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=1)
     partial = await r.create("ab", config=config)
@@ -252,8 +502,17 @@ async def test_selected_embedding_profile_requires_every_eligible_vector_before_
     await r.embeddings.save(complete.plan.chunks[0], r.provider.configuration, vector(1, 2))
     hits = await r.search(config).execute("q", 1, owner_id=None)
     assert [hit.document_id for hit in hits] == [complete.document.id]
+    bounded = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw", hnsw_candidate_limits=(1,))
+    # The nearest candidate belongs to an incomplete plan. Its missing sibling
+    # is outside the candidate set, but must still exclude the entire plan.
+    assert await bounded.search(vector(), config, r.provider.configuration, owner_id=None, limit=1) == ()
+    hnsw = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw")
+    assert await hnsw.search(vector(), config, r.provider.configuration, owner_id=None, limit=1) == hits
     await r.embeddings.save(partial.plan.chunks[1], r.provider.configuration, vector())
     assert len(await r.search(config).execute("q", owner_id=None)) == 3
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    # Manual vectors do not establish readiness for the alternate profile.
+    assert await ready.search(vector(), config, r.provider.configuration, owner_id=None, limit=10) == ()
     r.provider.configuration = replace(r.provider.configuration, model_id="missing-model")
     assert await r.search(config).execute("q", owner_id=None) == ()
 
@@ -268,7 +527,7 @@ async def test_exact_serving_embedding_identity_prevents_cross_profile_search(re
     assert await r.search().execute("q", owner_id=None) == ()
 
 
-async def test_selected_chunking_profile_requires_complete_plan(retrieval):
+async def test_selected_chunking_profile_requires_complete_plan(retrieval, sessions):
     r = retrieval
     item = await r.create("ab")
     other = replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=1)
@@ -279,12 +538,15 @@ async def test_selected_chunking_profile_requires_complete_plan(retrieval):
     await r.plans.save(plan)
     await r.embeddings.save(plan.chunks[0], r.provider.configuration, vector())
     assert await r.search(other).execute("q", owner_id=None) == ()
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    assert await ready.search(vector(), other, r.provider.configuration, owner_id=None, limit=10) == ()
     await r.embeddings.save(plan.chunks[1], r.provider.configuration, vector())
     assert len(await r.search(other).execute("q", owner_id=None)) == 2
+    assert await ready.search(vector(), other, r.provider.configuration, owner_id=None, limit=10) == ()
 
 
 @pytest.mark.parametrize("corruption", ["missing", "ordinal", "count", "gap", "outside"])
-async def test_invalid_active_plan_is_excluded_before_limit(retrieval, db_engine, corruption):
+async def test_invalid_active_plan_is_excluded_before_limit(retrieval, db_engine, sessions, corruption):
     r = retrieval
     config = replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=2)
     bad = await r.create("abcd", config=config)
@@ -312,9 +574,18 @@ async def test_invalid_active_plan_is_excluded_before_limit(retrieval, db_engine
             connection.execute(update(ChunkMembershipRow).where(member, ChunkMembershipRow.ordinal == 1).values(end=5))
     hits = await r.search(config).execute("q", 1, owner_id=None)
     assert len(hits) == 1 and hits[0].document_id == good.document.id
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    assert await ready.search(
+        vector(), config, r.provider.configuration, owner_id=None, limit=1
+    ) == await r.evidence.search(vector(), config, r.provider.configuration, owner_id=None, limit=1)
+
+    hnsw = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw")
+    assert await hnsw.search(vector(), config, r.provider.configuration, owner_id=None, limit=1) == hits
 
 
-async def test_python_unicode_whitespace_agrees_with_indexer_and_empty_active_states_are_hidden(retrieval, db_engine):
+async def test_python_unicode_whitespace_agrees_with_indexer_and_empty_active_states_are_hidden(
+    retrieval, db_engine, sessions
+):
     r = retrieval
     config = replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=1)
     mixed = await r.create("\u0085\xa0\x1c😀\u2007", config=config)
@@ -328,9 +599,13 @@ async def test_python_unicode_whitespace_agrees_with_indexer_and_empty_active_st
             )
     hits = await r.search(config).execute("q", owner_id=None)
     assert [(hit.document_id, hit.start, hit.end, hit.text) for hit in hits] == [(mixed.document.id, 3, 4, "😀")]
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    assert await ready.search(
+        vector(), config, r.provider.configuration, owner_id=None, limit=10
+    ) == await r.evidence.search(vector(), config, r.provider.configuration, owner_id=None, limit=10)
 
 
-async def test_equivalent_embedding_rows_do_not_duplicate_or_change_reused_vector(retrieval, db_engine):
+async def test_equivalent_embedding_rows_do_not_duplicate_or_change_reused_vector(retrieval, db_engine, sessions):
     r = retrieval
     item = await r.create()
     with db_engine.begin() as connection:
@@ -353,9 +628,15 @@ async def test_equivalent_embedding_rows_do_not_duplicate_or_change_reused_vecto
         )
     hits = await r.search().execute("q", owner_id=None)
     assert len(hits) == 1 and hits[0].score == pytest.approx(1)
+    hnsw = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw")
+    assert await hnsw.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10) == hits
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    assert await ready.search(
+        vector(), r.config, r.provider.configuration, owner_id=None, limit=10
+    ) == await r.evidence.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10)
 
 
-async def test_ambiguous_equivalent_chunk_plans_are_not_served(retrieval, db_engine):
+async def test_ambiguous_equivalent_chunk_plans_are_not_served(retrieval, db_engine, sessions):
     r = retrieval
     item = await r.create()
     with db_engine.begin() as connection:
@@ -383,6 +664,11 @@ async def test_ambiguous_equivalent_chunk_plans_are_not_served(retrieval, db_eng
             )
         )
     assert await r.search().execute("q", owner_id=None) == ()
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    assert await ready.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10) == ()
+
+    hnsw = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw")
+    assert await hnsw.search(vector(), r.config, r.provider.configuration, owner_id=None, limit=10) == ()
 
 
 async def test_query_embedding_has_no_open_database_session(retrieval, sessions):
@@ -518,3 +804,54 @@ async def test_bounded_single_statement_search_over_one_thousand_distinct_vector
         f"EXPLAIN execution={explain['Execution Time']:.2f} ms, "
         f"planning={explain['Planning Time']:.2f} ms. Not a full-corpus benchmark."
     )
+
+
+@pytest.mark.parametrize("ef", [100, 200, 400])
+async def test_hnsw_uses_exact_configured_ef_and_local_settings(retrieval, sessions, ef):
+    await retrieval.create()
+    captured = []
+    engine = sessions.kw["bind"].sync_engine
+
+    def capture(connection, cursor, statement, parameters, context, executemany):
+        if "set_config('hnsw." in statement:
+            captured.append((statement, parameters["value"]))
+
+    event.listen(engine, "before_cursor_execute", capture)
+    try:
+        repo = PostgreSQLEvidenceRepository(
+            sessions, semantic_backend="hnsw", hnsw_ef_search=ef, hnsw_candidate_limits=(100,)
+        )
+        assert (
+            len(await repo.search(vector(), retrieval.config, retrieval.provider.configuration, owner_id=None, limit=1))
+            == 1
+        )
+    finally:
+        event.remove(engine, "before_cursor_execute", capture)
+    assert [value for sql, value in captured] == [str(ef), "off"]
+    assert all(", true)" in sql for sql, value in captured)
+
+
+@pytest.mark.parametrize("missing_sibling", [False, True])
+async def test_hnsw_validates_all_ranges_of_candidate_content(retrieval, sessions, missing_sibling):
+    r = retrieval
+    config = replace(r.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=1)
+    r.provider.vectors = {"a": vector(), "b": vector(0, 1)}
+    item = await r.create("ab", config=config)
+    if missing_sibling:
+        async with sessions() as session, session.begin():
+            await session.execute(
+                delete(ChunkEmbeddingRow).where(
+                    ChunkEmbeddingRow.content_sha256 == bytes.fromhex(item.plan.chunks[1].content_sha256),
+                    ChunkEmbeddingRow.start == 1,
+                    ChunkEmbeddingRow.end == 2,
+                )
+            )
+    repo = PostgreSQLEvidenceRepository(sessions, semantic_backend="hnsw", hnsw_candidate_limits=(1,))
+    hits = await repo.search(vector(), config, r.provider.configuration, owner_id=None, limit=1)
+    expected = await r.evidence.search(vector(), config, r.provider.configuration, owner_id=None, limit=1)
+    assert hits == expected
+    if missing_sibling:
+        assert hits == ()
+    else:
+        # Only a is an ANN candidate, but b must remain available for full-plan validation.
+        assert len(hits) == 1 and hits[0].text == "a"

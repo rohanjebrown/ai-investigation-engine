@@ -3,6 +3,7 @@
 import asyncio
 import sys
 from logging.config import fileConfig
+from time import sleep
 
 from alembic import context
 from sqlalchemy import Connection, pool, text
@@ -35,13 +36,26 @@ def run_migrations_offline() -> None:
 def run_migrations(connection: Connection, *, lock_already_acquired: bool = False) -> None:
     if connection.dialect.server_version_info < (15,):
         raise RuntimeError("This schema requires PostgreSQL 15+ for NULLS NOT DISTINCT")
-    # Also protect callers that supply their own connection. Its surrounding
-    # transaction keeps this lock through Alembic's revision checks and DDL.
+    # Also protect callers that supply their own connection. A session lock
+    # survives Alembic's autocommit blocks for concurrent index operations.
     if not lock_already_acquired:
-        connection.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": MIGRATION_LOCK_KEY})
-    context.configure(connection=connection, target_metadata=target_metadata)
-    with context.begin_transaction():
-        context.run_migrations()
+        connection.execution_options(isolation_level="AUTOCOMMIT")
+        while not connection.scalar(text("SELECT pg_try_advisory_lock(:key)"), {"key": MIGRATION_LOCK_KEY}):
+            sleep(0.05)
+        connection.commit()
+        connection.execution_options(isolation_level="READ COMMITTED")
+    try:
+        context.configure(connection=connection, target_metadata=target_metadata)
+        with context.begin_transaction():
+            context.run_migrations()
+    finally:
+        if not lock_already_acquired:
+            if connection.in_transaction():
+                connection.rollback()
+            connection.execution_options(isolation_level="AUTOCOMMIT")
+            connection.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": MIGRATION_LOCK_KEY})
+            connection.commit()
+            connection.execution_options(isolation_level="READ COMMITTED")
 
 
 async def run_migrations_online() -> None:
@@ -56,17 +70,22 @@ async def run_migrations_online() -> None:
     )
     try:
         async with engine.connect() as connection:
-            # Commit acquisition so Alembic can own its migration transactions
-            # while this session-level lock spans revision inspection and DDL.
-            await connection.execute(text("SELECT pg_advisory_lock(:key)"), {"key": MIGRATION_LOCK_KEY})
+            # Acquire outside a transaction: a lock waiter must not hold a
+            # transaction ID that blocks the migration lock owner.
+            connection = await connection.execution_options(isolation_level="AUTOCOMMIT")
+            while not await connection.scalar(text("SELECT pg_try_advisory_lock(:key)"), {"key": MIGRATION_LOCK_KEY}):
+                await asyncio.sleep(0.05)
             await connection.commit()
             try:
+                connection = await connection.execution_options(isolation_level="READ COMMITTED")
                 await connection.run_sync(run_migrations, lock_already_acquired=True)
             finally:
                 if connection.in_transaction():
                     await connection.rollback()
+                connection = await connection.execution_options(isolation_level="AUTOCOMMIT")
                 await connection.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": MIGRATION_LOCK_KEY})
                 await connection.commit()
+                connection = await connection.execution_options(isolation_level="READ COMMITTED")
     finally:
         await engine.dispose()
 

@@ -49,12 +49,17 @@ def test_migrated_schema_matches_mappings_and_only_essential_indexes(db_engine):
             "version_chunk_plans",
             "chunk_memberships",
             "chunk_embeddings",
+            "membership_chunk_embeddings",
         ]
         indexes = connection.scalars(
             text("SELECT indexname FROM pg_indexes WHERE schemaname='public' AND tablename=ANY(:tables)"),
             {"tables": derived},
         ).all()
-        assert set(indexes) == {"pk_" + name for name in derived} | {"uq_chunk_memberships_range"}
+        assert set(indexes) == {"pk_" + name for name in derived} | {
+            "uq_chunk_memberships_range",
+            "ix_chunk_embeddings_embedding_hnsw",
+            "ix_membership_chunk_embeddings_configuration_membership",
+        }
 
 
 @pytest.mark.parametrize(

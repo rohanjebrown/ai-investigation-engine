@@ -3,7 +3,6 @@
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 
-from investigation_engine.infrastructure.observability.tracing import instrument_database
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from investigation_engine.application.chunking import ChunkingConfig
@@ -13,6 +12,7 @@ from investigation_engine.application.use_cases.answer_question import AnswerQue
 from investigation_engine.application.use_cases.delete_document import DeleteDocument
 from investigation_engine.application.use_cases.get_document import GetDocument
 from investigation_engine.application.use_cases.index_document_version import IndexDocumentVersion
+from investigation_engine.application.use_cases.ingest_document import IngestDocument
 from investigation_engine.application.use_cases.list_documents import ListDocuments
 from investigation_engine.application.use_cases.prepare_document_indexing import PrepareDocumentIndexing
 from investigation_engine.application.use_cases.register_document import RegisterDocument
@@ -21,6 +21,7 @@ from investigation_engine.application.use_cases.update_document import UpdateDoc
 from investigation_engine.infrastructure.embeddings.gemini_provider import GeminiEmbeddingProvider
 from investigation_engine.infrastructure.generation.gemini_answer_generator import GeminiAnswerGenerator
 from investigation_engine.infrastructure.generation.gemini_investigation_model import GeminiInvestigationModel
+from investigation_engine.infrastructure.observability.tracing import instrument_database
 from investigation_engine.infrastructure.persistence.models import ChunkingConfigurationRow
 from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
     PostgreSQLChunkPlanRepository,
@@ -34,6 +35,9 @@ from investigation_engine.infrastructure.persistence.postgresql_embedding_reposi
     PostgreSQLEmbeddingRepository,
 )
 from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import PostgreSQLEvidenceRepository
+from investigation_engine.infrastructure.persistence.postgresql_indexed_document_repository import (
+    PostgreSQLIndexedDocumentRepository,
+)
 from investigation_engine.infrastructure.tokenization.huggingface_tokenizer import (
     VOYAGE_REFERENCE_NAME,
     VOYAGE_REFERENCE_REVISION,
@@ -55,6 +59,7 @@ class APIServices:
     chunking: ChunkingConfig
     embedding_configuration: EmbeddingConfig
     investigations: InvestigateQuestion | None = None
+    ingest_document: IngestDocument | None = None
 
 
 def _engine_options(config):
@@ -87,7 +92,7 @@ async def application_service():
             engine = create_async_engine(settings.database_url(), **_engine_options(settings))
             resources.push_async_callback(engine.dispose)
 
-            if settings.otel_enabled:
+            if getattr(settings, "otel_enabled", False):
                 instrument_database(engine)
 
             sessions = async_sessionmaker(engine, expire_on_commit=False)
@@ -140,11 +145,19 @@ async def application_service():
                 embeddings,
                 activation,
                 embedding,
-                max_attempts=1,
-                request_timeout_seconds=60,
+                max_attempts=getattr(settings, "embedding_max_attempts", 3),
+                retry_delay_seconds=getattr(settings, "embedding_retry_base_delay_seconds", 1.0),
+                max_retry_delay_seconds=getattr(settings, "embedding_retry_max_delay_seconds", 30.0),
+                request_timeout_seconds=getattr(settings, "embedding_request_timeout_seconds", 60.0),
             )
             evidence = PostgreSQLEvidenceRepository(
-                sessions, lexical_backend=getattr(settings, "lexical_search_backend", "postgres_fts")
+                sessions,
+                lexical_backend=getattr(settings, "lexical_search_backend", "postgres_fts"),
+                embedding_backend=getattr(settings, "retrieval_embedding_backend", "legacy_shared"),
+                semantic_backend=getattr(settings, "semantic_search_backend", "exact"),
+                hnsw_ef_search=getattr(settings, "hnsw_ef_search", 400),
+                hnsw_candidate_limits=getattr(settings, "hnsw_candidate_limits", (400,)),
+                hnsw_iterative_scan=getattr(settings, "hnsw_iterative_scan", False),
             )
             await evidence.validate_backend()
             search = SearchEvidence(
@@ -174,6 +187,17 @@ async def application_service():
                 prepare_indexing=PrepareDocumentIndexing(plans, indexer, tokenizer) if tokenizer is not None else None,
                 chunking=chunking,
                 embedding_configuration=embedding.configuration,
+                ingest_document=(
+                    IngestDocument(
+                        PostgreSQLIndexedDocumentRepository(sessions),
+                        indexer,
+                        tokenizer,
+                        chunking,
+                        embedding.configuration,
+                    )
+                    if tokenizer is not None
+                    else None
+                ),
                 investigations=(
                     InvestigateQuestion(
                         search,
@@ -236,7 +260,13 @@ async def question_service():
                     raise ValueError("Selected serving chunking configuration does not exist")
                 chunking = _configuration(row)
             evidence = PostgreSQLEvidenceRepository(
-                sessions, lexical_backend=getattr(settings, "lexical_search_backend", "postgres_fts")
+                sessions,
+                lexical_backend=getattr(settings, "lexical_search_backend", "postgres_fts"),
+                embedding_backend=getattr(settings, "retrieval_embedding_backend", "legacy_shared"),
+                semantic_backend=getattr(settings, "semantic_search_backend", "exact"),
+                hnsw_ef_search=getattr(settings, "hnsw_ef_search", 400),
+                hnsw_candidate_limits=getattr(settings, "hnsw_candidate_limits", (400,)),
+                hnsw_iterative_scan=getattr(settings, "hnsw_iterative_scan", False),
             )
             await evidence.validate_backend()
             search = SearchEvidence(

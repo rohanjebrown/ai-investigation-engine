@@ -1,12 +1,15 @@
 import asyncio
+import sys
 from dataclasses import replace
 from datetime import UTC, datetime
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid7
 
 import pytest
 from sqlalchemy import delete, event, func, insert, select, text, update
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import DBAPIError, OperationalError
 
 from investigation_engine.application.chunking import Chunk, ChunkingConfig, ChunkingStrategy, chunk_document
 from investigation_engine.application.embeddings import embedding_eligible, storage_vector
@@ -33,6 +36,13 @@ from investigation_engine.infrastructure.persistence.postgresql_document_activat
 from investigation_engine.infrastructure.persistence.postgresql_embedding_repository import (
     PostgreSQLEmbeddingRepository,
 )
+
+_FAST_BACKFILL_PATH = Path(__file__).resolve().parents[4] / "scripts" / "backfill_chunk_plan_readiness_fast.py"
+_FAST_BACKFILL_SPEC = spec_from_file_location("fast_readiness_backfill", _FAST_BACKFILL_PATH)
+_FAST_BACKFILL_MODULE = module_from_spec(_FAST_BACKFILL_SPEC)
+sys.modules[_FAST_BACKFILL_SPEC.name] = _FAST_BACKFILL_MODULE
+_FAST_BACKFILL_SPEC.loader.exec_module(_FAST_BACKFILL_MODULE)
+fast_backfill = _FAST_BACKFILL_MODULE.backfill
 
 
 @pytest.fixture
@@ -354,6 +364,30 @@ async def test_activation_failure_rolls_back_readiness(services, registered_plan
         assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
 
 
+async def test_unverified_direct_readiness_insert_is_rejected(services, registered_plan, db_engine):
+    item = await registered_plan()
+    chunk = next(chunk for chunk in item.plan.chunks if embedding_eligible(chunk))
+    await services.vectors.save(chunk, services.profile, (1.0,) + (0.0,) * 767)
+    with db_engine.connect() as connection:
+        chunking_id = connection.scalar(
+            select(VersionChunkPlanRow.chunking_configuration_id).where(
+                VersionChunkPlanRow.document_version_id == item.version.id
+            )
+        )
+        embedding_id = connection.scalar(select(func.min(EmbeddingConfigurationRow.id)))
+    with pytest.raises(DBAPIError, match="complete eligible embeddings"):
+        with db_engine.begin() as connection:
+            connection.execute(
+                insert(ChunkPlanReadinessRow).values(
+                    document_version_id=item.version.id,
+                    chunking_configuration_id=chunking_id,
+                    embedding_configuration_id=embedding_id,
+                )
+            )
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
+
+
 async def test_partial_cache_generates_only_missing_chunk(services, registered_plan):
     item = await registered_plan()
     await services.vectors.save(item.plan.chunks[0], services.profile, (1.0,) + (0.0,) * 767)
@@ -364,9 +398,11 @@ async def test_partial_cache_generates_only_missing_chunk(services, registered_p
 async def test_shared_embedding_mutation_invalidates_readiness_and_explicit_backfill_revalidates(
     services, registered_plan, db_engine
 ):
-    item = await registered_plan()
-    assert await index(services, item) == IndexingOutcome.ACTIVATED
-    chunk = next(chunk for chunk in item.plan.chunks if embedding_eligible(chunk))
+    first, second = await registered_plan(source_id="shared-a"), await registered_plan(source_id="shared-b")
+    assert await index(services, first) == IndexingOutcome.ACTIVATED
+    assert await index(services, second) == IndexingOutcome.ACTIVATED
+    assert first.plan.chunks[0].identity == second.plan.chunks[0].identity
+    chunk = next(chunk for chunk in first.plan.chunks if embedding_eligible(chunk))
     with db_engine.begin() as connection:
         connection.execute(
             delete(ChunkEmbeddingRow).where(
@@ -377,12 +413,166 @@ async def test_shared_embedding_mutation_invalidates_readiness_and_explicit_back
         )
         assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
     await services.vectors.save(chunk, services.profile, (1.0,) + (0.0,) * 767)
-    report = await services.activation.backfill_active(item.config, services.profile)
-    assert len(report) == 1 and report[0]["status"] == "verified"
-    assert report[0]["document_version_id"] == str(item.version.id)
-    assert (await services.activation.backfill_active(item.config, services.profile)) == report
+    report = [row async for row in services.activation.backfill_active(first.config, services.profile)]
+    assert {row["status"] for row in report} == {"verified"}
+    assert {row["document_version_id"] for row in report} == {str(first.version.id), str(second.version.id)}
+    assert [row async for row in services.activation.backfill_active(first.config, services.profile)] == report
     with db_engine.connect() as connection:
-        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 1
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 2
+
+
+async def test_fast_readiness_backfill_is_batched_idempotent_and_resumable(
+    services, registered_plan, sessions, db_engine
+):
+    first = await registered_plan(source_id="fast-backfill-a")
+    second = await registered_plan(source_id="fast-backfill-b")
+    assert await index(services, first) == IndexingOutcome.ACTIVATED
+    assert await index(services, second) == IndexingOutcome.ACTIVATED
+    with db_engine.begin() as connection:
+        connection.execute(delete(ChunkPlanReadinessRow))
+
+    first_run = await fast_backfill(sessions, first.config, services.profile, batch_size=100, emit=lambda _line: None)
+    assert (first_run["processed"], first_run["verified"], first_run["skipped"], first_run["failed"]) == (2, 2, 0, 0)
+    assert first_run["transactions"] == 1
+
+    resumed = await fast_backfill(sessions, first.config, services.profile, batch_size=100, emit=lambda _line: None)
+    assert (resumed["processed"], resumed["verified"], resumed["skipped"], resumed["failed"]) == (2, 2, 0, 0)
+    assert resumed["transactions"] == 0
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 2
+
+
+async def test_fast_readiness_backfill_can_bound_a_diagnostic_population(
+    services, registered_plan, sessions, db_engine
+):
+    first = await registered_plan(source_id="fast-selected")
+    second = await registered_plan(source_id="fast-unselected")
+    assert await index(services, first) == IndexingOutcome.ACTIVATED
+    assert await index(services, second) == IndexingOutcome.ACTIVATED
+    with db_engine.begin() as connection:
+        connection.execute(delete(ChunkPlanReadinessRow))
+
+    report = await fast_backfill(
+        sessions,
+        first.config,
+        services.profile,
+        candidate_document_ids=(first.document.id,),
+        batch_size=1,
+        emit=lambda _line: None,
+    )
+    assert (report["processed"], report["verified"], report["failed"]) == (1, 1, 0)
+    with db_engine.connect() as connection:
+        assert set(connection.scalars(select(ChunkPlanReadinessRow.document_version_id))) == {first.version.id}
+
+
+async def test_fast_readiness_backfill_bisects_invalid_batch_and_keeps_valid_rows(
+    services, registered_plan, sessions, db_engine
+):
+    good = await registered_plan(source_id="fast-good")
+    bad = await registered_plan(source_id="fast-invalid")
+    assert await index(services, good) == IndexingOutcome.ACTIVATED
+    assert await index(services, bad) == IndexingOutcome.ACTIVATED
+    with db_engine.begin() as connection:
+        connection.execute(delete(ChunkPlanReadinessRow))
+        connection.execute(
+            update(ChunkMembershipRow)
+            .where(
+                ChunkMembershipRow.document_version_id == bad.version.id,
+                ChunkMembershipRow.ordinal == 0,
+            )
+            .values(ordinal=100)
+        )
+
+    report = await fast_backfill(sessions, good.config, services.profile, batch_size=100, emit=lambda _line: None)
+    assert (report["processed"], report["verified"], report["skipped"], report["failed"]) == (2, 1, 0, 1)
+    assert report["validation_retry_subdivisions"] >= 1
+    with db_engine.connect() as connection:
+        assert set(connection.scalars(select(ChunkPlanReadinessRow.document_version_id))) == {good.version.id}
+
+
+async def test_fast_readiness_backfill_dry_run_does_not_insert(services, registered_plan, sessions, db_engine):
+    item = await registered_plan(source_id="fast-dry-run")
+    assert await index(services, item) == IndexingOutcome.ACTIVATED
+    with db_engine.begin() as connection:
+        connection.execute(delete(ChunkPlanReadinessRow))
+
+    report = await fast_backfill(
+        sessions, item.config, services.profile, batch_size=1, dry_run=True, emit=lambda _line: None
+    )
+    assert report["processed"] == 1 and report["would_validate"] == 1
+    assert report["verified"] == report["failed"] == 0
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
+
+
+async def test_fast_readiness_backfill_revalidates_after_concurrent_membership_change(
+    services, registered_plan, sessions, db_engine
+):
+    item = await registered_plan(source_id="fast-concurrent-mutation")
+    assert await index(services, item) == IndexingOutcome.ACTIVATED
+    with db_engine.begin() as connection:
+        connection.execute(delete(ChunkPlanReadinessRow))
+
+    statement_started = asyncio.Event()
+
+    def before_execute(_connection, _cursor, statement, _parameters, _context, _executemany):
+        if "INSERT INTO chunk_plan_readiness" in statement:
+            statement_started.set()
+
+    async_engine = sessions.kw["bind"].sync_engine
+    event.listen(async_engine, "before_cursor_execute", before_execute)
+    with db_engine.connect() as writer:
+        transaction = writer.begin()
+        writer.execute(
+            select(VersionChunkPlanRow)
+            .where(VersionChunkPlanRow.document_version_id == item.version.id)
+            .with_for_update()
+        )
+        task = asyncio.create_task(
+            fast_backfill(sessions, item.config, services.profile, batch_size=1, emit=lambda _line: None)
+        )
+        try:
+            await asyncio.wait_for(statement_started.wait(), timeout=5)
+            writer.execute(
+                update(ChunkMembershipRow)
+                .where(
+                    ChunkMembershipRow.document_version_id == item.version.id,
+                    ChunkMembershipRow.ordinal == 0,
+                )
+                .values(ordinal=100)
+            )
+            transaction.commit()
+            report = await task
+        finally:
+            event.remove(async_engine, "before_cursor_execute", before_execute)
+            if transaction.is_active:
+                transaction.rollback()
+            if not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+    assert report["failed"] == 1 and report["verified"] == 0
+    with db_engine.connect() as connection:
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
+
+
+async def test_shared_embedding_invalidation_does_not_cross_content_hash(services, registered_plan, db_engine):
+    first = await registered_plan(body="a b", source_id="content-a")
+    second = await registered_plan(body="x y", source_id="content-b")
+    assert first.plan.chunks[0].start == second.plan.chunks[0].start
+    assert first.plan.chunks[0].content_sha256 != second.plan.chunks[0].content_sha256
+    assert await index(services, first) == IndexingOutcome.ACTIVATED
+    assert await index(services, second) == IndexingOutcome.ACTIVATED
+    chunk = next(chunk for chunk in first.plan.chunks if embedding_eligible(chunk))
+    with db_engine.begin() as connection:
+        connection.execute(
+            delete(ChunkEmbeddingRow).where(
+                ChunkEmbeddingRow.content_sha256 == bytes.fromhex(chunk.content_sha256),
+                ChunkEmbeddingRow.start == chunk.start,
+                ChunkEmbeddingRow.end == chunk.end,
+            )
+        )
+        remaining = set(connection.scalars(select(ChunkPlanReadinessRow.document_version_id)))
+    assert remaining == {second.version.id}
 
 
 async def test_membership_mutation_invalidates_readiness(services, registered_plan, db_engine):
@@ -394,6 +584,39 @@ async def test_membership_mutation_invalidates_readiness(services, registered_pl
             .where(ChunkMembershipRow.document_version_id == item.version.id)
             .values(ordinal=ChunkMembershipRow.ordinal + 1000)
         )
+        assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
+
+
+async def test_concurrent_membership_mutation_cannot_leave_stale_readiness(
+    services, registered_plan, sessions, db_engine
+):
+    item = await registered_plan()
+    assert await index(services, item) == IndexingOutcome.ACTIVATED
+    statement_started = asyncio.Event()
+
+    async def mutate_membership():
+        async with sessions() as mutator:
+            async with mutator.begin():
+                statement_started.set()
+                await mutator.execute(
+                    update(ChunkMembershipRow)
+                    .where(ChunkMembershipRow.document_version_id == item.version.id)
+                    .values(ordinal=ChunkMembershipRow.ordinal + 1000)
+                )
+
+    async with sessions() as holder:
+        async with holder.begin():
+            await holder.execute(
+                select(VersionChunkPlanRow)
+                .where(VersionChunkPlanRow.document_version_id == item.version.id)
+                .with_for_update()
+            )
+            mutation = asyncio.create_task(mutate_membership())
+            await statement_started.wait()
+            await asyncio.sleep(0.1)
+            assert not mutation.done()
+    await asyncio.wait_for(mutation, timeout=5)
+    with db_engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 0
 
 

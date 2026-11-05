@@ -64,7 +64,9 @@ async def configuration_id(session: AsyncSession, config: EmbeddingConfig) -> in
     return found
 
 
-async def validate_chunks(session: AsyncSession, chunks: tuple[Chunk, ...]) -> None:
+async def validate_chunks(
+    session: AsyncSession, chunks: tuple[Chunk, ...], *, require_registered_content: bool = True
+) -> None:
     for chunk in chunks:
         if not isinstance(chunk, Chunk):
             raise ValueError("An exact Chunk is required")
@@ -82,7 +84,9 @@ async def validate_chunks(session: AsyncSession, chunks: tuple[Chunk, ...]) -> N
         contents = {row.sha256.hex(): _content(row) for row in rows}
     except (TypeError, ValueError) as error:
         raise RepositoryError("Stored embedding Content is invalid") from error
-    if any(contents.get(chunk.content_sha256) != chunk.content for chunk in chunks):
+    if require_registered_content and any(contents.get(chunk.content_sha256) != chunk.content for chunk in chunks):
+        raise ValueError("Embedding chunk must reference exact registered Content")
+    if any(chunk.content_sha256 in contents and contents[chunk.content_sha256] != chunk.content for chunk in chunks):
         raise ValueError("Embedding chunk must reference exact registered Content")
 
 
@@ -92,9 +96,10 @@ async def find_embeddings(
     config: EmbeddingConfig,
     *,
     lock: bool = False,
+    require_registered_content: bool = True,
 ) -> dict[tuple[str, int, int], EmbeddingVector]:
     filters = configuration_filter(config)
-    await validate_chunks(session, chunks)
+    await validate_chunks(session, chunks, require_registered_content=require_registered_content)
     found = {}
     # Bound SQL parameter counts without introducing a batch/job abstraction.
     keys = list(dict.fromkeys((bytes.fromhex(c.content_sha256), c.start, c.end) for c in chunks))
@@ -108,7 +113,12 @@ async def find_embeddings(
                     keys[offset : offset + 500]
                 ),
             )
-            .order_by(ChunkEmbeddingRow.embedding_configuration_id)
+            .order_by(
+                ChunkEmbeddingRow.embedding_configuration_id,
+                ChunkEmbeddingRow.content_sha256,
+                ChunkEmbeddingRow.start,
+                ChunkEmbeddingRow.end,
+            )
         )
         if lock:
             query = query.with_for_update(of=ChunkEmbeddingRow)

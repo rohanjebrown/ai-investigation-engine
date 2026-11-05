@@ -49,6 +49,12 @@ def management_app():
     async def unused(*args, **kwargs):
         raise AssertionError("Not expected in this test")
 
+    async def ingest(extracted, *, actor):
+        document, version = await RegisterDocument(repository).execute(extracted, owner_id=actor.principal_id)
+        document = replace(document, current_version_id=version.id)
+        repository._documents[document.id] = document
+        return document, version
+
     services = SimpleNamespace(
         settings=settings,
         questions=question_service,
@@ -59,10 +65,9 @@ def management_app():
         get_document=GetDocument(repository),
         prepare_indexing=SimpleNamespace(
             execute=AsyncMock(),
-            inspect=AsyncMock(
-                return_value=IndexingProgress(IndexingState.REGISTERED_NOT_INDEXED, None, 0, False, False)
-            ),
+            inspect=AsyncMock(return_value=IndexingProgress(IndexingState.SEARCHABLE, 1, 1, True, True)),
         ),
+        ingest_document=SimpleNamespace(create=AsyncMock(side_effect=ingest), replace=AsyncMock()),
         chunking=object(),
         embedding_configuration=object(),
     )
@@ -106,7 +111,7 @@ async def test_upload_registers_private_document_and_stable_retry_is_idempotent(
                 f"/documents/{first.json()['document']['id']}", headers={"Authorization": f"Bearer {ADMIN_TOKEN}"}
             )
     assert first.status_code == second.status_code == 200, first.text
-    assert first.json()["status"] == "registered_not_indexed"
+    assert first.json()["status"] == "indexed"
     assert first.json()["original_retained"] is False
     assert first.json()["document"]["owner_id"] == "admin-test"
     assert first.json()["document"]["id"] == second.json()["document"]["id"]
@@ -114,7 +119,8 @@ async def test_upload_registers_private_document_and_stable_retry_is_idempotent(
     assert page.json()["total"] == 1
     assert response.status_code == 200
     assert response.json()["versions"][0]["content"]["text"] == "Exact text.\n"
-    assert page.json()["items"][0]["current_version"] is None
+    assert page.json()["items"][0]["current_version"]["id"] == first.json()["version"]["id"]
+    assert response.json()["indexing"]["state"] == "searchable"
 
 
 async def test_distinct_upload_keys_keep_independent_sources_and_reuse_content(management_app):

@@ -209,12 +209,76 @@ async def test_transient_errors_have_bounded_configurable_retries(workflow, erro
         delays.append(delay)
 
     monkeypatch.setattr(asyncio, "sleep", wait)
+    monkeypatch.setattr(
+        "investigation_engine.application.use_cases.index_document_version.random.uniform",
+        lambda lower, upper: (lower + upper) / 2,
+    )
     w.provider.failures = [error, None]
     w.usecase = IndexDocumentVersion(
         w.plans, w.store, w.activation, w.provider, max_attempts=2, retry_delay_seconds=0.25, embedding_batch_size=1
     )
     assert await run(w) == IndexingOutcome.ACTIVATED
     assert w.provider.calls == ["a", "a", "b"] and delays == [0.25]
+
+
+async def test_retry_delays_grow_exponentially_and_remain_bounded(workflow, monkeypatch):
+    w = workflow
+    delays = []
+
+    async def wait(delay):
+        delays.append(delay)
+
+    monkeypatch.setattr(asyncio, "sleep", wait)
+    monkeypatch.setattr(
+        "investigation_engine.application.use_cases.index_document_version.random.uniform",
+        lambda lower, upper: (lower + upper) / 2,
+    )
+    w.provider.failures = [EmbeddingProviderError("busy", retryable=True)] * 2 + [None, None]
+    w.usecase = IndexDocumentVersion(
+        w.plans,
+        w.store,
+        w.activation,
+        w.provider,
+        max_attempts=3,
+        retry_delay_seconds=0.5,
+        max_retry_delay_seconds=2.0,
+        embedding_batch_size=25,
+    )
+    assert await run(w) == IndexingOutcome.ACTIVATED
+    assert w.provider.calls == ["a", "b", "a", "b", "a", "b"]
+    assert delays == [0.5, 1.0]
+
+
+async def test_retry_after_is_respected_and_delays_above_cap_fail_without_early_retry(workflow, monkeypatch):
+    w = workflow
+    delays = []
+
+    async def wait(delay):
+        delays.append(delay)
+
+    monkeypatch.setattr(asyncio, "sleep", wait)
+    w.provider.failures = [EmbeddingRateLimitError("quota", retry_after_seconds=2.0), None]
+    w.usecase = IndexDocumentVersion(
+        w.plans,
+        w.store,
+        w.activation,
+        w.provider,
+        max_attempts=2,
+        retry_delay_seconds=0.25,
+        max_retry_delay_seconds=3.0,
+        embedding_batch_size=1,
+    )
+    assert await run(w) == IndexingOutcome.ACTIVATED
+    assert delays == [2.0]
+
+    w.values.clear()
+    w.provider.calls.clear()
+    w.provider.failures = [EmbeddingRateLimitError("quota", retry_after_seconds=4.0)]
+    w.activation.activate.reset_mock()
+    with pytest.raises(EmbeddingRateLimitError):
+        await run(w)
+    assert w.provider.calls == ["a"] and delays == [2.0]
+    w.activation.activate.assert_not_awaited()
 
 
 async def test_timeout_exhausts_attempts_without_activating(workflow):
@@ -303,3 +367,21 @@ async def test_wrong_persisted_plan_cannot_be_indexed_for_another_request(workfl
     with pytest.raises(ValueError, match="complete persisted"):
         await run(w)
     assert not w.provider.calls
+
+
+def test_request_budget_includes_retry_after_cap_for_every_batch(workflow):
+    w = workflow
+    indexer = IndexDocumentVersion(
+        w.plans,
+        w.store,
+        w.activation,
+        w.provider,
+        max_attempts=3,
+        request_timeout_seconds=60,
+        retry_delay_seconds=1,
+        max_retry_delay_seconds=30,
+        embedding_batch_size=25,
+    )
+    assert indexer.maximum_retry_budget_seconds(0) == 0
+    assert indexer.maximum_retry_budget_seconds(25) == 240
+    assert indexer.maximum_retry_budget_seconds(26) == 480

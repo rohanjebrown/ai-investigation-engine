@@ -29,6 +29,10 @@ class Settings:
     gemini_api_key: str | None = field(default=None, repr=False)
     gemini_embedding_batch_size: int = 25
     gemini_embedding_batch_token_limit: int = 32768
+    embedding_max_attempts: int = 3
+    embedding_retry_base_delay_seconds: float = 1.0
+    embedding_retry_max_delay_seconds: float = 30.0
+    embedding_request_timeout_seconds: float = 60.0
     gemini_generation_model: str | None = None
     serving_chunking_configuration_id: int | None = None
     generation_timeout_seconds: int = 30
@@ -48,6 +52,11 @@ class Settings:
     investigation_max_output_tokens: int = 1024
     investigation_timeout_seconds: int = 120
     retrieval_mode: str = "semantic"
+    retrieval_embedding_backend: str = "legacy_shared"
+    semantic_search_backend: str = "exact"
+    hnsw_ef_search: int = 400
+    hnsw_candidate_limits: tuple[int, ...] = (400,)
+    hnsw_iterative_scan: bool = False
     lexical_search_backend: str = "postgres_fts"
     semantic_candidate_limit: int = 20
     keyword_candidate_limit: int = 20
@@ -112,6 +121,19 @@ def _integer_setting(name: str, default: int | None, low: int, high: int) -> int
     return parsed_integer
 
 
+def _integer_list_setting(name: str, default: tuple[int, ...]) -> tuple[int, ...]:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        values = tuple(int(value.strip()) for value in raw.split(","))
+    except ValueError:
+        raise ValueError(f"{name} must be a comma-separated list of increasing positive integers") from None
+    if not values or any(value < 1 or value > 100000 for value in values) or tuple(sorted(set(values))) != values:
+        raise ValueError(f"{name} must be a comma-separated list of increasing positive integers")
+    return values
+
+
 def _boolean_setting(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
     if raw is None:
@@ -122,6 +144,19 @@ def _boolean_setting(name: str, default: bool) -> bool:
     if boolean_text in ("0", "false", "no", "off"):
         return False
     raise ValueError(f"{name} must be a boolean value")
+
+
+def _float_setting(name: str, default: float, low: float, high: float) -> float:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        parsed = float(raw)
+    except ValueError:
+        raise ValueError(f"{name} must be a number between {low} and {high}") from None
+    if not math.isfinite(parsed) or not low <= parsed <= high:
+        raise ValueError(f"{name} must be a number between {low} and {high}")
+    return parsed
 
 
 def _temperature_setting() -> float | None:
@@ -159,6 +194,12 @@ def _load_settings() -> Settings:
     lexical_backend = os.environ.get("LEXICAL_SEARCH_BACKEND", "postgres_fts")
     if lexical_backend not in ("postgres_fts", "bm25"):
         raise ValueError("LEXICAL_SEARCH_BACKEND must be postgres_fts or bm25")
+    retrieval_embedding_backend = os.environ.get("RETRIEVAL_EMBEDDING_BACKEND", "legacy_shared")
+    if retrieval_embedding_backend not in ("legacy_shared", "membership_owned"):
+        raise ValueError("RETRIEVAL_EMBEDDING_BACKEND must be legacy_shared or membership_owned")
+    semantic_search_backend = os.environ.get("SEMANTIC_SEARCH_BACKEND", "exact")
+    if semantic_search_backend not in ("exact", "hnsw"):
+        raise ValueError("SEMANTIC_SEARCH_BACKEND must be exact or hnsw")
     connection_mode = os.environ.get("DB_CONNECTION_MODE", DB_CONNECTION_MODE_PROXY)
     if connection_mode not in (DB_CONNECTION_MODE_PROXY, "cloudsql_socket"):
         raise ValueError("DB_CONNECTION_MODE must be proxy or cloudsql_socket")
@@ -194,6 +235,10 @@ def _load_settings() -> Settings:
         gemini_api_key=os.environ.get("GEMINI_API_KEY") or None,
         gemini_embedding_batch_size=_integer_setting("GEMINI_EMBEDDING_BATCH_SIZE", 25, 1, 100),
         gemini_embedding_batch_token_limit=_integer_setting("GEMINI_EMBEDDING_BATCH_TOKEN_LIMIT", 32768, 1, 262144),
+        embedding_max_attempts=_integer_setting("EMBEDDING_MAX_ATTEMPTS", 3, 1, 5),
+        embedding_retry_base_delay_seconds=_float_setting("EMBEDDING_RETRY_BASE_DELAY_SECONDS", 1.0, 0.0, 30.0),
+        embedding_retry_max_delay_seconds=_float_setting("EMBEDDING_RETRY_MAX_DELAY_SECONDS", 30.0, 0.0, 120.0),
+        embedding_request_timeout_seconds=_float_setting("EMBEDDING_REQUEST_TIMEOUT_SECONDS", 60.0, 1.0, 180.0),
         gemini_generation_model=os.environ.get("GEMINI_GENERATION_MODEL") or None,
         serving_chunking_configuration_id=_integer_setting("SERVING_CHUNKING_CONFIGURATION_ID", None, 1, 2147483647),
         generation_timeout_seconds=_integer_setting("GENERATION_TIMEOUT_SECONDS", 30, 1, 120),
@@ -213,6 +258,11 @@ def _load_settings() -> Settings:
         investigation_max_output_tokens=_integer_setting("INVESTIGATION_MAX_OUTPUT_TOKENS", 1024, 128, 4096),
         investigation_timeout_seconds=_integer_setting("INVESTIGATION_TIMEOUT_SECONDS", 120, 1, 180),
         retrieval_mode=mode,
+        retrieval_embedding_backend=retrieval_embedding_backend,
+        semantic_search_backend=semantic_search_backend,
+        hnsw_ef_search=_integer_setting("HNSW_EF_SEARCH", 400, 1, 1000),
+        hnsw_candidate_limits=_integer_list_setting("HNSW_CANDIDATE_LIMITS", (400,)),
+        hnsw_iterative_scan=_boolean_setting("HNSW_ITERATIVE_SCAN", False),
         lexical_search_backend=lexical_backend,
         semantic_candidate_limit=_integer_setting("SEMANTIC_CANDIDATE_LIMIT", 20, 1, 100),
         keyword_candidate_limit=_integer_setting("KEYWORD_CANDIDATE_LIMIT", 20, 1, 100),

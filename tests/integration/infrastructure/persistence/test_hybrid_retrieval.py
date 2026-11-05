@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 from uuid import uuid7
 
 import pytest
-from sqlalchemy import event, func, select, update
+from sqlalchemy import event, func, select, text, update
 
 from investigation_engine.application.answers import AnswerStatus, GenerationResult
 from investigation_engine.application.chunking import ChunkingConfig, ChunkingStrategy, chunk_document
@@ -157,6 +157,36 @@ async def test_keyword_visibility_and_lifecycle_filter_before_top_k(hybrid, db_e
     }
 
 
+async def test_readiness_hybrid_channels_match_reference(hybrid, sessions):
+    h = hybrid
+    await h.create("quasar shared archive")
+    await h.create("quasar alice archive", owner_id="alice")
+    await h.create("quasar bob archive", owner_id="bob")
+    reference = PostgreSQLEvidenceRepository(sessions)
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+
+    for owner in (None, "alice", "bob"):
+        expected = await reference.search_channels(
+            vector(),
+            "quasar",
+            h.config,
+            h.provider.configuration,
+            owner_id=owner,
+            semantic_limit=10,
+            keyword_limit=10,
+        )
+        actual = await ready.search_channels(
+            vector(),
+            "quasar",
+            h.config,
+            h.provider.configuration,
+            owner_id=owner,
+            semantic_limit=10,
+            keyword_limit=10,
+        )
+        assert actual == expected
+
+
 async def test_shared_vector_keyword_ties_and_rrf_keep_independent_provenance(hybrid, db_engine):
     a = await hybrid.create()
     b = await hybrid.create()
@@ -176,6 +206,40 @@ async def test_shared_vector_keyword_ties_and_rrf_keep_independent_provenance(hy
     assert len(fused) == 1 and fused[0].source == representative.version.source
     with db_engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 1
+
+
+async def test_hnsw_hybrid_preserves_lexical_channel_and_rrf(hybrid, sessions):
+    h = hybrid
+    await h.create("quasar archive first")
+    await h.create("quasar archive second")
+    hnsw = PostgreSQLEvidenceRepository(
+        sessions,
+        semantic_backend="hnsw",
+        hnsw_candidate_limits=(400,),
+    )
+    exact_search = SearchEvidence(
+        h.evidence,
+        h.provider,
+        h.config,
+        h.provider.configuration,
+        mode="hybrid",
+        hybrid_repository=h.evidence,
+        semantic_candidates=10,
+        keyword_candidates=10,
+    )
+    hnsw_search = SearchEvidence(
+        hnsw,
+        h.provider,
+        h.config,
+        h.provider.configuration,
+        mode="hybrid",
+        hybrid_repository=hnsw,
+        semantic_candidates=10,
+        keyword_candidates=10,
+    )
+    assert await hnsw_search.execute("quasar archive", owner_id=None) == await exact_search.execute(
+        "quasar archive", owner_id=None
+    )
 
 
 async def test_keyword_unicode_chunk_keeps_original_intersecting_sentence_locations(hybrid):
@@ -215,7 +279,7 @@ async def test_superseded_version_retains_only_current_version_specific_location
     assert len(hits) == 1 and hits[0].document_version_id == later.id and hits[0].source_spans == (span,)
 
 
-async def test_keyword_excludes_incomplete_selected_embedding_and_chunking_profiles(hybrid, db_engine):
+async def test_keyword_excludes_incomplete_selected_embedding_and_chunking_profiles(hybrid, db_engine, sessions):
     h = hybrid
     config = replace(h.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=6)
     partial = await h.create("quasar mars", config=config)
@@ -224,6 +288,11 @@ async def test_keyword_excludes_incomplete_selected_embedding_and_chunking_profi
     assert await h.keyword("quasar", config=config) == ()
     complete = await h.create("quasar", config=config)
     assert [x.document_id for x in await h.keyword("quasar", config=config, limit=1)] == [complete.document.id]
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    assert [
+        item.document_id
+        for item in await ready.search_keywords("quasar", config, h.provider.configuration, owner_id=None, limit=1)
+    ] == [complete.document.id]
     assert await h.keyword("quasar", config=replace(config, max_tokens=5)) == ()
     assert await h.keyword("quasar", config=config, profile=replace(h.provider.configuration, model_id="absent")) == ()
     with db_engine.begin() as connection:
@@ -307,7 +376,9 @@ async def test_real_rag_hybrid_promotes_keyword_supported_evidence_above_semanti
     assert generator.generate.await_args.args[0].evidence[0].text == target
 
 
-async def test_duplicates_do_not_crowd_top_k_and_ineligible_copies_cannot_be_representatives(hybrid, db_engine):
+async def test_duplicates_do_not_crowd_top_k_and_ineligible_copies_cannot_be_representatives(
+    hybrid, db_engine, sessions
+):
     from sqlalchemy import delete
 
     from investigation_engine.infrastructure.persistence.models import ChunkMembershipRow, DocumentVersionRow
@@ -339,6 +410,16 @@ async def test_duplicates_do_not_crowd_top_k_and_ineligible_copies_cannot_be_rep
             next(hit for hit in channel if hit.document_id == representative.document.id).source
             == representative.version.source
         )
+    ready = PostgreSQLEvidenceRepository(sessions, eligibility_backend="readiness")
+    assert await ready.search_channels(
+        vector(),
+        "quasar",
+        hybrid.config,
+        hybrid.provider.configuration,
+        owner_id=None,
+        semantic_limit=2,
+        keyword_limit=2,
+    ) == (semantic, keyword)
     with db_engine.connect() as connection:
         assert connection.scalar(select(func.count()).select_from(DocumentVersionRow)) == 7
         assert connection.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 2
@@ -440,3 +521,50 @@ async def test_prescored_private_and_inactive_matches_cannot_crowd_authorized_to
     expected_sources = {first.document.id: first.version.source}
     expected_sources[second.document.id] = second.version.source
     assert sources == expected_sources
+
+
+async def test_membership_owned_hybrid_preserves_legacy_lexical_channel(hybrid, sessions):
+    h = hybrid
+    await h.create("quasar archive evidence")
+    async with sessions() as session, session.begin():
+        await session.execute(
+            text(
+                """
+                INSERT INTO membership_chunk_embeddings (
+                    document_version_id, chunking_configuration_id, ordinal,
+                    embedding_configuration_id, embedding, created_at
+                )
+                SELECT m.document_version_id, m.chunking_configuration_id, m.ordinal,
+                       ce.embedding_configuration_id, ce.embedding, now()
+                  FROM chunk_memberships m
+                  JOIN document_versions v ON v.id = m.document_version_id
+                  JOIN contents c ON c.sha256 = v.content_sha256
+                  JOIN chunk_embeddings ce
+                    ON ce.content_sha256 = v.content_sha256
+                   AND ce.start = m.start AND ce."end" = m."end"
+                 WHERE btrim(substr(c.text, m.start + 1, m."end" - m.start)) <> ''
+                ON CONFLICT DO NOTHING
+                """
+            )
+        )
+    legacy = h.evidence
+    owned = PostgreSQLEvidenceRepository(sessions, embedding_backend="membership_owned")
+    expected = await legacy.search_channels(
+        vector(),
+        "quasar archive",
+        h.config,
+        h.provider.configuration,
+        owner_id=None,
+        semantic_limit=10,
+        keyword_limit=10,
+    )
+    actual = await owned.search_channels(
+        vector(),
+        "quasar archive",
+        h.config,
+        h.provider.configuration,
+        owner_id=None,
+        semantic_limit=10,
+        keyword_limit=10,
+    )
+    assert actual == expected

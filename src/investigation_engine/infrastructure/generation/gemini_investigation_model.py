@@ -27,6 +27,7 @@ from investigation_engine.application.ports.generation_errors import (
     GenerationTimeoutError,
 )
 from investigation_engine.application.ports.provider_diagnostics import attach_diagnostic, status_category
+from investigation_engine.application.timing import log_event, stage_timing, timed
 from investigation_engine.infrastructure.generation.gemini_diagnostics import error_details
 
 TOOL_NAME = "search_evidence"
@@ -152,16 +153,17 @@ class GeminiInvestigationModel:
         # Opaque signatures/native parts never enter the application values or reports.
         # Bounded storage also covers abandoned/resource-limited investigations.
         self._native_calls: OrderedDict[str, _NativeCall] = OrderedDict()
-        self._client = genai.Client(
-            api_key=api_key,
-            enterprise=False,
-            http_options=types.HttpOptions(
-                base_url="https://generativelanguage.googleapis.com",
-                api_version="v1beta",
-                timeout=timeout_seconds * 1000,
-                retry_options=types.HttpRetryOptions(attempts=1),
-            ),
-        )
+        with stage_timing("gemini.client_init"):
+            self._client = genai.Client(
+                api_key=api_key,
+                enterprise=False,
+                http_options=types.HttpOptions(
+                    base_url="https://generativelanguage.googleapis.com",
+                    api_version="v1beta",
+                    timeout=timeout_seconds * 1000,
+                    retry_options=types.HttpRetryOptions(attempts=1),
+                ),
+            )
 
     async def aclose(self) -> None:
         if not self._closed:
@@ -176,6 +178,7 @@ class GeminiInvestigationModel:
     def provider_requests(self) -> int:
         return self._provider_requests
 
+    @timed("gemini.investigation.provider_total")
     async def next_action(self, turn: InvestigationTurn) -> SearchEvidenceCall | InvestigationDecision:
         if self._closed:
             raise GenerationProviderError("Investigation model is closed")
@@ -183,7 +186,8 @@ class GeminiInvestigationModel:
             raise GenerationResponseError("Investigation context is invalid or too large")
         step = len(turn.exchanges) + 1
         try:
-            contents = self._contents(turn)
+            with stage_timing("gemini.investigation.prepare_history"):
+                contents = self._contents(turn)
         except GenerationResponseError as error:
             reason = (
                 "missing_native_history"
@@ -199,41 +203,43 @@ class GeminiInvestigationModel:
                 error_reason=reason,
                 investigation_step=step,
             ) from None
-        function = types.FunctionDeclaration(**TOOL_DECLARATION)
-        tool = types.Tool(function_declarations=[function])
-        config = types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION
-            + (
-                "\nfinal_only is enabled. Search is disabled. Return your final structured decision now."
-                if turn.final_only
-                else ""
-            ),
-            tools=[tool],
-            tool_config=types.ToolConfig(
-                function_calling_config=types.FunctionCallingConfig(
-                    mode=(
-                        types.FunctionCallingConfigMode.NONE
-                        if turn.final_only
-                        else types.FunctionCallingConfigMode.VALIDATED
-                    ),
-                    allowed_function_names=None if turn.final_only else [TOOL_NAME],
-                )
-            ),
-            response_mime_type="application/json",
-            response_json_schema=FINAL_SCHEMA,
-            max_output_tokens=self.max_output_tokens,
-            candidate_count=1,
-        )
+        with stage_timing("gemini.investigation.prepare_config"):
+            function = types.FunctionDeclaration(**TOOL_DECLARATION)
+            tool = types.Tool(function_declarations=[function])
+            config = types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION
+                + (
+                    "\nfinal_only is enabled. Search is disabled. Return your final structured decision now."
+                    if turn.final_only
+                    else ""
+                ),
+                tools=[tool],
+                tool_config=types.ToolConfig(
+                    function_calling_config=types.FunctionCallingConfig(
+                        mode=(
+                            types.FunctionCallingConfigMode.NONE
+                            if turn.final_only
+                            else types.FunctionCallingConfigMode.VALIDATED
+                        ),
+                        allowed_function_names=None if turn.final_only else [TOOL_NAME],
+                    )
+                ),
+                response_mime_type="application/json",
+                response_json_schema=FINAL_SCHEMA,
+                max_output_tokens=self.max_output_tokens,
+                candidate_count=1,
+            )
         status = None
         details = {}
         try:
             self._provider_requests += 1
             async with asyncio.timeout(self.timeout_seconds):
-                response = await self._client.aio.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=config,
-                )
+                with stage_timing("gemini.investigation.api_request"):
+                    response = await self._client.aio.models.generate_content(
+                        model=self.model,
+                        contents=contents,
+                        config=config,
+                    )
         except errors.APIError as error:
             details = error_details(error)
             code = error.code
@@ -260,7 +266,16 @@ class GeminiInvestigationModel:
         # No retry here: each model turn is one budgeted provider request.
         else:
             try:
-                action = self._parse_response(response)
+                with stage_timing("gemini.investigation.parse_validate"):
+                    action = self._parse_response(response)
+                log_event(
+                    "gemini.investigation.usage",
+                    model_id=self.model,
+                    prompt_tokens=action.usage.prompt_tokens,
+                    candidate_tokens=action.usage.candidate_tokens,
+                    thinking_tokens=action.usage.thinking_tokens,
+                    turn_number=step,
+                )
                 if isinstance(action, SearchEvidenceCall):
                     if turn.final_only:
                         raise GenerationResponseError("Search tool is disabled during finalization")

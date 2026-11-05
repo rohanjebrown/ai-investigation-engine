@@ -62,7 +62,7 @@ def migrate(pytestconfig):
     def run(engine, revision="head", *, downgrade=False):
         cfg = Config(str(pytestconfig.rootpath / "alembic.ini"))
         cfg.set_main_option("script_location", str(pytestconfig.rootpath / "migrations"))
-        with engine.begin() as connection:
+        with engine.connect() as connection:
             cfg.attributes["connection"] = connection
             operation = command.downgrade if downgrade else command.upgrade
             operation(cfg, revision)
@@ -93,7 +93,8 @@ def db_engine(schema_engine):
             # No other engine/URL can reach this cleanup; every test sees real commits.
             connection.execute(
                 text(
-                    "TRUNCATE searchable_chunks, chunk_plan_readiness, chunk_embeddings, chunk_memberships, version_chunk_plans, "
+                    "TRUNCATE searchable_chunks, chunk_plan_readiness, membership_chunk_embeddings, chunk_embeddings, "
+                    "chunk_memberships, version_chunk_plans, "
                     "embedding_configurations, chunking_configurations, document_versions, "
                     "documents, contents RESTART IDENTITY CASCADE"
                 )

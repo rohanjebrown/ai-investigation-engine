@@ -161,3 +161,22 @@ def test_deploy_uses_digest_and_only_updates_existing_image(service, monkeypatch
         "--container=existing",
         "--image=" + image,
     ]
+
+
+def test_cloud_build_blocks_publishing_until_all_quality_and_runtime_gates_pass():
+    import yaml
+
+    config = yaml.safe_load((ROOT / "cloudbuild.yaml").read_text())
+    steps = config["steps"]
+    position = {step["id"]: i for i, step in enumerate(steps)}
+    for gate in ("ValidateCommit", "Preflight", "PythonChecks", "FrontendChecks", "Smoke"):
+        assert position[gate] < position["Push"] < position["Deploy"]
+    assert all("waitFor" not in step and not step.get("allowFailure") for step in steps)
+    python = next(step for step in steps if step["id"] == "PythonChecks")
+    assert "--network=host" in python["args"]
+    assert any("/var/run/docker.sock" in argument for argument in python["args"])
+    assert "tests/unit tests/integration" in python["args"][-1]
+    assert "--run-external" not in python["args"][-1]
+    deployment = next(step for step in steps if step["id"] == "Deploy")
+    assert deployment["args"][:2] == ["deploy/cloud_run.py", "deploy"]
+    assert any(argument.startswith("--image-file=") for argument in deployment["args"])

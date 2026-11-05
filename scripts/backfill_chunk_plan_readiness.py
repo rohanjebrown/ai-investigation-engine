@@ -24,7 +24,7 @@ def _arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-async def _run(args: argparse.Namespace) -> list[dict[str, str]]:
+async def _run(args: argparse.Namespace) -> dict[str, int]:
     from investigation_engine.infrastructure.config import settings
 
     engine = create_async_engine(settings.database_url(), poolclass=NullPool, hide_parameters=True)
@@ -54,21 +54,23 @@ async def _run(args: argparse.Namespace) -> list[dict[str, str]]:
             document_format=embedding_row.document_format,
             normalization=embedding_row.normalization,
         )
-        return await PostgreSQLDocumentActivationRepository(sessions).backfill_active(chunking, embedding)
+        counts = {"verified": 0, "skipped": 0, "failed": 0}
+        backfill = PostgreSQLDocumentActivationRepository(sessions).backfill_active(chunking, embedding)
+        async for result in backfill:
+            print(json.dumps(result), flush=True)
+            counts[result["status"]] += 1
+        return counts
     finally:
         await engine.dispose()
 
 
 def main() -> None:
     args = _arguments()
-    results = asyncio.run(
+    counts = asyncio.run(
         _run(args),
         loop_factory=asyncio.SelectorEventLoop if sys.platform == "win32" else None,
     )
-    counts = {
-        status: sum(result["status"] == status for result in results) for status in ("verified", "skipped", "failed")
-    }
-    print(json.dumps({"counts": counts, "results": results}, indent=2))
+    print(json.dumps({"summary": counts}))
 
 
 if __name__ == "__main__":

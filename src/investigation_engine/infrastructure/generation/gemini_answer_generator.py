@@ -33,6 +33,7 @@ from investigation_engine.application.ports.provider_diagnostics import (
     safe_diagnostic,
     status_category,
 )
+from investigation_engine.application.timing import log_event, stage_timing, timed
 
 logger = logging.getLogger(__name__)
 MAX_RETRY_DELAY = 10.0
@@ -194,16 +195,17 @@ class GeminiAnswerGenerator:
         self._temperature = float(temperature) if temperature is not None else (0.0 if supports_temperature else None)
         self._closed = False
         self._provider_requests = 0
-        self._client = genai.Client(
-            api_key=api_key,
-            enterprise=False,
-            http_options=types.HttpOptions(
-                base_url="https://generativelanguage.googleapis.com",
-                api_version="v1beta",
-                timeout=timeout_seconds * 1000,
-                retry_options=types.HttpRetryOptions(attempts=1),
-            ),
-        )
+        with stage_timing("gemini.client_init"):
+            self._client = genai.Client(
+                api_key=api_key,
+                enterprise=False,
+                http_options=types.HttpOptions(
+                    base_url="https://generativelanguage.googleapis.com",
+                    api_version="v1beta",
+                    timeout=timeout_seconds * 1000,
+                    retry_options=types.HttpRetryOptions(attempts=1),
+                ),
+            )
 
     async def aclose(self) -> None:
         if not self._closed:
@@ -221,6 +223,7 @@ class GeminiAnswerGenerator:
     def provider_requests(self) -> int:
         return self._provider_requests
 
+    @timed("gemini.answer.provider_total")
     async def generate(self, request: GenerationRequest) -> GenerationResult:
         if self._closed:
             raise GenerationProviderError("Generation provider is closed")
@@ -230,7 +233,8 @@ class GeminiAnswerGenerator:
             for i, item in enumerate(request.evidence, 1)
         ):
             raise ValueError("Generation requires bounded server-identified evidence")
-        payload = request.context_json()
+        with stage_timing("gemini.answer.prepare_payload"):
+            payload = request.context_json()
         if len(payload) > 64000:
             raise ValueError("Generation context exceeds the character limit")
         schema = _response_schema(request)
@@ -244,11 +248,21 @@ class GeminiAnswerGenerator:
                     )
                     raise
                 try:
-                    return self._parse(
-                        response,
-                        allowed_ids={item.evidence_id for item in request.evidence},
-                        provider_requests=attempt + 1,
+                    with stage_timing("gemini.answer.parse_validate"):
+                        result = self._parse(
+                            response,
+                            allowed_ids={item.evidence_id for item in request.evidence},
+                            provider_requests=attempt + 1,
+                        )
+                    log_event(
+                        "gemini.answer.usage",
+                        model_id=self._model,
+                        prompt_tokens=result.usage.prompt_tokens,
+                        candidate_tokens=result.usage.candidate_tokens,
+                        thinking_tokens=result.usage.thinking_tokens,
+                        attempts=attempt + 1,
                     )
+                    return result
                 except GenerationResponseError as error:
                     candidates = getattr(response, "candidates", None)
                     candidate = candidates[0] if isinstance(candidates, (list, tuple)) and candidates else None
@@ -302,7 +316,8 @@ class GeminiAnswerGenerator:
                 )
                 if not retry:
                     raise
-                await asyncio.sleep(delay)
+                with stage_timing("gemini.answer.retry_wait"):
+                    await asyncio.sleep(delay)
         raise AssertionError("Unreachable retry boundary")
 
     async def _request(self, payload: str, *, schema: dict):
@@ -311,17 +326,18 @@ class GeminiAnswerGenerator:
             self._provider_requests += 1
             options = {"temperature": self._temperature} if self._temperature is not None else {}
             async with asyncio.timeout(self._timeout):
-                return await self._client.aio.models.generate_content(
-                    model=self._model,
-                    contents=types.Content(role="user", parts=[types.Part(text=payload)]),
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        response_mime_type="application/json",
-                        response_json_schema=schema,
-                        max_output_tokens=self._output_tokens,
-                        **options,
-                    ),
-                )
+                with stage_timing("gemini.answer.api_request"):
+                    return await self._client.aio.models.generate_content(
+                        model=self._model,
+                        contents=types.Content(role="user", parts=[types.Part(text=payload)]),
+                        config=types.GenerateContentConfig(
+                            system_instruction=SYSTEM_INSTRUCTION,
+                            response_mime_type="application/json",
+                            response_json_schema=schema,
+                            max_output_tokens=self._output_tokens,
+                            **options,
+                        ),
+                    )
         except errors.APIError as error:
             code = error.code
             status, category = code, status_category(code)

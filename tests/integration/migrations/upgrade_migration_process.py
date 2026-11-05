@@ -20,7 +20,7 @@ try:
             raise TimeoutError("Migration process did not receive the start signal")
         time.sleep(0.01)
     config = Config(config_path)
-    with engine.begin() as connection:
+    with engine.connect() as connection:
         config.attributes["connection"] = connection
         command.upgrade(config, "head")
 finally:

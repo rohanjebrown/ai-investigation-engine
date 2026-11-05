@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
+from sqlalchemy import func, select
 
 from investigation_engine.application.answers import AnswerStatus, GenerationResult
 from investigation_engine.application.chunking import ChunkingConfig, ChunkingStrategy
@@ -13,6 +14,7 @@ from investigation_engine.application.use_cases.answer_question import AnswerQue
 from investigation_engine.application.use_cases.delete_document import DeleteDocument
 from investigation_engine.application.use_cases.get_document import GetDocument
 from investigation_engine.application.use_cases.index_document_version import IndexDocumentVersion
+from investigation_engine.application.use_cases.ingest_document import IngestDocument
 from investigation_engine.application.use_cases.list_documents import ListDocuments
 from investigation_engine.application.use_cases.prepare_document_indexing import PrepareDocumentIndexing
 from investigation_engine.application.use_cases.register_document import RegisterDocument
@@ -20,6 +22,11 @@ from investigation_engine.application.use_cases.search_evidence import SearchEvi
 from investigation_engine.application.use_cases.update_document import UpdateDocument
 from investigation_engine.infrastructure.api.app import create_app
 from investigation_engine.infrastructure.api.bootstrap import APIServices
+from investigation_engine.infrastructure.persistence.models import (
+    ChunkEmbeddingRow,
+    ChunkPlanReadinessRow,
+    MembershipChunkEmbeddingRow,
+)
 from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
     PostgreSQLChunkPlanRepository,
 )
@@ -30,6 +37,9 @@ from investigation_engine.infrastructure.persistence.postgresql_embedding_reposi
     PostgreSQLEmbeddingRepository,
 )
 from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import PostgreSQLEvidenceRepository
+from investigation_engine.infrastructure.persistence.postgresql_indexed_document_repository import (
+    PostgreSQLIndexedDocumentRepository,
+)
 
 TOKEN = "integration-only-" + "x" * 40
 
@@ -78,7 +88,7 @@ async def test_pdf_and_docx_register_through_authenticated_http(filename, reposi
                 files={"file": (filename, data, "application/octet-stream")},
             )
     assert response.status_code == 200, response.text
-    assert response.json()["status"] == "registered_not_indexed"
+    assert response.json()["status"] == "indexed"
     assert response.json()["original_retained"] is False
 
 
@@ -99,11 +109,11 @@ async def test_http_private_upload_index_question_replace_reactivate_delete_life
             assert uploaded.status_code == 200
             document, version = uploaded.json()["document"], uploaded.json()["version"]
             assert document["owner_id"] == "administrator-integration"
-            assert uploaded.json()["status"] == "registered_not_indexed"
+            assert uploaded.json()["status"] == "indexed"
 
             first_index = await client.post(f"/documents/{document['id']}/index", headers=_bearer())
-            assert first_index.status_code == 200 and first_index.json()["status"] == "activated"
-            assert first_index.json()["requested_embeddings"] == 1
+            assert first_index.status_code == 200 and first_index.json()["status"] == "already_active"
+            assert first_index.json()["requested_embeddings"] == 0
             public = await client.post("/questions", json={"question": "What is the project code?"})
             assert public.json()["status"] == "insufficient_evidence"
             private = await client.post("/questions", headers=_bearer(), json={"question": "What is the project code?"})
@@ -116,19 +126,15 @@ async def test_http_private_upload_index_question_replace_reactivate_delete_life
                 headers={**_auth(replacement_key), "If-Match": f'"{version["id"]}"'},
                 files={"file": ("facts.txt", b"The private project code is TULIP.", "text/plain")},
             )
-            assert replacement.status_code == 200 and replacement.json()["status"] == "pending_replacement", (
-                replacement.text
-            )
-            before_activation = await client.post(
-                "/questions", headers=_bearer(), json={"question": "What is the project code?"}
-            )
-            assert before_activation.json()["citations"][0]["evidence"]["text"] == "The private project code is ORCHID."
-            activated = await client.post(f"/documents/{document['id']}/index", headers=_bearer())
-            assert activated.status_code == 200 and activated.json()["status"] == "activated", activated.text
+            assert replacement.status_code == 200 and replacement.json()["status"] == "indexed", replacement.text
             after_activation = await client.post(
                 "/questions", headers=_bearer(), json={"question": "What is the project code?"}
             )
             assert after_activation.json()["citations"][0]["evidence"]["text"] == "The private project code is TULIP."
+            async with sessions() as session:
+                assert await session.scalar(select(func.count()).select_from(ChunkPlanReadinessRow)) == 2
+                assert await session.scalar(select(func.count()).select_from(ChunkEmbeddingRow)) == 2
+                assert await session.scalar(select(func.count()).select_from(MembershipChunkEmbeddingRow)) == 2
 
             deleted = await client.delete(f"/documents/{document['id']}", headers=_bearer())
             assert deleted.status_code == 200 and deleted.json()["status"] == "deleted"
@@ -167,6 +173,13 @@ def _services(repository, sessions, tokenizer, embedding, generator):
         prepare_indexing=PrepareDocumentIndexing(plans, indexer, tokenizer),
         chunking=chunking,
         embedding_configuration=embedding.configuration,
+        ingest_document=IngestDocument(
+            PostgreSQLIndexedDocumentRepository(sessions),
+            indexer,
+            tokenizer,
+            chunking,
+            embedding.configuration,
+        ),
     )
 
 

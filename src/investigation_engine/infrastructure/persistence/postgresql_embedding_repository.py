@@ -39,6 +39,33 @@ class PostgreSQLEmbeddingRepository:
         except SQLAlchemyError as error:
             raise RepositoryError("Embeddings could not be read") from error
 
+    async def find_reusable(
+        self,
+        chunks: Sequence[Chunk],
+        config: EmbeddingConfig,
+    ) -> dict[tuple[str, int, int], EmbeddingVector]:
+        """Read cache hits before a new document's Content is committed.
+
+        Any matching legacy embedding necessarily references an existing
+        Content row by foreign key; when that row exists its exact text is
+        still checked before the vector is reused.
+        """
+        chunks = tuple(chunks)
+        configuration_values(config)
+        try:
+            async with self._sessions() as session:
+                async with session.begin():
+                    await session.connection(execution_options={"isolation_level": "READ COMMITTED"})
+                    found = await find_embeddings(
+                        session,
+                        chunks,
+                        config,
+                        require_registered_content=False,
+                    )
+            return found
+        except SQLAlchemyError as error:
+            raise RepositoryError("Reusable embeddings could not be read") from error
+
     async def save(self, chunk: Chunk, config: EmbeddingConfig, vector: EmbeddingVector) -> EmbeddingVector:
         vector = storage_vector(vector)
         configuration_values(config)

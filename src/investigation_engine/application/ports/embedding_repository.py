@@ -15,6 +15,14 @@ class EmbeddingRepository(Protocol):
         """Read compatible committed vectors by existing Chunk.identity."""
         ...
 
+    async def find_reusable(
+        self,
+        chunks: Sequence[Chunk],
+        config: EmbeddingConfig,
+    ) -> dict[tuple[str, int, int], EmbeddingVector]:
+        """Read exact-content cache hits before first-time Content registration."""
+        ...
+
     async def save(self, chunk: Chunk, config: EmbeddingConfig, vector: EmbeddingVector) -> EmbeddingVector:
         """Commit one float32 vector or reuse a compatible winner, never overwrite.
 

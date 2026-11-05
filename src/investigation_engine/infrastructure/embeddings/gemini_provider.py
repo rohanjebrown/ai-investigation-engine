@@ -1,6 +1,8 @@
 """Gemini Developer API text embeddings; no persistence or chunk transformation."""
 
 from collections.abc import Awaitable, Sequence
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from http import HTTPStatus
 from math import hypot, isfinite
 from types import TracebackType
@@ -19,6 +21,7 @@ from investigation_engine.application.ports.embedding_errors import (
 )
 from investigation_engine.application.ports.embedding_provider import EmbeddingVector
 from investigation_engine.application.ports.provider_diagnostics import attach_diagnostic, status_category
+from investigation_engine.application.timing import stage_timing, timed
 
 MODEL = "gemini-embedding-2"
 DIMENSIONS = 768
@@ -51,16 +54,17 @@ class GeminiEmbeddingProvider:
             raise ValueError("batch_token_limit must be a positive integer")
         if not isinstance(api_key, str) or not api_key.strip():
             raise EmbeddingProviderError("GEMINI_API_KEY is required for Gemini embeddings")
-        self._client = genai.Client(
-            api_key=api_key,
-            enterprise=False,
-            http_options=types.HttpOptions(
-                base_url="https://generativelanguage.googleapis.com",
-                api_version="v1beta",
-                timeout=60_000,
-                retry_options=types.HttpRetryOptions(attempts=1),
-            ),
-        )
+        with stage_timing("gemini.client_init"):
+            self._client = genai.Client(
+                api_key=api_key,
+                enterprise=False,
+                http_options=types.HttpOptions(
+                    base_url="https://generativelanguage.googleapis.com",
+                    api_version="v1beta",
+                    timeout=60_000,
+                    retry_options=types.HttpRetryOptions(attempts=1),
+                ),
+            )
         self._closed = False
         self._batch_size = batch_size
         self._batch_token_limit = batch_token_limit
@@ -126,6 +130,7 @@ class GeminiEmbeddingProvider:
             vectors.extend(await self._send_batch(group))
         return tuple(vectors)
 
+    @timed("gemini.embedding.query_total")
     async def embed_query(self, query: str) -> EmbeddingVector:
         self._ensure_open()
         _validate_text(query, label="Query")
@@ -208,19 +213,29 @@ class GeminiEmbeddingProvider:
         elif operation == "embedding generation":
             self._embed_content_requests += 1
         try:
-            return await request
+            with stage_timing(
+                "gemini.embedding.count_tokens_api"
+                if operation == "token counting"
+                else "gemini.embedding.embed_content_api"
+            ):
+                return await request
         except errors.APIError as error:
             code = error.code
             status, category = code, status_category(code)
+            retry_after = _retry_after_seconds(error)
             cause = RuntimeError(f"Gemini API failure during {operation} (HTTP {code})")
             if code == HTTPStatus.TOO_MANY_REQUESTS:
-                failure = EmbeddingRateLimitError("Gemini rate or quota limit exceeded")
+                failure = EmbeddingRateLimitError(
+                    "Gemini rate or quota limit exceeded",
+                    retry_after_seconds=retry_after,
+                )
             elif code in (400, 413, 422):
                 failure = EmbeddingInputError("Gemini rejected the embedding input")
             else:
                 failure = EmbeddingProviderError(
                     f"Gemini {operation} failed",
                     retryable=code in (408, 425, 500, 502, 503, 504),
+                    retry_after_seconds=retry_after,
                 )
         except httpx.RequestError as error:
             category = "timeout" if isinstance(error, httpx.TimeoutException) else "transport"
@@ -252,3 +267,26 @@ def _validate_text(text: str, *, label: str) -> None:
         text.encode("utf-8")
     except UnicodeEncodeError:
         raise EmbeddingInputError(f"{label} must be valid UTF-8 text") from None
+
+
+def _retry_after_seconds(error: BaseException) -> float | None:
+    response = getattr(error, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return None
+    value = headers.get("Retry-After") or headers.get("retry-after")
+    if value is None:
+        return None
+    try:
+        seconds = float(value)
+    except TypeError, ValueError:
+        try:
+            retry_at = parsedate_to_datetime(str(value))
+            if retry_at.tzinfo is None:
+                retry_at = retry_at.replace(tzinfo=UTC)
+            seconds = (retry_at - datetime.now(UTC)).total_seconds()
+        except TypeError, ValueError, OverflowError:
+            return None
+    if not isfinite(seconds) or seconds < 0:
+        return None
+    return seconds
