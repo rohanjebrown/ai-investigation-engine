@@ -24,6 +24,8 @@ Inspect `db.execute`/`db.executed`, `db.transaction`, and `db.results` for execu
 
 `retrieval.search`, `retrieval.query_vector`, `retrieval.backend`, `retrieval.hnsw_attempt`, `retrieval.channels`, and `retrieval.selected` explain configuration, searches and admitted rankings. SQL shows lexical expressions and completeness/compatibility filters. RRF contribution events contain the actual rank, smoothing constant, contribution, accumulated score and duplicate occurrence keys. Answer context and decision events show selected evidence and citation validation.
 
+Optional [Voyage reranking](voyage-reranking.md) adds `rerank.candidates` (active query and full eligible fused pool, with channel ranks/scores), `rerank.configuration`, `voyage.request` (query/title/passage only), `voyage.response` (model, elapsed time, numeric usage and safe error category), `rerank.cache`, `rerank.ranking` (identity, original/reranked positions and separate relevance score), and `rerank.selection` (selected whole passages and fallback reason). `evidence_reranking` is the inclusive application stage. `rerank.fallback` records failures, including missing credentials or an exhausted request budget. Cached responses do not generate a second provider-usage event. Normal production logs receive only model, duration, numeric token usage, success and safe reason; queries, passages, IDs, scores, headers and response bodies stay out of them.
+
 For Investigation inspect, in order:
 
 1. `investigation.turn`: question/history, admitted evidence and remaining budgets.

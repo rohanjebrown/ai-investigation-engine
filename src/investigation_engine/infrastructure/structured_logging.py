@@ -37,6 +37,7 @@ class TimingJsonFormatter(logging.Formatter):
             "prompt_tokens",
             "candidate_tokens",
             "thinking_tokens",
+            "total_tokens",
             "semantic_limit",
             "lexical_limit",
             "result_limit",

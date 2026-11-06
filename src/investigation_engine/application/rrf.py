@@ -35,7 +35,7 @@ class _FusionAccumulator:
         for evidence in channel_results:
             self._add_evidence(name, expected_kind, evidence, seen)
 
-    def ranked(self, limit: int) -> tuple[Evidence, ...]:
+    def ranked(self, limit: int | None) -> tuple[Evidence, ...]:
         ordered_keys = sorted(
             self._candidates,
             key=lambda evidence_key: (
@@ -98,10 +98,12 @@ def reciprocal_rank_fusion(
     semantic: Sequence[Evidence],
     keyword: Sequence[Evidence],
     *,
-    limit: int,
+    limit: int | None,
     k: int = 60,  # noqa: WPS111
 ) -> tuple[Evidence, ...]:
-    validate_search_scope(None, limit)
+    # None exposes the entire bounded channel union for optional reranking.
+    if limit is not None:
+        validate_search_scope(None, limit)
     validate_rrf_k(k)
     accumulator = _FusionAccumulator(k)
     accumulator.add_channel("semantic", "cosine_similarity", semantic)

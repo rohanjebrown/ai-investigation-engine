@@ -61,6 +61,11 @@ class Settings:
     semantic_candidate_limit: int = 20
     keyword_candidate_limit: int = 20
     rrf_k: int = 60
+    reranker_backend: str = "none"
+    reranker_model: str = "rerank-3"
+    voyage_api_key: str | None = field(default=None, repr=False)
+    reranker_timeout_seconds: float = 10.0
+    reranker_max_requests: int = 10
     admin_api_token: str | None = field(default=None, repr=False)
     admin_principal_id: str = "administrator"
     admin_require_https: bool = True
@@ -192,6 +197,12 @@ def _load_settings() -> Settings:
     if mode not in ("semantic", "hybrid"):
         raise ValueError("RETRIEVAL_MODE must be semantic or hybrid")
     lexical_backend = os.environ.get("LEXICAL_SEARCH_BACKEND", "postgres_fts")
+    reranker_backend = os.environ.get("RERANKER_BACKEND", "none")
+    if reranker_backend not in ("none", "voyage"):
+        raise ValueError("RERANKER_BACKEND must be none or voyage")
+    reranker_model = os.environ.get("RERANKER_MODEL", "rerank-3")
+    if reranker_model != "rerank-3":
+        raise ValueError("RERANKER_MODEL must be rerank-3")
     if lexical_backend not in ("postgres_fts", "bm25"):
         raise ValueError("LEXICAL_SEARCH_BACKEND must be postgres_fts or bm25")
     retrieval_embedding_backend = os.environ.get("RETRIEVAL_EMBEDDING_BACKEND", "legacy_shared")
@@ -267,6 +278,11 @@ def _load_settings() -> Settings:
         semantic_candidate_limit=_integer_setting("SEMANTIC_CANDIDATE_LIMIT", 20, 1, 100),
         keyword_candidate_limit=_integer_setting("KEYWORD_CANDIDATE_LIMIT", 20, 1, 100),
         rrf_k=_integer_setting("RRF_K", 60, 0, 10000),
+        reranker_backend=reranker_backend,
+        reranker_model=reranker_model,
+        voyage_api_key=os.environ.get("VOYAGE_API_KEY") or None,
+        reranker_timeout_seconds=_float_setting("RERANKER_TIMEOUT_SECONDS", 10.0, 0.1, 60.0),
+        reranker_max_requests=_integer_setting("RERANKER_MAX_REQUESTS", 10, 0, 100),
         admin_api_token=admin_token,
         admin_principal_id=admin_principal,
         admin_require_https=_boolean_setting("ADMIN_REQUIRE_HTTPS", True),

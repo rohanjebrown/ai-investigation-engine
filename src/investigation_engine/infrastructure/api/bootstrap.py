@@ -38,6 +38,7 @@ from investigation_engine.infrastructure.persistence.postgresql_evidence_reposit
 from investigation_engine.infrastructure.persistence.postgresql_indexed_document_repository import (
     PostgreSQLIndexedDocumentRepository,
 )
+from investigation_engine.infrastructure.reranking.voyage import VoyageReranker
 from investigation_engine.infrastructure.tokenization.huggingface_tokenizer import (
     VOYAGE_REFERENCE_NAME,
     VOYAGE_REFERENCE_REVISION,
@@ -72,6 +73,20 @@ def _engine_options(config):
         "pool_recycle": 1800,
         "connect_args": {"options": f"-c statement_timeout={getattr(config, 'db_statement_timeout_ms', 30000)}"},
     }
+
+
+def _reranker(config, resources):
+    """One optional provider/budget shared by both workflows for this lifespan."""
+    if getattr(config, "reranker_backend", "none") == "none":
+        return None
+    reranker = VoyageReranker(
+        api_key=getattr(config, "voyage_api_key", None),
+        model=getattr(config, "reranker_model", "rerank-3"),
+        timeout_seconds=getattr(config, "reranker_timeout_seconds", 10.0),
+        max_requests=getattr(config, "reranker_max_requests", 10),
+    )
+    resources.push_async_callback(reranker.aclose)
+    return reranker
 
 
 @asynccontextmanager
@@ -170,6 +185,7 @@ async def application_service():
                 semantic_candidates=settings.semantic_candidate_limit,
                 keyword_candidates=settings.keyword_candidate_limit,
                 rrf_k=settings.rrf_k,
+                reranker=_reranker(settings, resources),
             )
             services = APIServices(
                 settings=settings,
@@ -279,6 +295,7 @@ async def question_service():
                 semantic_candidates=settings.semantic_candidate_limit,
                 keyword_candidates=settings.keyword_candidate_limit,
                 rrf_k=settings.rrf_k,
+                reranker=_reranker(settings, resources),
             )
             yield AnswerQuestion(
                 search,

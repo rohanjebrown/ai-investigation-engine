@@ -25,6 +25,37 @@ def dotenv_file(tmp_path):
     return path
 
 
+def test_reranker_defaults_and_explicit_voyage_configuration(load_settings, dotenv_file, monkeypatch):
+    initial = load_settings()
+    assert initial.reranker_backend == "none" and initial.reranker_model == "rerank-3"
+    assert initial.voyage_api_key is None and initial.reranker_max_requests == 10
+    monkeypatch.setenv("RERANKER_BACKEND", "voyage")
+    monkeypatch.setenv("VOYAGE_API_KEY", "private-voyage-key")
+    monkeypatch.setenv("RERANKER_MAX_REQUESTS", "1")
+    monkeypatch.setenv("RERANKER_TIMEOUT_SECONDS", "2.5")
+    selected = load_settings()
+    assert selected.reranker_backend == "voyage" and selected.voyage_api_key == "private-voyage-key"
+    assert selected.reranker_max_requests == 1 and selected.reranker_timeout_seconds == 2.5
+    assert "private-voyage-key" not in repr(selected)
+
+
+@pytest.mark.parametrize(
+    "name,value",
+    [
+        ("RERANKER_BACKEND", "local"),
+        ("RERANKER_MODEL", "other"),
+        ("RERANKER_MAX_REQUESTS", "-1"),
+        ("RERANKER_MAX_REQUESTS", "101"),
+        ("RERANKER_TIMEOUT_SECONDS", "nan"),
+        ("RERANKER_TIMEOUT_SECONDS", "0"),
+    ],
+)
+def test_reranker_settings_reject_invalid_values(load_settings, dotenv_file, monkeypatch, name, value):
+    monkeypatch.setenv(name, value)
+    with pytest.raises(ValueError, match=name):
+        load_settings()
+
+
 def test_dotenv_loads_typed_frozen_settings_without_rewriting_secrets(load_settings, dotenv_file):
     settings = load_settings()
     assert settings.db_port == 15432 and type(settings.db_port) is int

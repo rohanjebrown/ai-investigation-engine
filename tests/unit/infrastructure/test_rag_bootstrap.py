@@ -1,4 +1,5 @@
 import sys
+from contextlib import AsyncExitStack
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
@@ -127,3 +128,36 @@ async def test_partial_startup_failure_still_disposes_existing_resources(resourc
         async with bootstrap.question_service():
             pytest.fail("Must not start with a failed provider")
     assert resources.events == ["embedding", "engine"]
+
+
+async def test_disabled_reranker_does_not_construct_http_provider(resources, monkeypatch):
+    factory = Mock(side_effect=AssertionError("Disabled provider constructed"))
+    monkeypatch.setattr(bootstrap, "VoyageReranker", factory)
+    resources.settings.voyage_api_key = "present-but-disabled"
+    async with AsyncExitStack() as stack:
+        assert bootstrap._reranker(resources.settings, stack) is None
+    factory.assert_not_called()
+
+
+@pytest.mark.parametrize("service_name", ["question_service", "application_service"])
+async def test_enabled_reranker_is_wired_and_closed_for_both_lifespans(resources, monkeypatch, service_name):
+    provider = SimpleNamespace(aclose=AsyncMock(), rerank=AsyncMock())
+    factory = Mock(return_value=provider)
+    monkeypatch.setattr(bootstrap, "VoyageReranker", factory)
+    # Bypass the unrelated persisted-profile/backend checks, all without network I/O.
+    monkeypatch.setattr(
+        bootstrap, "PostgreSQLEvidenceRepository", Mock(return_value=SimpleNamespace(validate_backend=AsyncMock()))
+    )
+    resources.settings.reranker_backend = "voyage"
+    resources.settings.voyage_api_key = "synthetic-key"
+    resources.settings.chunking_tokenizer_path = None
+    resources.settings.investigation_enabled = True
+    model = SimpleNamespace(aclose=AsyncMock())
+    monkeypatch.setattr(bootstrap, "GeminiInvestigationModel", Mock(return_value=model))
+    async with getattr(bootstrap, service_name)() as service:
+        question = service.questions if service_name == "application_service" else service
+        assert question._search._reranker is provider
+        if service_name == "application_service":
+            assert service.investigations._search is question._search
+    factory.assert_called_once_with(api_key="synthetic-key", model="rerank-3", timeout_seconds=10.0, max_requests=10)
+    provider.aclose.assert_awaited_once()

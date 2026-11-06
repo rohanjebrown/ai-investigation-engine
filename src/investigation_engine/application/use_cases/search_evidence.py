@@ -1,3 +1,5 @@
+import logging
+from math import isfinite
 from time import perf_counter
 
 from investigation_engine.application.chunking import ChunkingConfig
@@ -6,9 +8,10 @@ from investigation_engine.application.embeddings import EmbeddingConfig, storage
 from investigation_engine.application.ports.embedding_errors import EmbeddingInputError, EmbeddingResponseError
 from investigation_engine.application.ports.embedding_provider import EmbeddingProvider
 from investigation_engine.application.ports.evidence_repository import EvidenceRepository, HybridEvidenceRepository
+from investigation_engine.application.ports.evidence_reranker import EvidenceReranker, RerankingError
 from investigation_engine.application.retrieval import Evidence, validate_search_question, validate_search_scope
 from investigation_engine.application.rrf import reciprocal_rank_fusion, validate_rrf_k
-from investigation_engine.application.timing import retrieval_completed, stage_timing, timed
+from investigation_engine.application.timing import log_event, retrieval_completed, stage_timing, timed
 
 
 class SearchEvidence:
@@ -26,6 +29,7 @@ class SearchEvidence:
         semantic_candidates: int = 20,
         keyword_candidates: int = 20,
         rrf_k: int = 60,
+        reranker: EvidenceReranker | None = None,
     ) -> None:
         if not isinstance(chunking, ChunkingConfig) or not isinstance(embedding, EmbeddingConfig):
             raise ValueError("Explicit chunking and embedding configurations are required")
@@ -48,6 +52,7 @@ class SearchEvidence:
         self._semantic_candidates = semantic_candidates
         self._keyword_candidates = keyword_candidates
         self._rrf_k = rrf_k
+        self._reranker = reranker
 
     @timed("retrieval.lexical_total")
     async def execute_keywords(self, question: str, limit: int = 10, *, owner_id: str | None) -> tuple[Evidence, ...]:
@@ -110,7 +115,10 @@ class SearchEvidence:
             )
             emit("retrieval.channels", semantic=semantic, lexical=keyword)
             with stage_timing("hybrid_fusion"):
-                result = reciprocal_rank_fusion(semantic, keyword, limit=limit, k=self._rrf_k)
+                result = reciprocal_rank_fusion(
+                    semantic, keyword, limit=None if self._reranker is not None else limit, k=self._rrf_k
+                )
+            result = await self._select(question, result, limit)
             retrieval_completed("hybrid", len(result), len(semantic), len(keyword), (perf_counter() - started) * 1000)
             emit("retrieval.selected", evidence=result)
             return result
@@ -119,8 +127,48 @@ class SearchEvidence:
             self._chunking,
             self._embedding,
             owner_id=owner_id,
-            limit=limit,
+            limit=max(limit, self._semantic_candidates) if self._reranker is not None else limit,
         )
+        candidate_count = len(result)
+        result = await self._select(question, result, limit)
         emit("retrieval.selected", evidence=result)
-        retrieval_completed("semantic", len(result), len(result), 0, (perf_counter() - started) * 1000)
+        retrieval_completed("semantic", len(result), candidate_count, 0, (perf_counter() - started) * 1000)
         return result
+
+    async def _select(self, question: str, candidates: tuple[Evidence, ...], limit: int) -> tuple[Evidence, ...]:
+        emit("rerank.candidates", query=question, candidates=candidates)
+        ordered = candidates
+        reason = "disabled" if self._reranker is None else "empty_candidates" if not candidates else None
+        if self._reranker is not None and candidates:
+            try:
+                with stage_timing("evidence_reranking"):
+                    ranked = await self._reranker.rerank(question, candidates)
+                    # Enforce the application port: original objects, exactly once.
+                    if len(ranked) != len(candidates) or {id(row.evidence) for row in ranked} != {
+                        id(hit) for hit in candidates
+                    }:
+                        raise RerankingError("invalid_candidates")
+                    if any(
+                        type(row.relevance_score) not in (int, float) or not isfinite(row.relevance_score)
+                        for row in ranked
+                    ):
+                        raise RerankingError("invalid_score")
+                    ordered = tuple(row.evidence for row in ranked)
+                    emit(
+                        "rerank.ranking",
+                        ranking=[
+                            {
+                                "identity": row.evidence.identity,
+                                "original_position": row.evidence.rank,
+                                "reranked_position": position,
+                                "relevance_score": row.relevance_score,
+                            }
+                            for position, row in enumerate(ranked, 1)
+                        ],
+                    )
+            except RerankingError as error:
+                reason = str(error)
+                log_event("rerank.fallback", level=logging.WARNING, reason=reason, succeeded=False)
+        selected = ordered[:limit]
+        emit("rerank.selection", fallback=reason is not None, reason=reason, selected=selected)
+        return selected
