@@ -111,7 +111,9 @@ def test_native_tool_turn_is_one_bounded_request_and_continuation_is_preserved(p
     assert contents[2].parts[0].function_response.id == "call-1"
     function_result = contents[2].parts[0].function_response.response
     assert function_result["results"][0]["evidence_id"] == "E1"
-    assert function_result["results"][0]["document_version_id"] == str(version.id)
+    assert function_result["results"][0]["excerpt"] == "Fact."
+    assert "document_version_id" not in function_result["results"][0]
+    assert next_turn.exchanges[0].evidence[0].evidence.document_version_id == version.id
     config = provider.models.generate_content.await_args.kwargs["config"]
     assert config.response_json_schema == module.FINAL_SCHEMA
     assert config.max_output_tokens == 1024
@@ -174,3 +176,85 @@ async def test_numeric_latency_diagnostics_do_not_log_question_or_response(provi
         word not in caplog.text
         for word in ("private-question-marker", "private-response-marker", "never-print-this-key")
     )
+
+
+@pytest.mark.parametrize("search_count", [1, 2, 3])
+async def test_wisigard_scripted_gemini_can_finalize_with_grounded_citations(provider, search_count):
+    from investigation_engine.application.investigations import (
+        InvestigateQuestion,
+        InvestigationStatus,
+        SearchDisposition,
+    )
+
+    question = "Who is Wisigard's father-in-law?"
+    queries = ["Wisigard father in law", "Wisigard husband Theudebert I father", "Wacho children wives"][:search_count]
+    text = "Wisigard married Theudebert I. Theuderich I was Theudebert I's father."
+    document = Document(owner_id=None)
+    version = DocumentVersion(
+        document_id=document.id,
+        version_number=1,
+        content=Content(text),
+        source=SourceReference(
+            kind=SourceKind.DATASET, source_id="Wisigard", record_locator={"row": 7}, metadata={"internal": "retained"}
+        ),
+    )
+    hit = Evidence(
+        document_id=document.id,
+        document_version_id=version.id,
+        content_sha256=version.content.sha256,
+        start=0,
+        end=len(text),
+        text=text,
+        source=version.source,
+        source_spans=(),
+        rank=1,
+        score=1.0,
+    )
+    huge_text = "Unrelated Wacho details. " + "x" * 25000
+    huge = __import__("dataclasses").replace(
+        hit, text=huge_text, end=len(huge_text), content_sha256=Content(huge_text).sha256
+    )
+
+    class Search:
+        def __init__(self):
+            self.calls = []
+
+        async def execute(self, query, limit, *, owner_id):
+            self.calls.append(query)
+            return (huge,) if query == "Wacho children wives" else (hit,)
+
+    search = Search()
+    provider.models.generate_content.side_effect = [
+        *[
+            _response(
+                types.Part(function_call=types.FunctionCall(name="search_evidence", args={"query": q}, id=f"call-{i}"))
+            )
+            for i, q in enumerate(queries)
+        ],
+        _response(
+            types.Part(
+                text=json.dumps(
+                    {"status": "answered", "answer": "Theuderic I [E1]", "citations": ["E1"], "conflicts": []}
+                )
+            )
+        ),
+    ]
+    result = await InvestigateQuestion(search, provider.provider).execute(question, owner_id=None)
+    assert result.status == InvestigationStatus.ANSWERED and result.answer == "Theuderic I [E1]"
+    assert result.citations == ("E1",) and result.evidence[0].evidence == hit
+    assert result.evidence[0].evidence.source.metadata == {"internal": "retained"}
+    assert search.calls == queries and result.generation_requests == search_count + 1
+    final = provider.models.generate_content.await_args.kwargs
+    mode = final["config"].tool_config.function_calling_config.mode
+    assert mode == (
+        types.FunctionCallingConfigMode.NONE if search_count == 3 else types.FunctionCallingConfigMode.VALIDATED
+    )
+    responses = [p.function_response for c in final["contents"] for p in c.parts if p.function_response]
+    assert [r.id for r in responses] == [f"call-{i}" for i in range(search_count)]
+    assert responses[0].response["results"][0]["excerpt"] == text
+    assert "source_spans" not in responses[0].response["results"][0]
+    assert responses[0].response["results"][0]["source"]["metadata"] == {"internal": "retained"}
+    assert "document_id" not in responses[0].response["results"][0]
+    if search_count == 3:
+        assert responses[-1].response["results"] == []
+        assert result.searches[-1].disposition == SearchDisposition.CONTEXT_LIMIT

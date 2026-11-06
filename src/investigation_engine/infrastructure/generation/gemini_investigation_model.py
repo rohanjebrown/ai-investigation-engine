@@ -11,6 +11,7 @@ import httpx
 from google import genai
 from google.genai import errors, types
 
+from investigation_engine.application.debug_trace import provider_call
 from investigation_engine.application.investigations import (
     ConflictClaim,
     InvestigationDecision,
@@ -235,7 +236,9 @@ class GeminiInvestigationModel:
             self._provider_requests += 1
             async with asyncio.timeout(self.timeout_seconds):
                 with stage_timing("gemini.investigation.api_request"):
-                    response = await self._client.aio.models.generate_content(
+                    response = await provider_call(
+                        "generate_content",
+                        self._client.aio.models.generate_content,
                         model=self.model,
                         contents=contents,
                         config=config,

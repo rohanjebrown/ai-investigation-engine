@@ -22,6 +22,7 @@ from investigation_engine.application.answers import (
     generation_result,
     validate_question,
 )
+from investigation_engine.application.debug_trace import provider_call
 from investigation_engine.application.ports.generation_errors import (
     GenerationProviderError,
     GenerationRateLimitError,
@@ -327,7 +328,9 @@ class GeminiAnswerGenerator:
             options = {"temperature": self._temperature} if self._temperature is not None else {}
             async with asyncio.timeout(self._timeout):
                 with stage_timing("gemini.answer.api_request"):
-                    return await self._client.aio.models.generate_content(
+                    return await provider_call(
+                        "generate_content",
+                        self._client.aio.models.generate_content,
                         model=self._model,
                         contents=types.Content(role="user", parts=[types.Part(text=payload)]),
                         config=types.GenerateContentConfig(

@@ -7,6 +7,7 @@ from functools import wraps
 from time import perf_counter
 from uuid import uuid4
 
+from investigation_engine.application.debug_trace import emit
 from investigation_engine.application.ports.embedding_errors import (
     EmbeddingProviderError,
     EmbeddingRateLimitError,
@@ -21,6 +22,7 @@ _trace = ContextVar("timing_trace", default=None)
 
 def log_event(event: str, *, level: int = logging.INFO, **fields) -> None:
     """Emit caller-selected, non-sensitive operational values on the shared trace."""
+    emit(event, **fields)
     logger.log(
         level,
         event,
@@ -39,6 +41,7 @@ def log_event(event: str, *, level: int = logging.INFO, **fields) -> None:
 def stage_timing(stage: str):
     token = _trace.set(_trace.get() or uuid4().hex)
     started = perf_counter()
+    emit("stage.start", stage=stage)
     succeeded = False
     error_category = None
     try:
@@ -71,6 +74,14 @@ def stage_timing(stage: str):
                 "request_id": _trace.get(),
                 "error_category": error_category,
             },
+        )
+        emit(
+            "stage.end",
+            stage=stage,
+            duration_ms=elapsed,
+            succeeded=succeeded,
+            error_category=error_category,
+            timing="inclusive; do not sum nested durations",
         )
         _trace.reset(token)
 

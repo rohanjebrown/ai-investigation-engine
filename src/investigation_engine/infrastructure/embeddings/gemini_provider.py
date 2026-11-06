@@ -12,6 +12,7 @@ import httpx
 from google import genai
 from google.genai import errors, types
 
+from investigation_engine.application.debug_trace import provider_call
 from investigation_engine.application.embeddings import EmbeddingConfig
 from investigation_engine.application.ports.embedding_errors import (
     EmbeddingInputError,
@@ -149,7 +150,7 @@ class GeminiEmbeddingProvider:
 
     async def _count_tokens(self, content: types.Content) -> int:
         count = await self._request(
-            self._client.aio.models.count_tokens(model=MODEL, contents=content),
+            provider_call("count_tokens", self._client.aio.models.count_tokens, model=MODEL, contents=content),
             operation="token counting",
         )
         total = getattr(count, "total_tokens", None)
@@ -161,7 +162,9 @@ class GeminiEmbeddingProvider:
 
     async def _send_batch(self, contents: Sequence[types.Content]) -> tuple[EmbeddingVector, ...]:
         response = await self._request(
-            self._client.aio.models.embed_content(
+            provider_call(
+                "embed_content",
+                self._client.aio.models.embed_content,
                 model=MODEL,
                 contents=contents[0] if len(contents) == 1 else list(contents),
                 config=types.EmbedContentConfig(output_dimensionality=DIMENSIONS),

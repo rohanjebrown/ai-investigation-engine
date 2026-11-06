@@ -58,3 +58,6 @@ output
 /*.jsonl
 /*.zip
 /*_plan.json
+
+# Full local development traces never enter Git or images.
+.debug/

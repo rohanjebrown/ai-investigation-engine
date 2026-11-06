@@ -855,3 +855,31 @@ async def test_hnsw_validates_all_ranges_of_candidate_content(retrieval, session
     else:
         # Only a is an ANN candidate, but b must remain available for full-plan validation.
         assert len(hits) == 1 and hits[0].text == "a"
+
+
+async def test_local_trace_preserves_real_retrieval_rows_and_provenance(retrieval, monkeypatch, tmp_path):
+    import json
+
+    from investigation_engine.application.debug_trace import request_trace
+    from investigation_engine.infrastructure.observability import debug_trace as hooks
+
+    assert hooks.DebugTraceMiddleware
+    item = await retrieval.create("synthetic traced passage")
+    baseline = await retrieval.search().execute("question", owner_id=None)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("APP_ENV", "local")
+    monkeypatch.setenv("DEBUG_TRACE_ENABLED", "true")
+    for key in ("K_SERVICE", "K_REVISION", "CLOUD_RUN_JOB"):
+        monkeypatch.delenv(key, raising=False)
+    with request_trace("postgres", "question"):
+        actual = await retrieval.search().execute("question", owner_id=None)
+    assert actual == baseline
+    events = [
+        json.loads(line) for file in tmp_path.glob(".debug/traces/*.jsonl") for line in file.read_text().splitlines()
+    ]
+    rows = next(event["data"]["rows"] for event in events if event["event"] == "db.results")
+    assert rows[0]["text"] == "synthetic traced passage"
+    assert rows[0]["version_id"] == str(item.version.id)
+    assert any(event["event"] == "db.execute" and event["data"]["parameters"] for event in events)
+    selected = next(event["data"]["evidence"] for event in events if event["event"] == "retrieval.selected")
+    assert selected[0]["source"]["source_id"] == actual[0].source.source_id

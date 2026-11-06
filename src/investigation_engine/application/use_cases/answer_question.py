@@ -4,6 +4,7 @@ from dataclasses import replace
 from itertools import zip_longest
 
 from investigation_engine.application import answers as answer_types
+from investigation_engine.application.debug_trace import emit
 from investigation_engine.application.ports.answer_generator import AnswerGenerator
 from investigation_engine.application.ports.generation_errors import EvidenceContextLimitError, GenerationResponseError
 from investigation_engine.application.timing import log_event, stage_timing, timed
@@ -154,6 +155,7 @@ class AnswerQuestion:
                 self._max_evidence,
                 self._max_context_chars,
             )
+        emit("answer.context", request=request, selected=selected)
         log_event(
             "answer.evidence_selected",
             result_count=len(request.evidence),
@@ -183,6 +185,7 @@ class AnswerQuestion:
             generated.provider_requests,
         )
 
+        emit("answer.decision", generated=generated)
         resolved = _resolve_citations(selected, selected)
 
         if generated.status == answer_types.AnswerStatus.INSUFFICIENT_EVIDENCE:
@@ -198,6 +201,7 @@ class AnswerQuestion:
 
         with stage_timing("citation_validation"):
             _validate_citation_references(generated, selected)
+            emit("answer.citations", outcome="passed", citations=generated.citations)
 
         logger.info(
             "Question answering succeeded: citations=%d",

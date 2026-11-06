@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 from dataclasses import replace
 
+from investigation_engine.application.debug_trace import emit
 from investigation_engine.application.retrieval import Evidence, validate_search_scope
 
 MAX_RRF_K = 10_000
@@ -45,6 +46,7 @@ class _FusionAccumulator:
                 evidence_key[2],
             ),
         )
+        emit("rrf.ranking", identities=ordered_keys, scores=self._scores, limit=limit)
         return tuple(
             replace(
                 self._candidates[evidence_key],
@@ -70,6 +72,7 @@ class _FusionAccumulator:
         if previous is not None and not _same_evidence_payload(previous, evidence):
             raise ValueError("Retrieval channels disagree on the same evidence occurrence")
         if evidence_key in seen:
+            emit("rrf.duplicate", channel=name, identity=evidence_key)
             return
         seen.add(evidence_key)
         rank = len(seen)
@@ -77,6 +80,15 @@ class _FusionAccumulator:
         previous_score = self._scores.get(evidence_key, 0)
         reciprocal_rank = 1.0 / (self._smoothing + rank)
         self._scores[evidence_key] = previous_score + reciprocal_rank
+        emit(
+            "rrf.contribution",
+            identity=evidence_key,
+            channel=name,
+            rank=rank,
+            k=self._smoothing,
+            contribution=reciprocal_rank,
+            accumulated=self._scores[evidence_key],
+        )
         # Keep each channel's score and rank together for the final evidence.
         channel_values = {f"{name}_score": evidence.score, f"{name}_rank": rank}
         self._channels.setdefault(evidence_key, {}).update(channel_values)

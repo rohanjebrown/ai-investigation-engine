@@ -57,3 +57,6 @@ htmlcov/
 /reports/generated/
 /reports/evaluation/
 *.log
+
+# Full local development traces never enter Git or images.
+.debug/

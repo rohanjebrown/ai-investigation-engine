@@ -88,27 +88,20 @@ class InvestigationResult:
 
 def evidence_payload(reference: IdentifiedEvidence) -> dict:
     hit = reference.evidence
-    source_spans = []
-    for span in hit.source_spans:
-        locators = []
-        for locator in span.locators:
-            locators.append({"kind": locator.kind.value, "index": locator.index})
-        source_spans.append({"start": span.start, "end": span.end, "locators": locators})
-
+    # The model reasons over whole excerpts and human-readable source context.
+    # IDs, hashes, offsets and locators remain on Evidence for citation resolution.
+    source = {
+        "kind": hit.source.kind.value,
+        "revision": hit.source.revision,
+        "display_name": hit.source.display_name,
+    }
+    # Free-form metadata may supply source qualifiers outside the dataset case.
+    # Keep it when present rather than assuming every corpus uses it as boilerplate.
+    if hit.source.metadata:
+        source["metadata"] = hit.source.metadata
     return {
         "evidence_id": reference.evidence_id,
+        "title": hit.title,
         "excerpt": hit.text,
-        "document_id": str(hit.document_id),
-        "document_version_id": str(hit.document_version_id),
-        "content_sha256": hit.content_sha256,
-        "location": {"start": hit.start, "end": hit.end},
-        "source": {
-            "kind": hit.source.kind.value,
-            "source_id": hit.source.source_id,
-            "revision": hit.source.revision,
-            "display_name": hit.source.display_name,
-            "record_locator": hit.source.record_locator,
-            "metadata": hit.source.metadata,
-        },
-        "source_spans": source_spans,
+        "source": source,
     }

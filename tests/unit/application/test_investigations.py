@@ -457,3 +457,113 @@ async def test_investigation_events_report_limit_and_evidence_without_question_t
         value not in caplog.text
         for value in ("private-source", "private-document", "private-query", "private-question")
     )
+
+
+@pytest.mark.parametrize("extra_hits", ["oversized", "mixed"])
+@pytest.mark.parametrize("abstain", [False, True])
+async def test_context_admission_preserves_prior_evidence_and_finalizes(registration, extra_hits, abstain):
+    first = make_hit(
+        registration,
+        source_id="Wisigard",
+        body="Wisigard married Theudebert I. Theuderich I was Theudebert I's father.",
+    )
+    from dataclasses import replace
+
+    from investigation_engine.domain.source_span import LocatorKind, SourceLocator, SourceSpan
+
+    first = replace(
+        first,
+        source_spans=(
+            SourceSpan(start=0, end=len(first.text), locators=(SourceLocator(kind=LocatorKind.SENTENCE, index=7),)),
+        ),
+    )
+    huge = make_hit(registration, source_id="Wacho", body="Wacho's unrelated biography. " + "x" * 24000)
+    small = make_hit(registration, source_id="corroboration", body="Theuderic I was Theudebert I's father.")
+    final = InvestigationDecision(
+        status=InvestigationStatus.INSUFFICIENT_EVIDENCE if abstain else InvestigationStatus.ANSWERED,
+        answer=None if abstain else "Theuderic I [E1]",
+        citations=() if abstain else ("E1",),
+    )
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="Wisigard father in law", call_id="1"),
+            SearchEvidenceCall(query="Wacho children wives", call_id="2"),
+            final,
+        ]
+    )
+    search = QuerySearch(
+        {
+            "Wisigard father in law": (first,),
+            "Wacho children wives": (huge, small) if extra_hits == "mixed" else (huge,),
+        }
+    )
+    result = await InvestigateQuestion(search, model).execute("Who is Wisigard's father-in-law?", owner_id=None)
+    assert result.status == final.status and model.turns[-1].final_only
+    assert len(model.turns) == 3 and len(search.calls) == 2
+    assert all(len(turn.context_json()) <= 24000 for turn in model.turns)
+    assert result.evidence[0].evidence == first
+    assert all(item.evidence.text != huge.text for item in result.evidence)
+    assert result.searches[-1].disposition == SearchDisposition.CONTEXT_LIMIT
+    assert result.searches[-1].result_count == (2 if extra_hits == "mixed" else 1)
+    assert len(result.evidence) == (2 if extra_hits == "mixed" else 1)
+    assert result.evidence[0].evidence.source == first.source
+
+
+async def test_context_excluded_evidence_cannot_be_cited(registration):
+    first = make_hit(registration, source_id="known", body="An admitted fact.")
+    huge = make_hit(registration, source_id="excluded", body="x" * 25000)
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="first", call_id="1"),
+            SearchEvidenceCall(query="more", call_id="2"),
+            InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Excluded [E2]", citations=("E2",)),
+        ]
+    )
+    with pytest.raises(GenerationResponseError, match="outside"):
+        await InvestigateQuestion(QuerySearch({"first": (first,), "more": (huge,)}), model).execute(
+            "Question", owner_id=None
+        )
+
+
+async def test_context_finalization_does_not_create_extra_generation_budget(registration):
+    huge = make_hit(registration, source_id="excluded", body="x" * 25000)
+    model = ScriptedModel([SearchEvidenceCall(query="more", call_id="1")])
+    result = await InvestigateQuestion(QuerySearch({"more": (huge,)}), model, max_generation_requests=1).execute(
+        "Question", owner_id=None
+    )
+    assert result.status == InvestigationStatus.INCOMPLETE
+    assert "generation-request" in result.message
+    assert len(model.turns) == 1 and result.evidence == ()
+
+
+async def test_context_final_only_search_is_rejected_without_retrieval(registration):
+    huge = make_hit(registration, source_id="excluded", body="x" * 25000)
+    search = QuerySearch({"more": (huge,)})
+    model = ScriptedModel(
+        [SearchEvidenceCall(query="more", call_id="1"), SearchEvidenceCall(query="again", call_id="2")]
+    )
+    result = await InvestigateQuestion(search, model).execute("Question", owner_id=None)
+    assert result.status == InvestigationStatus.INCOMPLETE and len(search.calls) == 1
+    assert model.turns[-1].final_only
+
+
+async def test_context_envelope_overflow_preserves_prior_transcript(registration):
+    from investigation_engine.application.investigations import IdentifiedEvidence, InvestigationTurn, SearchExchange
+
+    hit = make_hit(registration, source_id="prior", body="Established fact. " + "x" * 350)
+    first = SearchExchange(query="q", call_id="1", evidence=(IdentifiedEvidence(evidence_id="E1", evidence=hit),))
+    budget = max(512, len(InvestigationTurn(question="Question", exchanges=(first,)).context_json()) + 1)
+    long_query = "q" * 500
+    search = QuerySearch({"q": (hit,), long_query: ()})
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="q", call_id="1"),
+            SearchEvidenceCall(query=long_query, call_id="2"),
+            InvestigationDecision(status=InvestigationStatus.ANSWERED, answer="Established [E1]", citations=("E1",)),
+        ]
+    )
+    result = await InvestigateQuestion(search, model, max_context_chars=budget).execute("Question", owner_id=None)
+    assert result.status == InvestigationStatus.ANSWERED and result.evidence[0].evidence == hit
+    assert model.turns[-1].exchanges == (first,) and model.turns[-1].final_only
+    assert len(result.searches) == 2 and result.searches[-1].disposition == SearchDisposition.CONTEXT_LIMIT
+    assert all(len(turn.context_json()) <= budget for turn in model.turns)

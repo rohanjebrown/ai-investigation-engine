@@ -22,6 +22,7 @@ from investigation_engine.application.answers import (
     ResolvedCitation,
     validate_question,
 )
+from investigation_engine.application.debug_trace import emit
 from investigation_engine.application.document_access import DocumentActor
 from investigation_engine.application.ports.embedding_errors import (
     EmbeddingInputError,
@@ -50,6 +51,7 @@ from investigation_engine.domain.provenance import SourceReference
 from investigation_engine.infrastructure.api.bootstrap import application_service
 from investigation_engine.infrastructure.api.uploads import extract_upload
 from investigation_engine.infrastructure.ingestion.extraction_errors import DocumentExtractionError
+from investigation_engine.infrastructure.observability.debug_trace import DebugTraceMiddleware
 from investigation_engine.infrastructure.observability.tracing import configure_tracing
 
 logger = logging.getLogger(__name__)
@@ -240,6 +242,8 @@ def create_app(*, service_factory=application_service) -> FastAPI:
                 return await call_next(request)
         return await call_next(request)
 
+    app.add_middleware(DebugTraceMiddleware)
+
     web_root = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=web_root), name="static")
 
@@ -282,6 +286,7 @@ def create_app(*, service_factory=application_service) -> FastAPI:
 
     @app.post("/questions", response_model=QuestionResponse)
     async def questions(body: QuestionRequest, request: Request):
+        emit("request.validated", question=body.question, request_type="quick_answer")
         service = request.app.state.services.questions
         auth = request.headers.get("authorization")
         owner_id = None
@@ -320,6 +325,7 @@ def create_app(*, service_factory=application_service) -> FastAPI:
 
     @app.post("/investigations", response_model=InvestigationResponse)
     async def investigations(body: QuestionRequest, request: Request):
+        emit("request.validated", question=body.question, request_type="investigation")
         services = request.app.state.services
         service = getattr(services, "investigations", None)
         config = getattr(services, "settings", None)

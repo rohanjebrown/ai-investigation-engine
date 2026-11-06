@@ -11,6 +11,7 @@ from investigation_engine.application import investigation_decisions as _decisio
 from investigation_engine.application import investigation_records as _records
 from investigation_engine.application import investigation_values as _investigation_values
 from investigation_engine.application.answers import MAX_QUESTION_CHARS
+from investigation_engine.application.debug_trace import emit
 from investigation_engine.application.ports.generation_errors import GenerationResponseError
 from investigation_engine.application.retrieval import Evidence, validate_search_question
 from investigation_engine.application.timing import log_event, stage_timing, timed
@@ -52,6 +53,7 @@ class _InvestigationState:
     embedding_requests: int = 0
     total_usage: TokenUsage = TokenUsage()
     model_version: str | None = None
+    context_exhausted: bool = False
 
 
 def _incomplete_result(
@@ -113,6 +115,13 @@ def _decision_result(
         prompt_tokens=usage.prompt_tokens,
         candidate_tokens=usage.candidate_tokens,
         thinking_tokens=usage.thinking_tokens,
+    )
+    emit(
+        "investigation.decision",
+        decision=decision,
+        citation_validation="passed",
+        origin="model",
+        explanation="No additional model rationale inferred",
     )
     return InvestigationResult(
         status=decision.status,
@@ -260,7 +269,8 @@ class InvestigateQuestion:
                 question=question,
                 exchanges=tuple(state.exchanges),
                 final_only=(
-                    len(state.registry) >= self._max_evidence
+                    state.context_exhausted
+                    or len(state.registry) >= self._max_evidence
                     or len(state.records) >= self._max_searches
                     or state.embedding_requests >= self._max_embeddings
                 ),
@@ -274,8 +284,8 @@ class InvestigateQuestion:
                 context_limit=self._max_context,
             )
             if turn.final_only:
-                reason = "evidence_limit"
-                if len(state.registry) < self._max_evidence:
+                reason = "context_limit" if state.context_exhausted else "evidence_limit"
+                if not state.context_exhausted and len(state.registry) < self._max_evidence:
                     reason = "search_limit" if len(state.records) >= self._max_searches else "embedding_limit"
                 log_event("investigation.limit_reached", reason=reason, evidence_count=len(state.registry))
             if len(turn.context_json()) > self._max_context:
@@ -289,6 +299,14 @@ class InvestigateQuestion:
                     "Investigation stopped at the evidence-context limit.",
                 )
             state.generation_requests += 1
+            emit(
+                "investigation.turn",
+                turn=turn,
+                evidence=tuple(state.registry.values()),
+                remaining_generations=self._max_generations - state.generation_requests,
+                remaining_searches=self._max_searches - len(state.records),
+                remaining_embeddings=self._max_embeddings - state.embedding_requests,
+            )
             action = await self._request_action(turn, state)  # noqa: WPS476 - each turn needs the prior transcript
             if isinstance(action, InvestigationDecision):
                 try:
@@ -361,6 +379,7 @@ class InvestigateQuestion:
                 candidate_tokens=action.usage.candidate_tokens,
                 thinking_tokens=action.usage.thinking_tokens,
             )
+        emit("investigation.action", action=action)
         state.model_version = action.model_version or state.model_version
         return action
 
@@ -398,16 +417,32 @@ class InvestigateQuestion:
             owner_id,
             state.records,
         )
+        admitted, context_limited, include_exchange = self._bounded_search_hits(action, hits, state, question)
         exchange = _record_search_results(
             action,
-            hits,
+            admitted,
             elapsed,
             state.registry,
             self._max_evidence,
             state.records,
             state.query_results,
         )
-        state.exchanges.append(exchange)
+        if context_limited:
+            state.context_exhausted = True
+            state.records[-1] = replace(
+                state.records[-1], result_count=len(hits), disposition=SearchDisposition.CONTEXT_LIMIT
+            )
+        emit(
+            "investigation.evidence_state",
+            query=action.query,
+            hits=hits,
+            exchange=exchange,
+            registry=tuple(state.registry.values()),
+            record=state.records[-1],
+            new_count=len(state.registry) - before_count,
+        )
+        if include_exchange:
+            state.exchanges.append(exchange)
         turn_context = InvestigationTurn(question=question, exchanges=tuple(state.exchanges)).context_json()
         log_event(
             "investigation.search_completed",
@@ -421,17 +456,30 @@ class InvestigateQuestion:
             context_limit=self._max_context,
             status=state.records[-1].disposition.value,
         )
-        if len(turn_context) > self._max_context:
-            return _incomplete_result(
-                state.registry,
-                state.records,
-                state.generation_requests,
-                state.embedding_requests,
-                state.model_version,
-                state.total_usage,
-                "Investigation stopped at the evidence-context limit.",
-            )
         return None
+
+    def _bounded_search_hits(self, action, hits, state, question):
+        """Admit whole hits only; reserve transcript overhead before mutating state."""
+        admitted = []
+        context_limited = False
+        empty = SearchExchange(query=action.query, call_id=action.call_id, evidence=())
+        if (
+            len(InvestigationTurn(question=question, exchanges=(*state.exchanges, empty)).context_json())
+            > self._max_context
+        ):
+            # Even the empty function-response envelope does not fit. Preserve the
+            # prior transcript and finalize from it; record this search internally.
+            return (), True, False
+        for hit in hits:
+            trial_registry = dict(state.registry)
+            references, _ = _collect_evidence_references(trial_registry, (*admitted, hit), self._max_evidence)
+            exchange = SearchExchange(query=action.query, call_id=action.call_id, evidence=references)
+            trial = InvestigationTurn(question=question, exchanges=(*state.exchanges, exchange))
+            if len(trial.context_json()) <= self._max_context:
+                admitted.append(hit)
+            else:
+                context_limited = True
+        return tuple(admitted), context_limited, True
 
     @timed("investigation.search")
     async def _search_with_record(

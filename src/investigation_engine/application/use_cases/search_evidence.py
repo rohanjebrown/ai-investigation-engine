@@ -1,6 +1,7 @@
 from time import perf_counter
 
 from investigation_engine.application.chunking import ChunkingConfig
+from investigation_engine.application.debug_trace import emit
 from investigation_engine.application.embeddings import EmbeddingConfig, storage_vector
 from investigation_engine.application.ports.embedding_errors import EmbeddingInputError, EmbeddingResponseError
 from investigation_engine.application.ports.embedding_provider import EmbeddingProvider
@@ -57,6 +58,7 @@ class SearchEvidence:
         """
         validate_search_scope(owner_id, limit)
         validate_search_question(question)
+        emit("retrieval.lexical_search", question=question, owner_id=owner_id, limit=limit)
         return await self._repository.search_keywords(
             question,
             self._chunking,
@@ -75,6 +77,15 @@ class SearchEvidence:
     ) -> tuple[Evidence, ...]:
         validate_search_scope(owner_id, limit)
         validate_search_question(question)
+        emit(
+            "retrieval.search",
+            question=question,
+            mode=self._mode,
+            owner_id=owner_id,
+            limit=limit,
+            chunking=self._chunking,
+            embedding=self._embedding,
+        )
         if self._provider.configuration != self._embedding:
             raise EmbeddingInputError("Serving embedding configuration does not match the query provider")
         started = perf_counter()
@@ -86,6 +97,7 @@ class SearchEvidence:
             vector = storage_vector(vector)
         except ValueError:
             raise EmbeddingResponseError("Query vector is incompatible with serving storage") from None
+        emit("retrieval.query_vector", vector=vector, configuration=self._embedding)
         if self._mode == "hybrid":
             semantic, keyword = await self._hybrid.search_channels(
                 vector,
@@ -96,9 +108,11 @@ class SearchEvidence:
                 semantic_limit=self._semantic_candidates,
                 keyword_limit=self._keyword_candidates,
             )
+            emit("retrieval.channels", semantic=semantic, lexical=keyword)
             with stage_timing("hybrid_fusion"):
                 result = reciprocal_rank_fusion(semantic, keyword, limit=limit, k=self._rrf_k)
             retrieval_completed("hybrid", len(result), len(semantic), len(keyword), (perf_counter() - started) * 1000)
+            emit("retrieval.selected", evidence=result)
             return result
         result = await self._repository.search(
             vector,
@@ -107,5 +121,6 @@ class SearchEvidence:
             owner_id=owner_id,
             limit=limit,
         )
+        emit("retrieval.selected", evidence=result)
         retrieval_completed("semantic", len(result), len(result), 0, (perf_counter() - started) * 1000)
         return result

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import aliased
 
 from investigation_engine.application.chunking import ChunkingConfig
+from investigation_engine.application.debug_trace import emit
 from investigation_engine.application.embeddings import EmbeddingConfig, EmbeddingVector, storage_vector
 from investigation_engine.application.ports.repository_errors import RepositoryError
 from investigation_engine.application.retrieval import (
@@ -1174,10 +1175,20 @@ class PostgreSQLEvidenceRepository:
                 async with session.begin():
                     with stage_timing("connection_acquisition"):
                         await session.connection(execution_options={"isolation_level": "READ COMMITTED"})
+                    emit(
+                        "retrieval.backend",
+                        semantic=self._semantic_backend,
+                        embedding=self._embedding_backend,
+                        lexical=self._lexical_backend,
+                        eligibility=self._eligibility_backend,
+                    )
                     # Includes driver transfer/decoding and server work. Server-only
                     # and channel branch timings come from EXPLAIN, not this clock.
                     with stage_timing(stage):
-                        rows = (await session.execute(statement)).mappings().all()
+                        result = await session.execute(statement)
+                        with stage_timing("result_fetch"):
+                            rows = result.mappings().all()
+                        emit("db.results", rows=rows, row_count=len(rows))
             return rows
         except SQLAlchemyError as error:
             raise RepositoryError("Evidence search could not be completed") from error
@@ -1200,8 +1211,19 @@ class PostgreSQLEvidenceRepository:
                             text("SELECT set_config('hnsw.iterative_scan', :value, true)"),
                             {"value": "strict_order" if self._hnsw_iterative_scan else "off"},
                         )
+                        emit(
+                            "retrieval.hnsw_attempt",
+                            ef_search=self._hnsw_ef_search,
+                            candidate_limit=candidate_limit,
+                            iterative_scan=self._hnsw_iterative_scan,
+                            completeness="full selected plans, including noncandidate sibling ranges",
+                            provenance="deterministic authorized current occurrence",
+                        )
                         with stage_timing(stage):
-                            rows = (await session.execute(statement_factory(candidate_limit))).mappings().all()
+                            result = await session.execute(statement_factory(candidate_limit))
+                            with stage_timing("result_fetch"):
+                                rows = result.mappings().all()
+                            emit("db.results", rows=rows, row_count=len(rows))
                         eligible_count = sum(row["channel"] == channel for row in rows) if channel else len(rows)
                         if eligible_count >= required_limit:
                             break
