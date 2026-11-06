@@ -2,7 +2,7 @@
 
 import logging
 
-from sqlalchemy import and_, exists, func, literal, literal_column, or_, select, text, tuple_, union_all
+from sqlalchemy import and_, exists, false, func, literal, literal_column, or_, select, text, tuple_, union_all
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import aliased
@@ -49,8 +49,16 @@ PYTHON_WHITESPACE = (
 
 
 def _eligible_memberships(
-    chunking: ChunkingConfig, embedding: EmbeddingConfig, owner_id: str | None, candidate_keys=None, suffix=""
+    chunking: ChunkingConfig,
+    embedding: EmbeddingConfig,
+    owner_id: str | None,
+    candidate_keys=None,
+    suffix="",
+    *,
+    candidate_ranges_only=True,
 ):
+    # HNSW keeps the default range restriction. BM25 can retain all validated
+    # ranges of candidate contents and reuse them during exact completion.
     hashes = None
     if candidate_keys is not None:
         hashes = (
@@ -255,7 +263,7 @@ def _eligible_memberships(
             .in_(select(complete.c.version_id, complete.c.configuration_id))
             .is_(True)
         )
-    if candidate_keys is not None:
+    if candidate_keys is not None and candidate_ranges_only:
         representative_query = representative_query.join(
             candidate_keys,
             and_(
@@ -771,6 +779,76 @@ def _bm25_statement(members, question, limit):
     )
 
 
+def _indexed_bm25_statement(chunking, embedding, owner_id, question, limit):
+    """Index-first top-K, with disjoint exact completion when the frontier is uncertain.
+
+    Cache complete authorized representatives for candidate contents, including
+    noncandidate siblings. An uncertain boundary expands to remaining contents
+    once; the first contents are never validated again. All work stays in one
+    statement/snapshot, including the legacy zero-score tail and provenance.
+    """
+    score = SearchableChunkRow.text.op("<@>")(func.to_bm25query(question, "searchable_chunks_bm25_idx"))
+    prefix = (
+        select(
+            SearchableChunkRow.content_sha256, SearchableChunkRow.start, SearchableChunkRow.end, score.label("score")
+        )
+        .order_by(score)
+        # Server-owned constant: keep LIMIT visible to the BM25 planner hook.
+        .limit(literal_column("400"))
+        .cte("bm25_index_candidates")
+        .prefix_with("MATERIALIZED")
+    )
+    contents = select(prefix.c.content_sha256).distinct().cte("bm25_first_contents")
+    cached = _eligible_memberships(
+        chunking, embedding, owner_id, contents, "_bm25_first", candidate_ranges_only=False
+    ).prefix_with("MATERIALIZED")
+    m = cached.c
+    fast = (
+        _candidate_statement(cached, prefix.c.score, prefix.c.score, "keyword_rank")
+        .join(
+            prefix, and_(prefix.c.content_sha256 == m.content_sha256, prefix.c.start == m.start, prefix.c.end == m.end)
+        )
+        .order_by(None)
+        .order_by(prefix.c.score, m.content_sha256, m.start, m.end)
+        .limit(limit)
+        .cte("bm25_first_hits")
+        .prefix_with("MATERIALIZED")
+    )
+    last_score = func.max(fast.c.ordering_value)
+    boundary = select(func.max(prefix.c.score)).scalar_subquery()
+    certified = (
+        select(
+            func.coalesce(
+                and_(
+                    func.count() == limit,
+                    last_score < 0,
+                    last_score > float("-inf"),
+                    boundary < float("inf"),
+                    last_score < boundary,
+                ),
+                false(),
+            ).label("accepted")
+        )
+        .select_from(fast)
+        .cte("bm25_frontier")
+        .prefix_with("MATERIALIZED")
+    )
+    accepted = select(certified.c.accepted).scalar_subquery()
+    remaining_contents = (
+        select(SearchableChunkRow.content_sha256)
+        .where(~accepted, SearchableChunkRow.content_sha256.not_in(select(contents.c.content_sha256)))
+        .distinct()
+        .cte("bm25_remaining_contents")
+        .prefix_with("MATERIALIZED")
+    )
+    remaining = _eligible_memberships(
+        chunking, embedding, owner_id, remaining_contents, "_bm25_rest", candidate_ranges_only=False
+    )
+    all_members = union_all(select(cached), select(remaining)).cte("bm25_complete_memberships")
+    reference = _bm25_statement(all_members, question, limit).subquery("bm25_completed_hits")
+    return union_all(select(fast).where(accepted), select(reference).where(~accepted))
+
+
 def _hydrate(statement):
     """Resolve trusted payloads only for already eligible, ranked candidates.
 
@@ -872,7 +950,11 @@ def _hybrid_statement(
             candidate_rows=candidates,
         ),
         (
-            _bm25_statement(lexical_members, question, keyword_limit)
+            (
+                _indexed_bm25_statement(chunking, embedding, owner_id, question, keyword_limit)
+                if eligibility_backend == "reference"
+                else _bm25_statement(lexical_members, question, keyword_limit)
+            )
             if lexical_backend == "bm25"
             else _keyword_statement(lexical_members, question, keyword_limit)
         ),
@@ -1112,7 +1194,11 @@ class PostgreSQLEvidenceRepository:
         validate_search_question(question)
         members = _memberships(chunking, embedding, owner_id, self._eligibility_backend)
         statement = (
-            _bm25_statement(members, question, limit)
+            (
+                _indexed_bm25_statement(chunking, embedding, owner_id, question, limit)
+                if self._eligibility_backend == "reference"
+                else _bm25_statement(members, question, limit)
+            )
             if self._lexical_backend == "bm25"
             else _keyword_statement(members, question, limit)
         )
@@ -1203,13 +1289,16 @@ class PostgreSQLEvidenceRepository:
                     rows = []
                     candidate_limit = self._hnsw_candidate_limits[-1]
                     for candidate_limit in self._hnsw_candidate_limits:
+                        # Apply both transaction-local settings in one round trip.
                         await session.execute(
-                            text("SELECT set_config('hnsw.ef_search', :value, true)"),
-                            {"value": str(self._hnsw_ef_search)},
-                        )
-                        await session.execute(
-                            text("SELECT set_config('hnsw.iterative_scan', :value, true)"),
-                            {"value": "strict_order" if self._hnsw_iterative_scan else "off"},
+                            text(
+                                "SELECT set_config('hnsw.ef_search', :ef_search, true), "
+                                "set_config('hnsw.iterative_scan', :iterative_scan, true)"
+                            ),
+                            {
+                                "ef_search": str(self._hnsw_ef_search),
+                                "iterative_scan": "strict_order" if self._hnsw_iterative_scan else "off",
+                            },
                         )
                         emit(
                             "retrieval.hnsw_attempt",

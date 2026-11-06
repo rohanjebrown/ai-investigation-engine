@@ -162,7 +162,7 @@ async def test_hnsw_retries_candidates_without_bypassing_authorization_or_proven
 
     def capture(connection, cursor, statement, parameters, context, executemany):
         if "set_config('hnsw.ef_search'" in statement:
-            statements.append(parameters["value"])
+            statements.append(parameters["ef_search"])
 
     engine = sessions.kw["bind"].sync_engine
     from sqlalchemy import event
@@ -806,20 +806,24 @@ async def test_bounded_single_statement_search_over_one_thousand_distinct_vector
     )
 
 
-@pytest.mark.parametrize("ef", [100, 200, 400])
-async def test_hnsw_uses_exact_configured_ef_and_local_settings(retrieval, sessions, ef):
+@pytest.mark.parametrize("ef,iterative", [(100, False), (200, False), (400, False), (400, True)])
+async def test_hnsw_uses_exact_configured_ef_and_local_settings(retrieval, sessions, ef, iterative):
     await retrieval.create()
     captured = []
     engine = sessions.kw["bind"].sync_engine
 
     def capture(connection, cursor, statement, parameters, context, executemany):
         if "set_config('hnsw." in statement:
-            captured.append((statement, parameters["value"]))
+            captured.append((statement, dict(parameters)))
 
     event.listen(engine, "before_cursor_execute", capture)
     try:
         repo = PostgreSQLEvidenceRepository(
-            sessions, semantic_backend="hnsw", hnsw_ef_search=ef, hnsw_candidate_limits=(100,)
+            sessions,
+            semantic_backend="hnsw",
+            hnsw_ef_search=ef,
+            hnsw_candidate_limits=(100,),
+            hnsw_iterative_scan=iterative,
         )
         assert (
             len(await repo.search(vector(), retrieval.config, retrieval.provider.configuration, owner_id=None, limit=1))
@@ -827,8 +831,80 @@ async def test_hnsw_uses_exact_configured_ef_and_local_settings(retrieval, sessi
         )
     finally:
         event.remove(engine, "before_cursor_execute", capture)
-    assert [value for sql, value in captured] == [str(ef), "off"]
-    assert all(", true)" in sql for sql, value in captured)
+    assert len(captured) == 1
+    sql, parameters = captured[0]
+    assert parameters == {"ef_search": str(ef), "iterative_scan": "strict_order" if iterative else "off"}
+    assert sql.count(", true)") == 2
+
+
+@pytest.mark.parametrize("fail", [False, True])
+async def test_batched_hnsw_settings_apply_before_query_and_reset_on_pooled_connection(db_engine, fail):
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    from investigation_engine.application.ports.repository_errors import RepositoryError
+
+    # One real pooled connection proves transaction-local settings do not leak
+    # after commit or rollback. The forced error occurs after both settings apply.
+    engine = create_async_engine(db_engine.url, pool_size=1, max_overflow=0, hide_parameters=True)
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    observed = []
+
+    def capture(connection, cursor, statement, parameters, context, executemany):
+        if statement == "SELECT 1 AS settings_probe":
+            observed.append(
+                connection.exec_driver_sql(
+                    "SELECT current_setting('hnsw.ef_search'), current_setting('hnsw.iterative_scan')"
+                ).one()
+            )
+
+    event.listen(engine.sync_engine, "before_cursor_execute", capture)
+    try:
+        async with sessions() as session:
+            await session.execute(text("LOAD 'vector'"))
+            defaults = (
+                await session.execute(
+                    text("SELECT current_setting('hnsw.ef_search'), current_setting('hnsw.iterative_scan')")
+                )
+            ).one()
+        repository = PostgreSQLEvidenceRepository(
+            sessions,
+            semantic_backend="hnsw",
+            hnsw_ef_search=173,
+            hnsw_candidate_limits=(1,),
+            hnsw_iterative_scan=True,
+        )
+
+        def statement_factory(candidate_limit):
+            assert candidate_limit == 1
+            if fail:
+                return text("SELECT 1/0 AS settings_probe")
+            return text("SELECT 1 AS settings_probe")
+
+        if fail:
+            # Read settings through the same connection before the failing query.
+            def failure_probe(connection, cursor, statement, parameters, context, executemany):
+                if "1/0" in statement:
+                    observed.append(
+                        connection.exec_driver_sql(
+                            "SELECT current_setting('hnsw.ef_search'), current_setting('hnsw.iterative_scan')"
+                        ).one()
+                    )
+
+            event.listen(engine.sync_engine, "before_cursor_execute", failure_probe)
+            with pytest.raises(RepositoryError):
+                await repository._read_hnsw_retries(statement_factory, required_limit=1, stage="settings_probe")
+        else:
+            await repository._read_hnsw_retries(statement_factory, required_limit=1, stage="settings_probe")
+        assert observed == [("173", "strict_order")]
+        async with sessions() as session:
+            after = (
+                await session.execute(
+                    text("SELECT current_setting('hnsw.ef_search'), current_setting('hnsw.iterative_scan')")
+                )
+            ).one()
+        assert after == defaults
+    finally:
+        await engine.dispose()
 
 
 @pytest.mark.parametrize("missing_sibling", [False, True])

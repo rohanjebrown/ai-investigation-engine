@@ -205,19 +205,106 @@ async def test_bm25_update_hides_superseded_version_and_missing_embeddings(bm25_
     assert all(hit.document_version_id != updated_version.id for hit in missing_embedding_hits)
 
 
+async def _reference_hits(h, sessions, question, *, owner=None, config=None, limit=20):
+    from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import (
+        _bm25_statement,
+        _eligible_memberships,
+        _evidence,
+        _hydrate,
+    )
+
+    statement = _hydrate(
+        _bm25_statement(_eligible_memberships(config or h.config, h.provider.configuration, owner), question, limit)
+    )
+    async with sessions() as session:
+        rows = (await session.execute(statement)).mappings().all()
+    return tuple(_evidence(row, i + 1) for i, row in enumerate(rows))
+
+
+async def test_bm25_exact_completion_beyond_400_private_leaders_and_positive_ties(bm25_repository, sessions):
+    h = bm25_repository
+    for index in range(410):
+        await h.create("quasar " * 20 + f"restricted record {index}", owner_id="alice")
+    for index in range(25):
+        await h.create(f"A public quasar archive record {index} with notes and context.")
+
+    for owner in (None, "alice"):
+        expected = await _reference_hits(h, sessions, "quasar", owner=owner)
+        actual = await h.evidence.search_keywords(
+            "quasar", h.config, h.provider.configuration, owner_id=owner, limit=20
+        )
+        assert actual == expected and len(actual) == 20
+    # Shared scope has no eligible hits among the 400 private leaders. Alice's
+    # private leaders have equal scores, so canonical hash ties require completion.
+    assert all("public" in hit.text for hit in await _reference_hits(h, sessions, "quasar"))
+
+
+async def test_bm25_cached_contents_keep_nonprefix_siblings_and_reject_missing_or_incompatible_embeddings(
+    bm25_repository, sessions, db_engine
+):
+    h = bm25_repository
+    config = replace(h.config, strategy=ChunkingStrategy.FIXED_TOKENS, max_tokens=1)
+    incomplete = await h.create("xy", selected_config=config)
+    complete = await h.create("xz", selected_config=config)
+    with db_engine.begin() as connection:
+        connection.execute(
+            delete(ChunkEmbeddingRow).where(
+                ChunkEmbeddingRow.content_sha256 == bytes.fromhex(incomplete.version.content.sha256),
+                ChunkEmbeddingRow.start == 1,
+            )
+        )
+    expected = await _reference_hits(h, sessions, "x", config=config)
+    actual = await h.evidence.search_keywords("x", config, h.provider.configuration, owner_id=None, limit=20)
+    assert actual == expected
+    assert {hit.text for hit in actual} == {"x", "z"}
+    assert all(hit.document_version_id == complete.version.id for hit in actual)
+    # z was not an indexed query match. It must survive exact zero-score
+    # completion from the first content's cached, fully validated memberships.
+    assert next(hit for hit in actual if hit.text == "z").score == 0
+
+    # A vector for another model cannot repair the selected plan's missing y.
+    await PostgreSQLEmbeddingRepository(sessions).save(
+        incomplete.plan.chunks[1],
+        replace(h.provider.configuration, model_id="incompatible-model"),
+        (1.0,) + (0.0,) * 767,
+    )
+    assert await _reference_hits(h, sessions, "x", config=config) == expected
+    assert await h.evidence.search_keywords("x", config, h.provider.configuration, owner_id=None, limit=20) == expected
+
+
+async def test_bm25_zero_score_ties_duplicates_and_fewer_than_limit_preserve_provenance(bm25_repository, sessions):
+    h = bm25_repository
+    original = await h.create("quasar catalogue one")
+    duplicate = await h.create("quasar catalogue one")
+    await h.create("quasar catalogue two")
+    for question in ("quasar", "qzxvnonexistentlexeme987654321"):
+        expected = await _reference_hits(h, sessions, question)
+        actual = await h.evidence.search_keywords(question, h.config, h.provider.configuration, owner_id=None, limit=20)
+        assert actual == expected and len(actual) == 2
+        representative = min((original, duplicate), key=lambda item: item.document.id)
+        selected = next(hit for hit in actual if hit.content_sha256 == original.version.content.sha256)
+        assert selected.document_version_id == representative.version.id
+        assert selected.source == representative.version.source
+
+
+async def test_bm25_empty_eligible_pool_matches_reference(bm25_repository, sessions):
+    h = bm25_repository
+    await h.create("quasar private record", owner_id="alice")
+    assert await _reference_hits(h, sessions, "quasar") == ()
+    assert await h.evidence.search_keywords("quasar", h.config, h.provider.configuration, owner_id=None, limit=20) == ()
+
+
 async def test_actual_bm25_repository_query_explain_analyze(bm25_repository, db_engine):
     h = bm25_repository
     await h.create("Director won the Velvet Slippers award for the Golden Umbrella.")
     await h.create("Astronomy studies distant planets and stars.")
     await h.create("Film director received the international Velvet prize.")
     from investigation_engine.infrastructure.persistence.postgresql_evidence_repository import (
-        _bm25_statement,
-        _eligible_memberships,
         _hydrate,
+        _indexed_bm25_statement,
     )
 
-    members = _eligible_memberships(h.config, h.provider.configuration, None)
-    statement = _hydrate(_bm25_statement(members, "Velvet Slippers award", 10))
+    statement = _hydrate(_indexed_bm25_statement(h.config, h.provider.configuration, None, "Velvet Slippers award", 10))
     compiled = statement.compile(dialect=postgresql.dialect())
     with db_engine.connect() as connection:
         try:
