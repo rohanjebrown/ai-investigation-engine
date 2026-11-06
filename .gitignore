@@ -58,5 +58,11 @@ htmlcov/
 /reports/evaluation/
 *.log
 
+# Local SQL plans and experiment archives are not build inputs.
+/*.sql
+/*.jsonl
+/*.zip
+/*_plan.json
+
 # Full local development traces never enter Git or images.
 .debug/
