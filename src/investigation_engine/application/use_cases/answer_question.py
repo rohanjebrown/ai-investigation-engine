@@ -1,6 +1,6 @@
 import logging
 import re
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from itertools import zip_longest
 
 from investigation_engine.application import answers as answer_types
@@ -45,7 +45,7 @@ def _balanced_evidence(channels):
     return tuple(selected)
 
 
-def _select_generation_evidence(question, evidence, max_evidence, max_context_chars):
+def _select_generation_evidence(question, evidence, max_evidence, max_context_chars, *, on_decision=None):
     selected = {}
     inputs = []
 
@@ -60,6 +60,14 @@ def _select_generation_evidence(question, evidence, max_evidence, max_context_ch
         if len(request.context_json()) <= max_context_chars:
             inputs.append(candidate)
             selected[evidence_id] = replace(retrieved)
+            if on_decision is not None:
+                on_decision(retrieved, "admitted")
+        elif on_decision is not None:
+            on_decision(retrieved, "context_budget")
+
+    if on_decision is not None:
+        for retrieved in evidence[max_evidence:]:
+            on_decision(retrieved, "evidence_count")
 
     return answer_types.GenerationRequest(question=question, evidence=tuple(inputs)), selected
 
@@ -104,6 +112,18 @@ def _validate_citation_references(generated, selected):
             raise GenerationResponseError("Answer contains an unlisted inline citation")
 
 
+@dataclass(frozen=True)
+class PreparedAnswerEvidence:
+    """Actual pre-generation result, including optional admission observations."""
+
+    request: answer_types.GenerationRequest
+    selected: dict
+    embedding_requests: int
+    channels: tuple
+    balanced: tuple
+    decisions: tuple
+
+
 class AnswerQuestion:
     def __init__(
         self,
@@ -124,6 +144,25 @@ class AnswerQuestion:
 
     @timed("answer.total")
     async def execute(self, question: str, *, owner_id: str | None) -> answer_types.AnswerResult:
+        prepared = await self.prepare_evidence(question, owner_id=owner_id)
+        request, selected, embedding_requests = prepared.request, prepared.selected, prepared.embedding_requests
+        if not prepared.balanced:
+            return self._abstain(embedding_requests=embedding_requests)
+
+        if not request.evidence:
+            logger.warning("Question answering failed: no evidence fits context budget")
+            log_event("answer.context_exhausted", succeeded=False, reason="context_limit")
+            raise EvidenceContextLimitError("No intact evidence fits the configured context budget")
+
+        return await self._generate_answer(question, request, selected, embedding_requests)
+
+    @timed("answer.evidence_preparation")
+    async def prepare_evidence(self, question: str, *, owner_id: str | None) -> PreparedAnswerEvidence:
+        """Run the same retrieval/admission boundary without invoking generation.
+
+        Empty admission is observable here. execute retains its existing empty
+        retrieval abstention and nonempty-but-unfittable context error behavior.
+        """
         answer_types.validate_question(question)
 
         queries = _independent_queries(question)
@@ -146,14 +185,23 @@ class AnswerQuestion:
         if not evidence:
             logger.info("Question answering abstained: no evidence retrieved")
             log_event("answer.abstained", reason="no_evidence", status="insufficient_evidence")
-            return self._abstain(embedding_requests=embedding_requests)
+            return PreparedAnswerEvidence(
+                answer_types.GenerationRequest(question=question, evidence=()),
+                {},
+                embedding_requests,
+                tuple(channels),
+                evidence,
+                (),
+            )
 
+        decisions = []
         with stage_timing("evidence_selection"):
             request, selected = _select_generation_evidence(
                 question,
                 evidence,
                 self._max_evidence,
                 self._max_context_chars,
+                on_decision=lambda hit, reason: decisions.append((hit, reason)),
             )
         emit("answer.context", request=request, selected=selected)
         log_event(
@@ -170,11 +218,11 @@ class AnswerQuestion:
             len(request.evidence),
         )
 
-        if not request.evidence:
-            logger.warning("Question answering failed: no evidence fits context budget")
-            log_event("answer.context_exhausted", succeeded=False, reason="context_limit")
-            raise EvidenceContextLimitError("No intact evidence fits the configured context budget")
+        return PreparedAnswerEvidence(
+            request, selected, embedding_requests, tuple(channels), evidence, tuple(decisions)
+        )
 
+    async def _generate_answer(self, question, request, selected, embedding_requests):
         with stage_timing("answer_generation"):
             generated = _validate_generated_result(await self._generator.generate(request))
 

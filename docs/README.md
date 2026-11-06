@@ -133,6 +133,16 @@ search budget, one provider request returned HTTP 503, and one pair's local
 report output was lost and not regenerated. No deployment or retrieval tuning
 was performed.
 
+## Structured evaluation and benchmarking
+
+The [evaluation CLI guide](validation/structured-evaluation.md) documents cached,
+read-only retrieval comparisons, persisted question selections, optional bounded
+answer runs and saved-run comparisons. The [initial results](validation/structured-evaluation-2026-11-06.md)
+record the five-question shared-corpus baseline and validation coverage.
+The [40-question serving-evidence benchmark](validation/40-question-serving-evaluation-2026-11-06.md)
+extends this with actual Quick Answer admission observations, hybrid-channel
+analysis, per-type comparisons and independently timed serving preparation.
+
 ## E40 corpus-scale processing
 
 The [corpus-scale record](validation/corpus-scale-2026-10-28.md) verifies 125,760

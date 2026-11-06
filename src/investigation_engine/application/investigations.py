@@ -417,16 +417,17 @@ class InvestigateQuestion:
             owner_id,
             state.records,
         )
-        admitted, context_limited, include_exchange = self._bounded_search_hits(action, hits, state, question)
-        exchange = _record_search_results(
-            action,
-            admitted,
-            elapsed,
-            state.registry,
-            self._max_evidence,
-            state.records,
-            state.query_results,
-        )
+        with stage_timing("evidence_selection"):
+            admitted, context_limited, include_exchange = self._bounded_search_hits(action, hits, state, question)
+            exchange = _record_search_results(
+                action,
+                admitted,
+                elapsed,
+                state.registry,
+                self._max_evidence,
+                state.records,
+                state.query_results,
+            )
         if context_limited:
             state.context_exhausted = True
             state.records[-1] = replace(

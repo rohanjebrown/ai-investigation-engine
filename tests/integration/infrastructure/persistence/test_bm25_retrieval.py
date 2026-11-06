@@ -346,3 +346,136 @@ async def test_actual_bm25_repository_query_explain_analyze(bm25_repository, db_
         },
     )
     assert "Execution Time" in plan[0]
+
+
+async def test_structured_evaluation_readonly_preflight_and_sql_observation(bm25_repository, db_engine):
+    from dataclasses import asdict
+
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    from investigation_engine.evaluation.postgres import preflight
+    from investigation_engine.evaluation.telemetry import observe, observe_sql
+
+    h = bm25_repository
+    public = await h.create("quasar shared passage")
+    private = await h.create("quasar private passage", owner_id="alice")
+    incomplete = await h.create("quasar incomplete passage")
+    with db_engine.begin() as connection:
+        connection.execute(
+            delete(ChunkEmbeddingRow).where(
+                ChunkEmbeddingRow.content_sha256 == bytes.fromhex(incomplete.version.content.sha256)
+            )
+        )
+    configuration_id = await h.plans.register_configuration(h.config)
+    gold = [
+        {
+            "source": asdict(item.version.source),
+            "content_sha256": item.version.content.sha256,
+            "sentence_index": 0,
+            "start": 0,
+            "end": len(item.version.content.text),
+        }
+        for item in (public, private, incomplete)
+    ]
+    gold.append({"mapping_error": "invalid_sentence_index", "sentence_index": 99})
+    cases = [{"id": "test", "gold": gold}]
+    engine = create_async_engine(
+        db_engine.url, hide_parameters=True, connect_args={"options": "-c default_transaction_read_only=on"}
+    )
+    try:
+        with observe_sql(engine.sync_engine), observe() as observation:
+            selected, metadata, available = await preflight(
+                engine,
+                expected_database=db_engine.url.database,
+                chunking_id=configuration_id,
+                embedding=h.provider.configuration,
+                cases=cases,
+                minimum_corpus_documents=0,
+            )
+        assert selected == h.config and metadata["read_only"]
+        assert metadata["shared_current_occurrences"] == 2
+        assert available["test"] == {
+            "0": "eligible",
+            "1": "absent_from_shared_corpus",
+            "2": "present_but_ineligible",
+            "3": "unresolvable_gold_mapping",
+        }
+        assert observation.sql and all(set(item) == {"kind", "duration_ms", "succeeded"} for item in observation.sql)
+        assert observation.timings()["postgres_explain_execution_ms"] is None
+        # The miniature fixture is allowed only by the direct test parameter.
+        # Operator CLI uses the full-corpus minimum and cannot silently run here.
+        with pytest.raises(ValueError, match="full shared"):
+            await preflight(
+                engine,
+                expected_database=db_engine.url.database,
+                chunking_id=configuration_id,
+                embedding=h.provider.configuration,
+                cases=cases,
+            )
+    finally:
+        await engine.dispose()
+
+
+async def test_actual_serving_preparation_observes_real_repository_without_generation(
+    bm25_repository, sessions, tmp_path
+):
+    from dataclasses import asdict
+    from unittest.mock import AsyncMock
+
+    from investigation_engine.application.use_cases.answer_question import AnswerQuestion
+    from investigation_engine.application.use_cases.search_evidence import SearchEvidence
+    from investigation_engine.evaluation.cached_queries import CachedQueryEmbeddings
+    from investigation_engine.evaluation.reporting import read_jsonl
+    from investigation_engine.evaluation.runner import EvaluationConfig, run_evaluation
+    from investigation_engine.evaluation.serving import LexicalSearch
+    from investigation_engine.evaluation.telemetry import ObservedRepository, observe_sql
+
+    h = bm25_repository
+    documents = [await h.create(f"quasar archive catalogue number {i}") for i in range(8)]
+    facts = [
+        {
+            "source": asdict(item.version.source),
+            "content_sha256": item.version.content.sha256,
+            "sentence_index": 0,
+            "start": 0,
+            "end": len(item.version.content.text),
+        }
+        for item in documents
+    ]
+    repository = ObservedRepository(h.evidence)
+    search = SearchEvidence(
+        repository, CachedQueryEmbeddings(h.provider.configuration, {}), h.config, h.provider.configuration
+    )
+    generator = type(
+        "ForbiddenGenerator", (), {"generate": AsyncMock(side_effect=AssertionError("No generation authorized"))}
+    )()
+    preparer = AnswerQuestion(LexicalSearch(search), generator)
+    configuration = EvaluationConfig(modes=("lexical",), repetitions=1, warmups=0)
+    output = tmp_path / "run"
+    with observe_sql(sessions.kw["bind"].sync_engine):
+        summary = await run_evaluation(
+            [
+                {
+                    "id": "test",
+                    "question": "quasar",
+                    "question_type": "inference",
+                    "reference_answer": None,
+                    "gold": facts,
+                }
+            ],
+            configuration,
+            {"lexical": {"service": search, "preparer": preparer}},
+            output=output,
+            manifest={"run_id": "disposable", "question_ids": ["test"]},
+            availability={"test": {str(i): "eligible" for i in range(8)}},
+        )
+    row = read_jsonl(output / "retrieval_results.jsonl")[0]
+    assert row["metrics"]["at_k"]["20"]["recall"] == 1
+    assert row["serving"]["admitted_passages"] == 5
+    assert row["serving"]["recall"] == 5 / 8
+    assert row["serving"]["supporting_facts_lost_from_ranked"] == 3
+    assert row["candidate_counts"] == {"semantic": 0, "lexical": 8}
+    assert len(row["timings"]["sql_operations"]) == len(row["serving"]["timings"]["sql_operations"]) == 1
+    assert row["generation_calls"] == 0
+    assert summary["modes"]["lexical"]["serving"]["complete_support"] == 0
+    generator.generate.assert_not_called()
