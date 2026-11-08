@@ -1,0 +1,35 @@
+{
+  "status": "offline_only",
+  "production_source_files_unchanged": 124,
+  "previous_case_initial_requests_unchanged": {
+    "A": true,
+    "B": true,
+    "C": true,
+    "D": true,
+    "E": true,
+    "F": true,
+    "G": true,
+    "H": true,
+    "I": true,
+    "J": true,
+    "K": true
+  },
+  "previous_native_followups_unchanged": true,
+  "L_vs_I_only_instruction_changes": true,
+  "M_vs_J_only_instruction_changes": true,
+  "l_m_only_evidence_changes": true,
+  "full_excerpt_characters": {
+    "L": [
+      677,
+      1296
+    ],
+    "M": [
+      677
+    ]
+  },
+  "maximum_l_m_requests_per_trial": 4,
+  "actual_generation_embedding_database_retrieval_requests": 0,
+  "production_prompt_sha256": "45cada8e1a9c9f2455a4966bedc4e86bcad985cc13086e9879ed97bd7638a510",
+  "path_addendum": "\nDiagnostic question meaning: paternal grandfather means the father of the\nsubject's father. The required path is subject -> father -> father, containing\nexactly two father relationships. Search only if a relationship required by\nthat path remains unsupported. Once the complete path is supported, answer\nusing the evidence. Do not investigate ancestors beyond the requested relationship.\n",
+  "limitation": "Comparisons use the same explicitly synthetic native SDK response fixture; actual independent provider responses may differ. No fixture signature is sent or inserted into executable preview history."
+}

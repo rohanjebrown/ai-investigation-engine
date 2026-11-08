@@ -19,6 +19,9 @@ class Observation:
         self.channels = []
         self.sql = []
         self.generation = []
+        self.embeddings = []
+        self.investigation_searches = []
+        self.investigation_turns = []
 
     def timings(self):
         def total(*names):
@@ -155,6 +158,10 @@ class RequestBudget:
             raise RequestBudgetExceeded("Live generation request cap reached")
         self.used += 1
 
+    def require(self, count):
+        if self.used + count > self.maximum:
+            raise RequestBudgetExceeded("Live provider request cap reached")
+
 
 class ObservedGenerator:
     """Underlying adapters must be configured for one attempt, including SDK retries."""
@@ -167,6 +174,8 @@ class ObservedGenerator:
         before_requests = getattr(self.provider, "provider_requests", None)
         item = {"status": "failed", "usage": None}
         observation, started = _current.get(), perf_counter()
+        api_stages = ("gemini.investigation.api_request",)
+        before_stages = {key: len(observation.stages[key]) for key in api_stages} if observation else {}
         if observation is not None:
             observation.generation.append(item)
         try:
@@ -180,6 +189,12 @@ class ObservedGenerator:
             return result
         finally:
             item["duration_ms"] = (perf_counter() - started) * 1000
+            api_values = (
+                [value for key, count in before_stages.items() for value in observation.stages[key][count:]]
+                if observation
+                else []
+            )
+            item["api_duration_ms"] = sum(api_values) if api_values else None
             after_requests = getattr(self.provider, "provider_requests", None)
             item["provider_requests"] = (
                 after_requests - before_requests

@@ -1,0 +1,40 @@
+{
+  "status": "offline_only",
+  "production_source_files_unchanged": 124,
+  "previous_a_q_initial_and_native_followup_requests_unchanged": {
+    "A": true,
+    "B": true,
+    "C": true,
+    "D": true,
+    "E": true,
+    "F": true,
+    "G": true,
+    "H": true,
+    "I": true,
+    "J": true,
+    "K": true,
+    "L": true,
+    "M": true,
+    "N": true,
+    "O": true,
+    "P": true,
+    "Q": true
+  },
+  "r_i_and_s_j_first_requests_identical_default_thinking": true,
+  "second_request_only_changes_thinking_config_to_medium": true,
+  "r_s_only_differ_in_evidence": true,
+  "baseline_model": "gemini-3.5-flash-lite",
+  "full_excerpt_characters": {
+    "R": [
+      677,
+      1296
+    ],
+    "S": [
+      677
+    ]
+  },
+  "actual_generation_embedding_database_retrieval_requests": 0,
+  "production_v5_sha256": "45cada8e1a9c9f2455a4966bedc4e86bcad985cc13086e9879ed97bd7638a510",
+  "thinking_usage_note": "Reported zero is not proof of no reasoning; missing usage remains null.",
+  "limitation": "Native comparisons use an explicitly synthetic in-memory SDK fixture. No fixture signature is submitted or inserted into executable preview histories. Actual provider responses may differ."
+}

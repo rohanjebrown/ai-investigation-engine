@@ -1,0 +1,17 @@
+{
+  "status": "offline_only",
+  "saved_actual_b_path": "reports\\generated\\gemini-investigation-decisions\\20261107T164817-50100a00\\call-B-001.json",
+  "e_request_equals_actual_b_except_tools_and_tool_config": true,
+  "e_final_only_false_no_forced_suffix": true,
+  "v5_prompt_hash_unchanged": "45cada8e1a9c9f2455a4966bedc4e86bcad985cc13086e9879ed97bd7638a510",
+  "saved_evidence_inputs_match_historical_b": true,
+  "f_initial_message_contains_only_original_question": true,
+  "f_second_request_deferred_without_invented_signed_parts": true,
+  "planned_maximum_generation_requests": 7,
+  "actual_generation_requests": 0,
+  "database_embedding_retrieval_requests": 0,
+  "historical_a_b_sha256": {
+    "reports\\generated\\gemini-investigation-decisions\\20261107T164449-2bc8f84f\\call-A-001.json": "3606f972ad5c0cb5007a7de11592d24b744249409e87b5d326c2975a1fee3d51",
+    "reports\\generated\\gemini-investigation-decisions\\20261107T164817-50100a00\\call-B-001.json": "fa2a47c9e0a324c838bf945addd6464730364396c9c59049c0e526f54a8508a3"
+  }
+}

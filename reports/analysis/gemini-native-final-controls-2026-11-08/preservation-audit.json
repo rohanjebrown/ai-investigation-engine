@@ -1,0 +1,38 @@
+{
+  "status": "offline_only",
+  "production_source_files_unchanged": 124,
+  "previous_a_m_initial_requests_unchanged": {
+    "A": true,
+    "B": true,
+    "C": true,
+    "D": true,
+    "E": true,
+    "F": true,
+    "G": true,
+    "H": true,
+    "I": true,
+    "J": true,
+    "K": true,
+    "L": true,
+    "M": true
+  },
+  "previous_native_followups_unchanged": true,
+  "n_i_and_o_j_first_requests_identical": true,
+  "n_o_only_evidence_differs": true,
+  "second_mode_any_exactly_search_and_submit_final": true,
+  "second_text_response_schema_absent": true,
+  "native_final_parameters_equal_production_final_schema": true,
+  "full_excerpt_characters": {
+    "N": [
+      677,
+      1296
+    ],
+    "O": [
+      677
+    ]
+  },
+  "actual_generation_embedding_database_retrieval_requests": 0,
+  "maximum_combined_n_o_requests": 4,
+  "production_v5_sha256": "45cada8e1a9c9f2455a4966bedc4e86bcad985cc13086e9879ed97bd7638a510",
+  "limitation": "Request comparisons use an explicitly synthetic native SDK object in memory. No fixture signature is sent or inserted into executable preview histories. N/O jointly change calling mode and final-answer representation."
+}

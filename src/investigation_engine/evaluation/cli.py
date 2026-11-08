@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from investigation_engine.application.embeddings import EmbeddingConfig
 from investigation_engine.application.use_cases.search_evidence import SearchEvidence
-from investigation_engine.evaluation.cached_queries import CachedQueryEmbeddings, import_query_caches, load_query_cache
+from investigation_engine.evaluation.cached_queries import import_query_caches, load_query_cache
 from investigation_engine.evaluation.dataset import (
     catalog,
     legacy_cases,
@@ -24,6 +24,13 @@ from investigation_engine.evaluation.dataset import (
     select_questions,
     selection_manifest,
 )
+from investigation_engine.evaluation.investigation import (
+    INVESTIGATION_MODES,
+    ObservedInvestigationModel,
+    ObservedInvestigationSearch,
+    investigation_request_plan,
+)
+from investigation_engine.evaluation.live_queries import ReadThroughQueryEmbeddings
 from investigation_engine.evaluation.metrics import ANSWER_SCORER, ANSWER_SCORER_SOURCE
 from investigation_engine.evaluation.reporting import compare_runs, comparison_markdown, write_json
 from investigation_engine.evaluation.retrieval import fingerprint
@@ -96,6 +103,19 @@ def selected_cases(args):
         selection = selection_manifest(select_questions(rows, args.sample_size, args.seed), args.seed)
     if len(selection["question_ids"]) > 100 and not args.large_run:
         raise ValueError("A larger persisted selection requires --large-run")
+    if args.question_id:
+        if len(set(args.question_id)) != len(args.question_id) or set(args.question_id) - set(
+            selection["question_ids"]
+        ):
+            raise ValueError("Smoke question IDs must be distinct members of the selected set")
+        selection = {
+            **selection,
+            "parent_selection_sha256": fingerprint(selection),
+            "question_ids": [key for key in selection["question_ids"] if key in args.question_id],
+        }
+        selection["question_overrides"] = {
+            key: value for key, value in selection.get("question_overrides", {}).items() if key in args.question_id
+        }
     return load_cases(args.dataset, selection), selection
 
 
@@ -115,9 +135,11 @@ async def execute_run(args):
         hnsw_iterative_scan=args.hnsw_iterative_scan,
         rrf_k=args.rrf_k,
         answer_retrieval_mode=args.answer_retrieval_mode,
-        request_timeout_seconds=args.timeout,
+        request_timeout_seconds=args.timeout or (900 if set(args.modes) & set(ANSWER_MODES) else 120),
         allow_generation=args.allow_generation,
         max_generation_requests=args.max_generation_requests,
+        allow_live_embeddings=args.allow_live_embeddings,
+        max_embedding_requests=args.max_embedding_requests,
         include_evidence_text=args.local_diagnostics,
         concurrency=args.concurrency,
         serving_max_evidence=args.serving_max_evidence,
@@ -134,7 +156,7 @@ async def execute_run(args):
         raise ValueError(
             "A profiled query cache is required; missing vectors are never generated. Lexical-only runs can supply --embedding-profile instead."
         )
-    provider = CachedQueryEmbeddings(embedding, vectors)
+    provider = ReadThroughQueryEmbeddings(embedding, vectors, cache_path=args.cache)
     embedding_audit = None
     if args.embedding_audit:
         supplied = json.loads(args.embedding_audit.read_text(encoding="utf-8"))
@@ -202,6 +224,75 @@ async def execute_run(args):
             hnsw_iterative_scan=configuration.hnsw_iterative_scan,
         )
         await raw_repository.validate_backend()
+        if args.plan_only:
+            modes = [
+                configuration.answer_retrieval_mode if mode == "investigation" else mode.removeprefix("investigation_")
+                for mode in configuration.modes
+                if mode in INVESTIGATION_MODES
+            ]
+            if len(modes) != len(configuration.modes):
+                raise ValueError("--plan-only currently requires Investigation modes")
+            budgets = {
+                key: getattr(settings, "investigation_" + key)
+                for key in (
+                    "max_turns",
+                    "max_search_calls",
+                    "max_results_per_search",
+                    "max_accumulated_evidence",
+                    "max_context_chars",
+                    "max_generation_requests",
+                    "max_embedding_requests",
+                )
+            }
+            plan = {
+                "status": "planned_no_provider_calls",
+                "run_id": run_id,
+                **software_manifest(),
+                "dataset": {"source": DATASET_ID, "revision": REVISION, "split": "dev", "sha256": FILE_SHA256},
+                "selection": selection,
+                "question_ids": [case["id"] for case in cases],
+                "selection_sha256": fingerprint(selection),
+                "corpus": corpus,
+                "configuration": configuration.json(),
+                "embedding": asdict(embedding),
+                "generation_model": args.generation_model or settings.gemini_generation_model,
+                "investigation_budgets": budgets,
+                "cache_sha256": cache_sha,
+                "cached_original_questions": sum(case["question"] in vectors for case in cases),
+                "provider_requests": {"generation": 0, "count_tokens": 0, "embed_content": 0, "voyage": 0},
+                "request_plan": investigation_request_plan(
+                    len(cases), modes, budgets, repetitions=configuration.repetitions, warmups=configuration.warmups
+                ),
+            }
+            output.mkdir(parents=True, exist_ok=False)
+            write_json(output / "plan.json", plan)
+            print(
+                json.dumps({"output": str(output), "status": plan["status"], "request_plan": plan["request_plan"]}),
+                flush=True,
+            )
+            return
+        if configuration.allow_live_embeddings:
+            from investigation_engine.evaluation.live_providers import BudgetedGeminiEmbeddingProvider, ProviderPacer
+            from investigation_engine.infrastructure.embeddings.gemini_provider import (
+                DIMENSIONS,
+                DOCUMENT_FORMAT_VERSION,
+                MODEL,
+            )
+
+            if embedding != EmbeddingConfig(
+                provider="gemini_developer_api",
+                model_id=MODEL,
+                dimensions=DIMENSIONS,
+                document_format=DOCUMENT_FORMAT_VERSION,
+            ):
+                raise ValueError("Live embedding adapter is incompatible with the cached/persisted profile")
+            live = BudgetedGeminiEmbeddingProvider(
+                api_key=settings.gemini_api_key,
+                maximum_requests=configuration.max_embedding_requests,
+                pacer=ProviderPacer(args.embedding_rpm, args.embedding_tpm),
+            )
+            clients.append(live)
+            provider = ReadThroughQueryEmbeddings(embedding, vectors, cache_path=args.cache, live=live, allow_live=True)
         repository = ObservedRepository(raw_repository)
         searches = {
             mode: SearchEvidence(
@@ -239,6 +330,9 @@ async def execute_run(args):
             )
 
             budget = RequestBudget(configuration.max_generation_requests)
+            from investigation_engine.evaluation.live_providers import PacedInvestigationModel, ProviderPacer
+
+            generation_pacer = ProviderPacer(args.generation_rpm, args.generation_tpm)
             model = args.generation_model or settings.gemini_generation_model
             if not model:
                 raise ValueError("An explicit generation model is required")
@@ -282,11 +376,18 @@ async def execute_run(args):
                     )
                     clients.append(client)
                     service = AnswerQuestion(
-                        searches[configuration.answer_retrieval_mode],
+                        LexicalSearch(searches[configuration.answer_retrieval_mode])
+                        if configuration.answer_retrieval_mode == "lexical"
+                        else searches[configuration.answer_retrieval_mode],
                         ObservedGenerator(client, budget),
                         **answer_budgets,
                     )
                 else:
+                    retrieval_mode = (
+                        configuration.answer_retrieval_mode
+                        if mode == "investigation"
+                        else mode.removeprefix("investigation_")
+                    )
                     client = GeminiInvestigationModel(
                         api_key=settings.gemini_api_key,
                         model=model,
@@ -295,15 +396,22 @@ async def execute_run(args):
                     )
                     clients.append(client)
                     service = InvestigateQuestion(
-                        searches[configuration.answer_retrieval_mode],
-                        ObservedGenerator(client, budget),
+                        ObservedInvestigationSearch(
+                            LexicalSearch(searches[retrieval_mode])
+                            if retrieval_mode == "lexical"
+                            else searches[retrieval_mode],
+                            retrieval_mode,
+                        ),
+                        ObservedInvestigationModel(
+                            ObservedGenerator(PacedInvestigationModel(client, generation_pacer), budget)
+                        ),
                         **investigation_budgets,
                     )
                 adapted = AnsweringRun(
                     name=mode,
                     mode="single_step" if mode == "quick_answer" else "multi_step",
                     service=service,
-                    retrieval_mode=configuration.answer_retrieval_mode,
+                    retrieval_mode=configuration.answer_retrieval_mode if mode == "quick_answer" else retrieval_mode,
                     chunking=asdict(chunking),
                     embedding=asdict(embedding),
                     generation_model=model,
@@ -341,11 +449,23 @@ async def execute_run(args):
                 "blocked_modes": [mode for mode in configuration.modes if mode in ("semantic", "hybrid")]
                 if all(case["question"] not in vectors for case in cases)
                 else [],
-                "policy": "exact text, cached only; no provider embedding calls, including Investigation followups",
+                "policy": "exact compatible hits reused; authorized bounded misses atomically persisted"
+                if configuration.allow_live_embeddings
+                else "exact text, cached only; no provider embedding calls, including Investigation followups",
             },
             "provider_requests": {"embedding_count_tokens": 0, "embedding_embed_content": 0, "voyage_reranking": 0},
             "provider_request_scope": "Benchmark execution only; any prior authorized embedding preparation is recorded separately",
             "embedding_preparation": embedding_audit,
+            "live_limits": {
+                "generation_rpm": args.generation_rpm,
+                "generation_tpm_reservation": args.generation_tpm,
+                "embedding_rpm_including_count_tokens": args.embedding_rpm,
+                "embedding_tpm": args.embedding_tpm,
+                "initial_cooldown_seconds": args.cooldown_seconds,
+                "generation_request_cap": configuration.max_generation_requests,
+                "embedding_rpc_cap_including_count_tokens": configuration.max_embedding_requests,
+                "automatic_retries": 0,
+            },
             "answer_scorer": {
                 "version": ANSWER_SCORER,
                 "source": ANSWER_SCORER_SOURCE,
@@ -361,12 +481,17 @@ async def execute_run(args):
             },
             "timing": {
                 "clock": "perf_counter monotonic",
-                "provider_embedding_network": False,
+                "provider_embedding_network": configuration.allow_live_embeddings,
                 "generation_network": bool(generation_settings),
                 "explain_server_time": "not collected; not interchangeable with driver latency",
                 "environment": "Local Python process against Cloud SQL via the configured proxy; includes network overhead, not deployed application latency",
             },
         }
+        if args.cooldown_seconds:
+            if not 0 < args.cooldown_seconds <= 3600:
+                raise ValueError("Cooldown must be between zero and 3600 seconds")
+            print(json.dumps({"initial_provider_cooldown_seconds": args.cooldown_seconds}), flush=True)
+            await asyncio.sleep(args.cooldown_seconds)
         with observe_sql(engine.sync_engine):
             summary = await run_evaluation(
                 cases,
@@ -376,6 +501,7 @@ async def execute_run(args):
                 manifest=manifest,
                 availability=availability,
                 progress=lambda row: print(json.dumps(row), flush=True),
+                query_provider=provider if args.cache.exists() else None,
             )
         print(json.dumps({"output": str(output), "modes": list(summary["modes"])}))
     finally:
@@ -400,12 +526,19 @@ def parser():
     run.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     run.add_argument("--set", dest="question_set", choices=("smoke", "regression", "sample", "legacy"), default="smoke")
     run.add_argument("--selection", type=Path)
+    run.add_argument(
+        "--question-id",
+        action="append",
+        help="Explicit smoke subset of the saved selection; original selection hash is retained",
+    )
     run.add_argument("--sample-size", type=int, default=40)
     run.add_argument("--large-run", action="store_true")
     run.add_argument("--seed", type=int, default=20261106)
     run.add_argument("--modes", nargs="+", choices=RETRIEVAL_MODES + ANSWER_MODES, default=list(RETRIEVAL_MODES))
-    run.add_argument("--repetitions", type=int, default=3)
-    run.add_argument("--warmups", type=int, default=1)
+    run.add_argument(
+        "--repetitions", type=int, help="Default: one for answer/Investigation runs, three for retrieval-only"
+    )
+    run.add_argument("--warmups", type=int, help="Default: zero for answer/Investigation runs, one for retrieval-only")
     run.add_argument("--concurrency", type=int, default=1)
     run.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
     run.add_argument("--embedding-profile", type=Path)
@@ -415,6 +548,11 @@ def parser():
         help="Record the matching local preparation/allowance audit; this never authorizes inference",
     )
     run.add_argument("--output", type=Path)
+    run.add_argument(
+        "--plan-only",
+        action="store_true",
+        help="Verify dataset/shared corpus and save Investigation request bounds without constructing providers or making AI calls",
+    )
     run.add_argument("--expected-database")
     run.add_argument("--chunking-id", type=int)
     run.add_argument("--semantic-backend", choices=("hnsw", "exact"), default="hnsw")
@@ -427,11 +565,31 @@ def parser():
     run.add_argument("--serving-max-evidence", type=int, default=5)
     run.add_argument("--serving-max-context-chars", type=int, default=12000)
     run.add_argument("--rrf-k", type=int, default=60)
-    run.add_argument("--timeout", type=float, default=120)
-    run.add_argument("--answer-retrieval-mode", choices=("semantic", "hybrid"), default="hybrid")
+    run.add_argument(
+        "--timeout",
+        type=float,
+        help="Whole Investigation/request timeout including pacing; default 900s for answers, 120s for retrieval",
+    )
+    run.add_argument("--answer-retrieval-mode", choices=RETRIEVAL_MODES, default="hybrid")
     run.add_argument("--allow-generation", action="store_true")
     run.add_argument("--max-generation-requests", type=int, default=0)
     run.add_argument("--generation-model")
+    run.add_argument("--allow-live-embeddings", action="store_true")
+    run.add_argument(
+        "--max-embedding-requests", type=int, default=0, help="Run-wide RPC cap including countTokens and embedContent"
+    )
+    run.add_argument("--generation-rpm", type=int, default=12)
+    run.add_argument(
+        "--generation-tpm",
+        type=int,
+        default=200000,
+        help="Conservative rolling token reservation; actual usage is recorded separately",
+    )
+    run.add_argument("--embedding-rpm", type=int, default=60, help="Conservatively counts token-counting RPCs too")
+    run.add_argument("--embedding-tpm", type=int, default=24000)
+    run.add_argument(
+        "--cooldown-seconds", type=float, default=0, help="Initial provider cooldown before benchmark timers"
+    )
     run.add_argument(
         "--local-diagnostics",
         action="store_true",
@@ -443,6 +601,19 @@ def parser():
     compare.add_argument("--left-mode", required=True)
     compare.add_argument("--right-mode", required=True)
     compare.add_argument("--output", type=Path, required=True)
+    rescore = commands.add_parser(
+        "rescore",
+        help="Offline answer extraction, official-score verification and result-bound factual-review import; no database/provider calls",
+    )
+    rescore.add_argument("source", type=Path)
+    rescore.add_argument(
+        "--reviews",
+        type=Path,
+        action="append",
+        default=[],
+        help="Completed copies of review_packets.jsonl; repeated files are merged strictly",
+    )
+    rescore.add_argument("--output", type=Path, required=True)
     return cli
 
 
@@ -470,6 +641,21 @@ def main():
                 value = import_query_caches(args.source, profile)
                 value["sources_sha256"] = [sha256(path.read_bytes()).hexdigest() for path in args.source]
                 write_json(args.output, value)
+            elif args.command == "rescore":
+                from investigation_engine.evaluation.answer_reviews import rescore_saved_run
+
+                value = rescore_saved_run(args.source, args.output, reviews=args.reviews)
+                print(
+                    json.dumps(
+                        {
+                            "output": str(args.output),
+                            "source_run_id": value["source_run_id"],
+                            "original_official_metrics_unchanged": True,
+                            "provider_requests": 0,
+                            "database_queries": 0,
+                        }
+                    )
+                )
             else:
                 value = compare_runs(args.left, args.right, left_mode=args.left_mode, right_mode=args.right_mode)
                 write_json(args.output, value)

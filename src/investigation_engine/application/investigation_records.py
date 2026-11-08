@@ -33,19 +33,49 @@ class InvestigationTurn:
     exchanges: tuple[SearchExchange, ...]
     final_only: bool = False
 
+    def search_responses(self) -> list[dict]:
+        """Prefix-stable wire presentation; keep full evidence on the records.
+
+        Canonical ranges are introduced once, in conversation order. Rendering
+        a longer history must not compact an earlier function response anew.
+        """
+        first_seen = {}
+        responses = []
+        for sequence, exchange in enumerate(self.exchanges, 1):
+            results, new_ids, previous_ids = [], [], []
+            for reference in exchange.evidence:
+                hit = reference.evidence
+                canonical = (hit.content_sha256, hit.start, hit.end)
+                if canonical in first_seen:
+                    original, first_search = first_seen[canonical]
+                    evidence_id = original.evidence_id
+                    payload = evidence_payload(original)
+                    payload.pop("excerpt")
+                    payload.update(evidence_id=evidence_id, previously_available=True, first_seen_search=first_search)
+                    previous_ids.append(evidence_id)
+                else:
+                    payload = evidence_payload(reference)
+                    first_seen[canonical] = (reference, sequence)
+                    new_ids.append(reference.evidence_id)
+                results.append(payload)
+            responses.append(
+                {
+                    "query": exchange.query,
+                    "results": results,
+                    "new_evidence_ids": new_ids,
+                    "previously_available_evidence_ids": previous_ids,
+                    "no_new_evidence": not new_ids,
+                }
+            )
+        return responses
+
     def context_json(self) -> str:
         """Bounded, provider-neutral representation of the complete tool transcript."""
         return json.dumps(
             {
                 "question": self.question,
                 "final_only": self.final_only,
-                "searches": [
-                    {
-                        "query": exchange.query,
-                        "results": [evidence_payload(hit) for hit in exchange.evidence],
-                    }
-                    for exchange in self.exchanges
-                ],
+                "searches": self.search_responses(),
             },
             ensure_ascii=False,
             separators=(",", ":"),

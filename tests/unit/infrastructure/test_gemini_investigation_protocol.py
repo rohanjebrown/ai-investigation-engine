@@ -105,6 +105,84 @@ def hit(registration, source, text):
     )
 
 
+async def test_incremental_repeats_preserve_signed_history_and_prior_full_function_response(
+    sdk_transport, registration
+):
+    first_native = tool_content(1, "first five")
+    second_native = tool_content(2, "same five again")
+    sdk_transport.replies.extend(
+        [(200, response(first_native)), (200, response(second_native)), (200, response(final_content()))]
+    )
+    evidence = tuple(hit(registration, str(index), f"Canonical passage {index}.") for index in range(5))
+
+    class Search:
+        async def execute(self, query, limit, *, owner_id):
+            return evidence
+
+    provider = sdk_transport.create()
+    try:
+        result = await InvestigateQuestion(Search(), provider).execute("Question?", owner_id=None)
+    finally:
+        await provider.aclose()
+    assert result.generation_requests == 3 and len(result.evidence) == 5
+    assert result.citations == ("E1", "E2")
+    second_request, third_request = sdk_transport.requests[1:]
+    # Earlier signed MODEL messages and USER function responses stay identical
+    # as later searches are appended; the first full passages are never rewritten.
+    assert third_request["contents"][:3] == second_request["contents"]
+    assert third_request["contents"][1] == first_native
+    assert third_request["contents"][3] == second_native
+    responses = [
+        part["functionResponse"]
+        for content in third_request["contents"]
+        for part in content["parts"]
+        if "functionResponse" in part
+    ]
+    assert [item["id"] for item in responses] == ["native-1", "native-2"]
+    assert [item["name"] for item in responses] == ["search_evidence", "search_evidence"]
+    a, b = [item["response"] for item in responses]
+    assert len(a["results"]) == 5 and all("excerpt" in item for item in a["results"])
+    assert b["new_evidence_ids"] == [] and b["no_new_evidence"]
+    assert all("excerpt" not in item and item["first_seen_search"] == 1 for item in b["results"])
+    assert [item["evidence_id"] for item in b["results"]] == ["E1", "E2", "E3", "E4", "E5"]
+    assert result.evidence[0].evidence == evidence[0]
+
+
+async def test_incremental_mixed_response_keeps_new_excerpt_and_earlier_citation(sdk_transport, registration):
+    sdk_transport.replies.extend(
+        [
+            (200, response(tool_content(1, "first"))),
+            (200, response(tool_content(2, "new dependent fact"))),
+            (200, response(final_content())),
+        ]
+    )
+    first = hit(registration, "first", "Aster Vale directed the film.")
+    second = hit(registration, "second", "Aster Vale was Canadian.")
+
+    class Search:
+        async def execute(self, query, limit, *, owner_id):
+            return (first,) if query == "first" else (first, second)
+
+    provider = sdk_transport.create()
+    try:
+        result = await InvestigateQuestion(Search(), provider).execute(
+            "What was the director's nationality?", owner_id=None
+        )
+    finally:
+        await provider.aclose()
+    functions = [
+        part["functionResponse"]["response"]
+        for content in sdk_transport.requests[-1]["contents"]
+        for part in content["parts"]
+        if "functionResponse" in part
+    ]
+    mixed = functions[1]
+    assert mixed["new_evidence_ids"] == ["E2"] and mixed["previously_available_evidence_ids"] == ["E1"]
+    assert "excerpt" not in mixed["results"][0] and mixed["results"][1]["excerpt"] == second.text
+    assert functions[0]["results"][0]["excerpt"] == first.text
+    assert result.citations == ("E1", "E2") and result.evidence[0].evidence.source == first.source
+
+
 async def test_sdk_serializes_two_signed_sequential_searches_and_final_decision(sdk_transport, registration):
     first = tool_content(1, "film director")
     second = tool_content(2, "Aster Vale nationality")

@@ -142,6 +142,46 @@ record the five-question shared-corpus baseline and validation coverage.
 The [40-question serving-evidence benchmark](validation/40-question-serving-evaluation-2026-11-06.md)
 extends this with actual Quick Answer admission observations, hybrid-channel
 analysis, per-type comparisons and independently timed serving preparation.
+The [end-to-end Investigation evaluator](validation/structured-investigation-evaluation-2026-11-06.md)
+adds actual model-directed search traces, authorized bounded query-cache misses,
+accumulated/final-context coverage and a live smoke record. Its full forty-question
+comparison remains unrun because the reported free daily allowance is insufficient
+for the worst-case request budget.
+The [answer-focused scoring and manual-review extension](validation/answer-correctness-evaluation-2026-11-07.md)
+preserves official whole-response EM/F1, adds conservative reference-free answer
+extraction and supports offline, result-bound factual reviews of saved runs.
+The [Investigation stopping analysis](validation/investigation-stopping-analysis-2026-11-07.md)
+reconstructs the Jolliffe search loop, distinguishes model choices from application
+limits, and records offline replay/regression evidence and unimplemented minimal
+improvements.
+The [minimal stopping-instruction change](validation/investigation-stopping-improvement-2026-11-07.md)
+records the preserved/revised prompts, offline regression checks and a prepared
+three-question paired comparison. Its effect on live Gemini behavior is unmeasured;
+the comparison has not been executed.
+
+The [incremental Investigation evidence report](validation/incremental-investigation-evidence-2026-11-07.md)
+documents first-appearance excerpts, compact references for repeated canonical
+passages, native-history compatibility, offline v5 context savings and regression
+coverage while retaining the v5 prompt and existing budgets.
+The [standalone Gemini decision diagnostic](validation/gemini-investigation-decision-diagnostic-2026-11-07.md)
+previews saved-evidence, structured-decision and native two-turn controls,
+supports explicitly capped requests and repeated trials, and retains native SDK
+parts for comparison and manual factual review without changing production behavior.
+The [native evidence controls I/J/K](validation/gemini-native-evidence-controls-2026-11-07.md)
+compare full minimal evidence with an incomplete subset and add observable gap
+arguments while preserving native function calling and the production v5 controls.
+The [relationship-path controls L/M](validation/gemini-relationship-path-controls-2026-11-08.md)
+add only a question-specific two-father goal description, compare directly with
+I/J and retain the original native tool schema and complete saved excerpts.
+The [native final-decision controls N/O](validation/gemini-native-final-decision-controls-2026-11-08.md)
+offer search and terminal answers as native functions under ANY on the second
+turn, with explicit ambiguity handling and unchanged first-request controls.
+The [response-constraint controls P/Q](validation/gemini-response-constraint-controls-2026-11-08.md)
+unset only second-turn response MIME/schema settings, retain VALIDATED native
+search, support an explicit baseline model and preserve unconstrained final text.
+The [thinking-level controls R/S](validation/gemini-thinking-level-controls-2026-11-08.md)
+set MEDIUM only on the second native request, preserving I/J's prompt/tools/schema
+and recording provider-reported thinking usage without reasoning inferences.
 
 ## E40 corpus-scale processing
 

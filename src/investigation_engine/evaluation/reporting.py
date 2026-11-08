@@ -5,6 +5,8 @@ from collections import Counter
 from pathlib import Path
 from statistics import mean
 
+from investigation_engine.evaluation.answer_focus import assessment_summary
+from investigation_engine.evaluation.investigation import investigation_summary
 from investigation_engine.evaluation.metrics import statistics
 from investigation_engine.ingestion.corpus_processing import atomic_json
 
@@ -172,6 +174,7 @@ def summarize(rows):
             "answer_reference_attempts": sum(row["answer_reference_available"] for row in subset),
         }
         result[mode].update(quality_summary(subset))
+        result[mode]["answer_assessment"] = assessment_summary([row.get("answer_assessment") for row in subset])
         result[mode]["pipeline_fact_states"] = dict(
             Counter(fact["state"] for row in subset for fact in row.get("pipeline_facts", []))
         )
@@ -188,12 +191,19 @@ def summarize(rows):
             for kind in sorted({row["question_type"] for row in subset})
             if (group := [row for row in subset if row["question_type"] == kind])
         }
+        result[mode]["investigation"] = investigation_summary(subset)
+        if result[mode]["investigation"] is not None:
+            for kind, data in result[mode]["by_question_type"].items():
+                group = [row for row in subset if row["question_type"] == kind]
+                data["investigation"] = investigation_summary(group)
+                data["answer_exact_match"] = mean(row["answer_metrics"]["exact_match"] or 0 for row in group)
+                data["answer_f1"] = mean(row["answer_metrics"]["f1"] or 0 for row in group)
     return {
         "modes": result,
         "denominator": "All measured attempts, including errors, absent and unresolved gold. Undefined quality values contribute zero to operational means; annotated/reference counts are reported. Warmups are retained but excluded.",
         "percentiles": "Nearest rank p90/p95; ordinary median. Descriptive only, especially for small samples.",
         "grounding": "Citation identifier validity is structural only. Factual support and entity interpretation require manual review.",
-        "answer_scoring_limit": "Whole returned answer text is scored. Explanatory answers can have low EM/F1 despite being correct; no short-answer extraction or automatic incorrectness label is applied.",
+        "answer_scoring_limit": "Official EM/F1 score the whole returned answer unchanged. Separate answer-focused metrics use only conservatively extracted values. Neither text score establishes factual correctness; explicit manual review is required.",
     }
 
 
@@ -244,7 +254,142 @@ def retrieval_comparison_tables(summary):
     return lines
 
 
+def answer_assessment_tables(summary):
+    modes = {
+        mode: data["answer_assessment"]
+        for mode, data in summary.get("modes", {}).items()
+        if data.get("answer_assessment") is not None
+    }
+    if not modes:
+        return []
+
+    def number(value):
+        return f"{value:.6f}" if value is not None else "unavailable"
+
+    lines = [
+        "",
+        "## Answer-focused metrics and manual factual review",
+        "",
+        "| Mode | Official whole-response EM | Official whole-response F1 | Focused EM | Focused F1 | Focused n / attempts | Ambiguous | Unreviewed | Reviewed accuracy | Reviewed n | Partial | Unverifiable |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for mode, data in modes.items():
+        lines.append(
+            f"| {mode} | {number(data['official_whole_response_em'])} | {number(data['official_whole_response_f1'])} | {number(data['answer_focused_em'])} | {number(data['answer_focused_f1'])} | {data['answer_focused_denominator']} / {data['attempts']} | {data['ambiguous_answers']} | {data['unreviewed_answers']} | {number(data['reviewed_answer_accuracy'])} | {data['reviewed_accuracy_denominator']} | {data['judgment_counts']['partially_correct']} | {data['judgment_counts']['unverifiable']} |"
+        )
+    lines += [
+        "",
+        next(iter(modes.values()))["denominators"],
+        "",
+        "Focused means are conditional on extraction availability and are not comparable to official all-attempt means without their denominators. Reliable extraction means a supported surface form was isolated, not that the answer is true. Factual judgments remain unverified until explicitly reviewed; pending reviews never become correct/incorrect automatically.",
+        "",
+    ]
+    return lines
+
+
+def investigation_comparison_tables(summary):
+    modes = [(mode, data) for mode, data in summary["modes"].items() if data.get("investigation") is not None]
+    if not modes:
+        return []
+    lines = [
+        "",
+        "## End-to-end Investigation comparison",
+        "",
+        "Actual InvestigateQuestion executions. Each configuration may generate different queries. Answer EM/F1 score the whole returned text; they are not factual correctness judgments. Missing/failed observations remain in operational denominators.",
+        "",
+        "| Configuration | Questions | Attempts | Official whole-response EM | Official whole-response F1 | Complete final context | Mean searches | Mean generation calls | Median ms | p95 ms | Failed/incomplete |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for mode, data in modes:
+        inv = data["investigation"]
+        lines.append(
+            f"| {mode} | {data['questions']} | {data['attempts']} | {data['answer_exact_match']:.3f} | {data['answer_f1']:.3f} | {inv['coverage']['final_generation']['complete_all_attempts']:.3f} | {inv['average_searches']:.2f} | {inv['average_generation_calls']:.2f} | {data['latency_ms_all_attempts']['median']:.2f} | {data['latency_ms_all_attempts']['p95']:.2f} | {data['failed_or_incomplete']} |"
+        )
+    lines.extend(
+        [
+            "",
+            "| Configuration | First-search recall | All-search recall | Accumulated recall | Final-context recall | Final contexts observed | Abstentions |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for mode, data in modes:
+        stages = data["investigation"]["coverage"]
+        cells = " | ".join(
+            f"{stages[key]['recall_all_attempts']:.3f}"
+            for key in ("first_search", "all_searches", "accumulated", "final_generation")
+        )
+        lines.append(f"| {mode} | {cells} | {stages['final_generation']['observed_attempts']} | {data['abstained']} |")
+    lines.extend(
+        [
+            "",
+            "Investigation's generic Recall@K fields describe returned accumulated registry order, not a single ranking or the final model context. Use the Investigation stage metrics above. No final context is invented for incomplete/provider-failed executions. Search durations include embedding; generation durations include pacing; component timings overlap. Inspect investigation_traces.jsonl for exact queries, per-search hits, each actual model-turn transcript, accumulated registry, final-decision context, scores, citations and usage. Full excerpts are retained only with --local-diagnostics.",
+            "",
+        ]
+    )
+    return lines
+
+
 def report_markdown(summary, manifest):
+    if summary["modes"] and all(data.get("investigation") is not None for data in summary["modes"].values()):
+        lines = [
+            "# Structured Investigation evaluation",
+            "",
+            f"Run: {manifest['run_id']}",
+            f"Questions: {len(manifest['question_ids'])}; repetitions: {manifest['configuration']['repetitions']}; warmups: {manifest['configuration']['warmups']}; concurrency: 1.",
+        ]
+        lines += investigation_comparison_tables(summary)
+        lines += answer_assessment_tables(summary)
+        lines += [
+            "",
+            "| Configuration / type | Questions | Attempts | Official whole-response EM | Official whole-response F1 | Final-context recall | Complete final context |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+        for mode, data in summary["modes"].items():
+            for kind, group in data["by_question_type"].items():
+                final = group["investigation"]["coverage"]["final_generation"]
+                lines.append(
+                    f"| {mode} / {kind} | {group['questions']} | {group['attempts']} | {group['answer_exact_match']:.3f} | {group['answer_f1']:.3f} | {final['recall_all_attempts']:.3f} | {final['complete_all_attempts']:.3f} |"
+                )
+        lines += [
+            "",
+            "## Latency and usage",
+            "",
+            "| Configuration / phase | n | Min ms | Median ms | Mean ms | p90 ms | p95 ms | Max ms |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+        usage_lines = []
+        for mode, data in summary["modes"].items():
+            inv = data["investigation"]
+            for phase, values in (
+                ("total Investigation", data["latency_ms_all_attempts"]),
+                ("individual searches", inv["search_duration_ms"]),
+                ("total retrieval", inv["total_retrieval_ms"]),
+                ("individual generation calls", data["generation_call_ms"]),
+                ("total generation", inv["total_generation_ms"]),
+                ("total embedding", inv["total_embedding_ms"]),
+            ):
+                cells = " | ".join(
+                    f"{values[key]:.3f}" if values[key] is not None else "unavailable"
+                    for key in ("minimum", "median", "mean", "p90", "p95", "maximum")
+                )
+                lines.append(f"| {mode} / {phase} | {values['count']} | {cells} |")
+            usage_lines.append(
+                f"\n{mode}: actual generation RPCs known={data['generation_provider_requests_known']}; request accounting complete={data['provider_request_count_complete']}; cache hits={inv['embedding_cache_hits']}, misses={inv['embedding_cache_misses']}; reported token usage={data['known_provider_usage']}; failed/incomplete={data['failed_or_incomplete']}.\n"
+            )
+        lines += usage_lines
+        lines += [
+            "",
+            summary["denominator"],
+            "",
+            summary["percentiles"],
+            "",
+            summary["grounding"],
+            "",
+            summary["answer_scoring_limit"],
+            "",
+            "See summary.json for all component timings, limits, availability and statuses; see the manifest for embedding RPC totals and cache fingerprints. Final context unavailable is distinct from observed zero coverage. All-attempt stage means conservatively score unavailable stages as zero. With one question per configuration, percentiles equal that single observed latency and do not describe a population. No statistical or causal comparison is implied.",
+        ]
+        return "\n".join(lines) + "\n"
     lines = [
         "# Structured evaluation",
         "",
@@ -282,6 +427,7 @@ def report_markdown(summary, manifest):
                 f"| {mode} | {serving['recall']:.3f} | {serving['complete_support']:.3f} | {serving['admitted_passages']['mean']:.2f} | {serving['context_chars']['mean']:.1f} | {serving['supporting_facts_lost_from_ranked']['mean']:.2f} | {serving['duration_ms']['median']:.2f} | {serving['duration_ms']['p95']:.2f} |"
             )
     lines += retrieval_comparison_tables(summary)
+    lines += investigation_comparison_tables(summary)
     lines += [
         "",
         "| Mode / type | Questions | Measured attempts | Recall@20 | Complete@20 | Admitted recall | Admitted complete |",
@@ -302,7 +448,7 @@ def report_markdown(summary, manifest):
     if answering:
         lines += [
             "",
-            "| Mode | Answer EM | Answer F1 | Answered | Abstained | Generation calls |",
+            "| Mode | Official whole-response EM | Official whole-response F1 | Answered | Abstained | Generation calls |",
             "| --- | ---: | ---: | ---: | ---: | ---: |",
         ]
         for mode, value in answering.items():
@@ -323,6 +469,7 @@ def report_markdown(summary, manifest):
         "",
         "See summary.json for all latency statistics, channel counts, duplicates, type strata and errors. Detailed passage text is absent unless local diagnostics were explicitly enabled.",
     ]
+    lines += answer_assessment_tables(summary)
     return "\n".join(lines) + "\n"
 
 
@@ -481,6 +628,15 @@ def compare_runs(left, right, *, left_mode, right_mode):
             else None
             for key in ("recall", "complete_support")
         },
+        "investigation_metric_deltas": {
+            stage: {
+                metric: b["investigation"]["coverage"][stage][metric] - a["investigation"]["coverage"][stage][metric]
+                if a.get("investigation") is not None and b.get("investigation") is not None
+                else None
+                for metric in ("recall_all_attempts", "complete_all_attempts")
+            }
+            for stage in ("first_search", "all_searches", "accumulated", "final_generation")
+        },
         "questions": changes,
         "caution": "Descriptive differences, not statistical evidence. Check manifest/configuration differences and unmatched IDs before attributing a change.",
     }
@@ -503,6 +659,12 @@ def comparison_markdown(result):
     lines += [
         f"| admitted {key} | {value if value is not None else 'unavailable'} |"
         for key, value in result.get("serving_metric_deltas", {}).items()
+    ]
+    lines += [
+        f"| Investigation {stage} / {metric} | {value} |"
+        for stage, metrics in result.get("investigation_metric_deltas", {}).items()
+        for metric, value in metrics.items()
+        if value is not None
     ]
     lines += [
         "",

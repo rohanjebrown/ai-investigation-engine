@@ -479,3 +479,114 @@ async def test_actual_serving_preparation_observes_real_repository_without_gener
     assert row["generation_calls"] == 0
     assert summary["modes"]["lexical"]["serving"]["complete_support"] == 0
     generator.generate.assert_not_called()
+
+
+async def test_structured_investigation_tracks_dynamic_searches_real_repository_and_final_context(
+    bm25_repository, tmp_path
+):
+    from dataclasses import asdict
+    from unittest.mock import AsyncMock
+
+    from investigation_engine.application.investigations import (
+        InvestigateQuestion,
+        InvestigationDecision,
+        InvestigationStatus,
+        SearchEvidenceCall,
+    )
+    from investigation_engine.application.use_cases.search_evidence import SearchEvidence
+    from investigation_engine.evaluation.answer_quality import AnsweringRun
+    from investigation_engine.evaluation.cached_queries import CachedQueryEmbeddings
+    from investigation_engine.evaluation.investigation import ObservedInvestigationModel, ObservedInvestigationSearch
+    from investigation_engine.evaluation.reporting import read_jsonl
+    from investigation_engine.evaluation.runner import EvaluationConfig, run_evaluation
+    from investigation_engine.evaluation.serving import LexicalSearch
+    from investigation_engine.evaluation.telemetry import ObservedGenerator, ObservedRepository, RequestBudget
+
+    h = bm25_repository
+    documents = [
+        await h.create(text) for text in ("Quasar identifies the explorer Nebulon.", "Nebulon was born in Florence.")
+    ]
+    gold = [
+        {
+            "source": asdict(item.version.source),
+            "content_sha256": item.version.content.sha256,
+            "sentence_index": 0,
+            "start": 0,
+            "end": len(item.version.content.text),
+        }
+        for item in documents
+    ]
+    search = LexicalSearch(
+        SearchEvidence(
+            ObservedRepository(h.evidence),
+            CachedQueryEmbeddings(h.provider.configuration, {}),
+            h.config,
+            h.provider.configuration,
+        )
+    )
+
+    def follow(turn):
+        assert "Nebulon" in turn.exchanges[0].evidence[0].evidence.text
+        return SearchEvidenceCall(query="Nebulon", call_id="follow")
+
+    model = type(
+        "FakeModel",
+        (),
+        {
+            "next_action": AsyncMock(
+                side_effect=[
+                    SearchEvidenceCall(query="Quasar", call_id="first"),
+                    follow,
+                    InvestigationDecision(
+                        status=InvestigationStatus.ANSWERED, answer="Florence", citations=("E1", "E2")
+                    ),
+                ]
+            )
+        },
+    )()
+
+    class Model:
+        async def next_action(self, turn):
+            action = await model.next_action(turn)
+            return action(turn) if callable(action) else action
+
+    service = InvestigateQuestion(
+        ObservedInvestigationSearch(search, "lexical"),
+        ObservedInvestigationModel(ObservedGenerator(Model(), RequestBudget(3))),
+        max_results_per_search=1,
+    )
+    adapted = AnsweringRun(
+        name="investigation_lexical",
+        mode="multi_step",
+        service=service,
+        retrieval_mode="lexical",
+        chunking=asdict(h.config),
+        embedding=asdict(h.provider.configuration),
+        generation_model="fake",
+        investigation_budgets={"max_results_per_search": 1},
+    )
+    output = tmp_path / "investigation"
+    summary = await run_evaluation(
+        [
+            {
+                "id": "dynamic",
+                "question": "Where was the explorer identified by Quasar born?",
+                "question_type": "inference",
+                "reference_answer": "Florence",
+                "gold": gold,
+            }
+        ],
+        EvaluationConfig(modes=("investigation_lexical",), allow_generation=True, max_generation_requests=3),
+        {"investigation_lexical": {"service": service, "answer_run": adapted}},
+        output=output,
+        manifest={"run_id": "disposable", "question_ids": ["dynamic"]},
+    )
+    row = read_jsonl(output / "investigation_traces.jsonl")[0]
+    assert row["answer"] == "Florence" and row["answer_metrics"]["exact_match"] == 1
+    assert [item["query"] for item in row["searches"]] == ["Quasar", "Nebulon"]
+    assert row["coverage"]["first_search"]["recall"] == 0.5
+    assert row["coverage"]["final_generation"]["complete"]
+    assert row["accumulated_count"] == len(row["final_generation_evidence"]) == 2
+    assert row["repository_calls"] == 2
+    assert row["embedding_calls"] == []
+    assert summary["modes"]["investigation_lexical"]["investigation"]["average_searches"] == 2

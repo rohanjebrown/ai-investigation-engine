@@ -59,7 +59,7 @@ class AnsweringRun:
     def __post_init__(self) -> None:
         if not self.name.strip() or self.mode not in ("single_step", "multi_step"):
             raise ValueError("Answering run requires a name and supported mode")
-        if self.retrieval_mode not in ("semantic", "hybrid"):
+        if self.retrieval_mode not in ("semantic", "lexical", "hybrid"):
             raise ValueError("Answering run requires a known retrieval mode")
         if (
             not self.generation_model.strip()

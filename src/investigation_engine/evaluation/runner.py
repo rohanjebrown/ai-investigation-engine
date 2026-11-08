@@ -6,9 +6,12 @@ from time import perf_counter
 
 from investigation_engine.application.ports.embedding_errors import EmbeddingProviderError, EmbeddingResponseError
 from investigation_engine.application.ports.generation_errors import GenerationProviderError, GenerationResponseError
+from investigation_engine.application.ports.provider_diagnostics import safe_diagnostic
 from investigation_engine.application.ports.repository_errors import RepositoryError
+from investigation_engine.evaluation.answer_focus import assess_answer
 from investigation_engine.evaluation.answer_quality import _response
 from investigation_engine.evaluation.cached_queries import CachedQueryMiss
+from investigation_engine.evaluation.investigation import INVESTIGATION_MODES, investigation_record
 from investigation_engine.evaluation.metrics import answer_scores, evidence_record, retrieval_metrics
 from investigation_engine.evaluation.reporting import (
     analysis_markdown,
@@ -22,14 +25,14 @@ from investigation_engine.evaluation.serving import pipeline_facts, serving_reco
 from investigation_engine.evaluation.telemetry import RequestBudgetExceeded, capture_timings, observe
 
 RETRIEVAL_MODES = ("semantic", "lexical", "hybrid")
-ANSWER_MODES = ("quick_answer", "investigation")
+ANSWER_MODES = ("quick_answer", *INVESTIGATION_MODES)
 
 
 @dataclass(frozen=True, kw_only=True)
 class EvaluationConfig:
     modes: tuple[str, ...] = RETRIEVAL_MODES
-    repetitions: int = 3
-    warmups: int = 1
+    repetitions: int | None = None
+    warmups: int | None = None
     seed: int = 20261106
     final_evidence_limit: int = 20
     semantic_candidates: int = 20
@@ -44,12 +47,19 @@ class EvaluationConfig:
     request_timeout_seconds: float = 120
     allow_generation: bool = False
     max_generation_requests: int = 0
+    allow_live_embeddings: bool = False
+    max_embedding_requests: int = 0
     include_evidence_text: bool = False
     concurrency: int = 1
     serving_max_evidence: int = 5
     serving_max_context_chars: int = 12000
 
     def __post_init__(self):
+        live_mode = bool(set(self.modes) & set(ANSWER_MODES))
+        if self.repetitions is None:
+            object.__setattr__(self, "repetitions", 1 if live_mode else 3)
+        if self.warmups is None:
+            object.__setattr__(self, "warmups", 0 if live_mode else 1)
         if (
             not self.modes
             or len(set(self.modes)) != len(self.modes)
@@ -95,9 +105,21 @@ class EvaluationConfig:
             and max(self.hnsw_candidate_limits) > self.hnsw_ef_search
         ):
             raise ValueError("Invalid HNSW candidate/ef configuration")
-        if self.answer_retrieval_mode not in ("semantic", "hybrid") or not 0 < self.request_timeout_seconds <= 3600:
+        if self.answer_retrieval_mode not in RETRIEVAL_MODES or not 0 < self.request_timeout_seconds <= 3600:
             raise ValueError("Invalid answer retrieval mode or request timeout")
-        if set(self.modes) & set(ANSWER_MODES) and (not self.allow_generation or self.max_generation_requests < 1):
+        if self.allow_live_embeddings and (
+            not live_mode or type(self.max_embedding_requests) is not int or self.max_embedding_requests < 2
+        ):
+            raise ValueError(
+                "Live query embeddings require an answer mode and --max-embedding-requests of at least two"
+            )
+        if not self.allow_live_embeddings and self.max_embedding_requests:
+            raise ValueError("A live embedding cap requires --allow-live-embeddings")
+        if set(self.modes) & set(ANSWER_MODES) and (
+            not self.allow_generation
+            or type(self.max_generation_requests) is not int
+            or self.max_generation_requests < 1
+        ):
             raise ValueError(
                 "Answer evaluation requires --allow-generation and an explicit positive --max-generation-requests"
             )
@@ -132,7 +154,9 @@ def error_category(error):
     return "validation" if isinstance(error, ValueError) else "internal"
 
 
-async def run_evaluation(cases, configuration, jobs, *, output, manifest, availability=None, progress=None):
+async def run_evaluation(
+    cases, configuration, jobs, *, output, manifest, availability=None, progress=None, query_provider=None
+):
     """Jobs contain services, never gold. References are accessed only after execution.
 
     A job is {service, answer_run?}; answer_run reuses the existing result adapter.
@@ -147,6 +171,8 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
         write_json(output / "selection.json", manifest["selection"])
     for filename in ("retrieval_results.jsonl", "answer_results.jsonl", "questions.jsonl"):
         (output / filename).touch()
+    if set(configuration.modes) & set(INVESTIGATION_MODES):
+        (output / "investigation_traces.jsonl").touch()
     if configuration.include_evidence_text:
         (output / "grounding_review.jsonl").touch()
     for case in cases:
@@ -162,7 +188,7 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
                     for mode in order:
                         job = jobs[mode]
                         started = perf_counter()
-                        hits, response, error = (), None, None
+                        hits, response, result, error = (), None, None, None
                         status = "failed"
                         with observe() as observation:
                             try:
@@ -185,7 +211,21 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
                                         status = "ok"
                             except Exception as caught:
                                 error = {"category": error_category(caught), "type": type(caught).__name__}
+                                if diagnostic := safe_diagnostic(caught):
+                                    error["provider_diagnostic"] = diagnostic
                         elapsed = (perf_counter() - started) * 1000
+                        investigation = (
+                            investigation_record(
+                                observation,
+                                result,
+                                case["gold"],
+                                retrieval_mode=job["answer_run"].retrieval_mode,
+                                include_text=configuration.include_evidence_text,
+                                budgets=job["answer_run"].investigation_budgets,
+                            )
+                            if mode in INVESTIGATION_MODES
+                            else None
+                        )
                         channels = {
                             name: [hit for item in observation.channels for hit in item[name]]
                             for name in ("semantic", "lexical")
@@ -274,7 +314,7 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
                             ),
                             "repository_calls": len(observation.channels),
                             "investigation_search_records": len(response.searches)
-                            if response and mode == "investigation"
+                            if response and mode in INVESTIGATION_MODES
                             else None,
                             "generation_calls": len(observation.generation),
                             "generation_provider_requests": sum(
@@ -283,6 +323,12 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
                             if all(call["provider_requests"] is not None for call in observation.generation)
                             else None,
                             "generation": observation.generation,
+                            "embedding_calls": observation.embeddings,
+                            "embedding_provider_requests": {
+                                key: sum(call["provider_requests"][key] for call in observation.embeddings)
+                                for key in ("count_tokens", "embed_content")
+                            },
+                            "investigation": investigation,
                             "answer_reference_available": case.get("reference_answer") is not None,
                             "answer_metrics": answer_scores(
                                 response.answer if response else None, case.get("reference_answer")
@@ -290,6 +336,7 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
                             if mode in ANSWER_MODES
                             else None,
                             "answer": response.answer if response else None,
+                            "expected_answer": case.get("reference_answer") if mode in ANSWER_MODES else None,
                             "evidence_ids": [key for key, _ in response.evidence] if response else [],
                             "citation_ids": response.citations if response else [],
                             "citation_structure_valid": (
@@ -304,9 +351,25 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
                             "usage": response.usage if response else None,
                             "model_version": response.model_version if response else None,
                             "searches": response.searches if response else [],
-                            "cache_status": "cached_only; misses fail; no embedding network calls",
-                            "provider_network_included": bool(observation.generation),
+                            "cache_status": "authorized read-through; compatible exact hits reused; misses persist"
+                            if configuration.allow_live_embeddings
+                            else "cached_only; misses fail; no embedding network calls",
+                            "provider_network_included": bool(observation.generation)
+                            or any(sum(call["provider_requests"].values()) for call in observation.embeddings),
                         }
+                        if investigation is not None:
+                            scores = row["answer_metrics"]
+                            investigation["correct_by_normalized_exact_match"] = (
+                                bool(scores["exact_match"]) if scores["exact_match"] is not None else None
+                            )
+                            investigation["external_request_limit_reached"] = bool(
+                                error and error["category"] == "request_budget"
+                            )
+                        row["answer_assessment"] = (
+                            assess_answer(case["question"], row["answer"], case.get("reference_answer"), status=status)
+                            if mode in ANSWER_MODES
+                            else None
+                        )
                         # Passage/candidate exports go straight to disk. Keep only
                         # summary inputs in memory for explicitly larger samples.
                         rows.append(
@@ -328,6 +391,31 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
                         )
                         filename = "answer_results.jsonl" if mode in ANSWER_MODES else "retrieval_results.jsonl"
                         append_jsonl(output / filename, row)
+                        if investigation is not None:
+                            append_jsonl(
+                                output / "investigation_traces.jsonl",
+                                {
+                                    "question_id": case["id"],
+                                    "question": case["question"],
+                                    "mode": mode,
+                                    "repetition": row["repetition"],
+                                    "warmup": row["warmup"],
+                                    "expected_answer": row["expected_answer"],
+                                    "answer": row["answer"],
+                                    "status": status,
+                                    "error": error,
+                                    "answer_metrics": row["answer_metrics"],
+                                    "answer_assessment": row["answer_assessment"],
+                                    "deterministic_scoring_limit": "Normalized text match, not a factual correctness judgment",
+                                    "citations": row["citation_ids"],
+                                    "duration_ms": elapsed,
+                                    "generation": observation.generation,
+                                    "usage": row["usage"],
+                                    "repository_calls": row["repository_calls"],
+                                    "timings": row["timings"],
+                                    **investigation,
+                                },
+                            )
                         if configuration.include_evidence_text:
                             append_jsonl(
                                 output / "grounding_review.jsonl",
@@ -371,13 +459,31 @@ async def run_evaluation(cases, configuration, jobs, *, output, manifest, availa
         manifest["provider_request_count_complete"] = all(
             row["generation_provider_requests"] is not None for row in rows
         )
+        manifest.setdefault("provider_requests", {}).update(
+            {
+                "embedding_count_tokens": sum(row["embedding_provider_requests"]["count_tokens"] for row in rows),
+                "embedding_embed_content": sum(row["embedding_provider_requests"]["embed_content"] for row in rows),
+                "generation_generate_content_known": manifest["generation_provider_requests_known"],
+            }
+        )
+        if query_provider is not None:
+            from hashlib import sha256
+
+            manifest["cache_after"] = {
+                "sha256": sha256(query_provider.cache_path.read_bytes()).hexdigest(),
+                "available_vectors": len(query_provider._vectors),
+                "hits": query_provider.hits,
+                "misses": query_provider.misses,
+            }
         write_json(output / "manifest.json", manifest)
         summary = summarize(rows)
         write_json(output / "summary.json", summary)
         analysis = benchmark_analysis(output)
         write_json(output / "analysis.json", analysis)
         (output / "report.md").write_text(
-            report_markdown(summary, manifest) + analysis_markdown(analysis), encoding="utf-8"
+            report_markdown(summary, manifest)
+            + (analysis_markdown(analysis) if set(configuration.modes) & set(RETRIEVAL_MODES) else ""),
+            encoding="utf-8",
         )
         if not interrupted:
             manifest["status"] = "complete"

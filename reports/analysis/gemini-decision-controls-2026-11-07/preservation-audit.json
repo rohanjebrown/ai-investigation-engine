@@ -1,0 +1,27 @@
+{
+  "status": "offline_only",
+  "production_source_files_unchanged": 124,
+  "production_v5_prompt_unchanged": true,
+  "a_f_request_sha256_unchanged": {
+    "A": "1fdd1c0ab6b15dac9e54ae96340b789827a2ab6b900f7405194626ad6f097b5c",
+    "B": "e3382309de340737f3ec41812b0221b7f2e09c68bbba1ff8f0f5770c4cfb78ac",
+    "C": "9f19dc931cdbdcc2dc9b0dde6c9053e951b32799fc9ca668e9c2210b17068d60",
+    "D": "78baa29b3f2dab93f851b0fd56d5b51ce198492b9fb6d7de8d3e2f60296d07b9",
+    "E": "17dd614586be5f217126ee0a555be21b6cf4c717d88ce270063d44b60010dec9",
+    "F": "533ca0420d183e8215f08a650c902b056465eda26fd91a2633700b398a0ae5b2"
+  },
+  "f_second_request_unchanged": true,
+  "i_j_differ_only_in_supplied_evidence": true,
+  "full_excerpt_character_lengths": {
+    "I": [
+      677,
+      1296
+    ],
+    "J": [
+      677
+    ]
+  },
+  "g_h_differ_only_in_evidence": true,
+  "generation_embedding_database_retrieval_requests": 0,
+  "note": "Native comparison uses an explicitly synthetic in-memory SDK fixture; no fixture signatures are sent to a provider or inserted into executable preview histories."
+}
