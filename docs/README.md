@@ -183,6 +183,26 @@ The [thinking-level controls R/S](validation/gemini-thinking-level-controls-2026
 set MEDIUM only on the second native request, preserving I/J's prompt/tools/schema
 and recording provider-reported thinking usage without reasoning inferences.
 
+The [search sufficiency continuation](validation/gemini-search-sufficiency-continuation-2026-11-08.md)
+records the retrieval-first, evidence-width, function-selection, goal-checklist, and
+readable-duplicate experiments, plus a post-hoc evidence-support audit that corrected
+four mislabeled complete fixtures and a reviewed 31-target evaluation suite. It also
+records a non-repeatable 3.1 gap-schema signal, negative stateless Interactions and
+answer-first pilots, and manual query review showing confirmatory searches despite
+sufficient evidence. A new explicit native-finalize tool pilot improved sufficient
+finalizations from 0/3 to 2/3 while preserving all 3/3 incomplete-evidence searches;
+its repeat was blocked by the provider's daily quota before any decision. A same-slice
+comparator now isolates the effect under production `VALIDATED` mode and the final JSON
+schema. Production remains unchanged pending live repetition and broader validation.
+The [Gemma 4 26B investigation model report](validation/gemma4-investigation-model-2026-11-09.md)
+documents the provider selection, native tools-only configuration, text-final adapter,
+focused tests, and quota-limited comparison against the Gemini baseline. The available
+live evidence is not sufficient to recommend changing the default.
+The [search sufficiency investigation](validation/gemini-search-sufficiency-investigation-2026-11-08.md)
+compares production behavior with a diagnostic-only conditional tool description on a
+pinned 40-question suite, includes incomplete/conflict controls and a context-width
+check, and recommends keeping production behavior unchanged pending stronger repeats.
+
 ## E40 corpus-scale processing
 
 The [corpus-scale record](validation/corpus-scale-2026-10-28.md) verifies 125,760

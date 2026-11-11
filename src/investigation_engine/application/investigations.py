@@ -12,6 +12,7 @@ from investigation_engine.application import investigation_records as _records
 from investigation_engine.application import investigation_values as _investigation_values
 from investigation_engine.application.answers import MAX_QUESTION_CHARS
 from investigation_engine.application.debug_trace import emit
+from investigation_engine.application.generation_budget import GenerationAttemptBudget, current_generation_budget
 from investigation_engine.application.ports.generation_errors import GenerationResponseError
 from investigation_engine.application.retrieval import Evidence, validate_search_question
 from investigation_engine.application.timing import log_event, stage_timing, timed
@@ -50,8 +51,10 @@ class _InvestigationState:
     records: list[SearchRecord] = field(default_factory=list)
     query_results: dict[str, tuple[str, ...]] = field(default_factory=dict)
     generation_requests: int = 0
+    completed_turns: int = 0
+    attempt_budget: GenerationAttemptBudget | None = None
     embedding_requests: int = 0
-    total_usage: TokenUsage = TokenUsage()
+    total_usage: TokenUsage = TokenUsage(total_tokens=0)
     model_version: str | None = None
     context_exhausted: bool = False
 
@@ -80,7 +83,13 @@ def _incomplete_result(
         reason=reasons.get(message, "unknown"),
         evidence_count=len(registry),
         generation_requests=generation_requests,
+        provider_attempts=(current_generation_budget.get().used if current_generation_budget.get() else None),
         embedding_requests=embedding_requests,
+        prompt_tokens=usage.prompt_tokens,
+        candidate_tokens=usage.candidate_tokens,
+        thinking_tokens=usage.thinking_tokens,
+        total_tokens=usage.total_tokens,
+        usage_scope="successful_model_turns",
     )
     return InvestigationResult(
         status=InvestigationStatus.INCOMPLETE,
@@ -111,10 +120,13 @@ def _decision_result(
         status=decision.status.value,
         evidence_count=len(registry),
         generation_requests=generation_requests,
+        provider_attempts=(current_generation_budget.get().used if current_generation_budget.get() else None),
         embedding_requests=embedding_requests,
         prompt_tokens=usage.prompt_tokens,
         candidate_tokens=usage.candidate_tokens,
         thinking_tokens=usage.thinking_tokens,
+        total_tokens=usage.total_tokens,
+        usage_scope="successful_model_turns",
     )
     emit(
         "investigation.decision",
@@ -251,11 +263,37 @@ class InvestigateQuestion:
         validate_search_question(question)
         if len(question) > MAX_QUESTION_CHARS:
             raise ValueError("Question must contain no more than 4000 characters")
-        state = _InvestigationState()
+        state = _InvestigationState(attempt_budget=GenerationAttemptBudget(self._max_generations))
         log_event("investigation.started", evidence_count=0)
+        budget_token = current_generation_budget.set(state.attempt_budget)
+        try:
+            return await self._execute(question, owner_id, state)
+        except Exception:
+            try:
+                log_event(
+                    "investigation.failed",
+                    level=logging.WARNING,
+                    succeeded=False,
+                    completed_turns=state.completed_turns,
+                    completed_searches=sum(record.succeeded for record in state.records),
+                    generation_requests=state.generation_requests,
+                    provider_attempts=state.attempt_budget.used,
+                    evidence_count=len(state.registry),
+                    prompt_tokens=state.total_usage.prompt_tokens,
+                    candidate_tokens=state.total_usage.candidate_tokens,
+                    thinking_tokens=state.total_usage.thinking_tokens,
+                    total_tokens=state.total_usage.total_tokens,
+                    usage_scope="successful_model_turns",
+                )
+            except Exception:
+                pass  # Preserve the investigation failure if the log sink fails.
+            raise
+        finally:
+            current_generation_budget.reset(budget_token)
 
+    async def _execute(self, question, owner_id, state):
         for _ in range(self._max_turns):
-            if state.generation_requests >= self._max_generations:
+            if state.generation_requests >= self._max_generations or state.attempt_budget.used >= self._max_generations:
                 return _incomplete_result(
                     state.registry,
                     state.records,
@@ -368,6 +406,7 @@ class InvestigateQuestion:
             action = await self._model.next_action(turn)
         if not isinstance(action, (InvestigationDecision, SearchEvidenceCall)):
             raise GenerationResponseError("Investigation model returned an unknown action")
+        state.completed_turns += 1
         if isinstance(action.usage, TokenUsage):
             state.total_usage = _sum_usage(state.total_usage, action.usage)
             log_event(
@@ -378,6 +417,7 @@ class InvestigateQuestion:
                 prompt_tokens=action.usage.prompt_tokens,
                 candidate_tokens=action.usage.candidate_tokens,
                 thinking_tokens=action.usage.thinking_tokens,
+                total_tokens=action.usage.total_tokens,
             )
         emit("investigation.action", action=action)
         state.model_version = action.model_version or state.model_version
@@ -558,4 +598,7 @@ def _sum_usage(left: TokenUsage, right: TokenUsage) -> TokenUsage:
         prompt_tokens=left.prompt_tokens + right.prompt_tokens,
         candidate_tokens=left.candidate_tokens + right.candidate_tokens,
         thinking_tokens=left.thinking_tokens + right.thinking_tokens,
+        total_tokens=(left.total_tokens + right.total_tokens)
+        if left.total_tokens is not None and right.total_tokens is not None
+        else None,
     )

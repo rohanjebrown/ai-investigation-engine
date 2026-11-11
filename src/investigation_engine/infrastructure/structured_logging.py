@@ -17,7 +17,23 @@ class TimingJsonFormatter(logging.Formatter):
             payload["duration_ms"] = round(record.duration_ms, 3)
         for field in (
             "model_id",
+            "provider",
+            "http_status",
+            "provider_code",
+            "error_reason",
+            "exception_type",
+            "retryable",
+            "provider_request_id",
+            "quota_scope",
+            "quota_metric",
+            "retry_after_seconds",
+            "completed_turns",
+            "completed_searches",
             "attempts",
+            "attempt",
+            "max_attempts",
+            "will_retry",
+            "retry_delay_seconds",
             "mode",
             "semantic_count",
             "lexical_count",
@@ -33,19 +49,25 @@ class TimingJsonFormatter(logging.Formatter):
             "reused_evidence_count",
             "evidence_count",
             "generation_requests",
+            "provider_attempts",
             "embedding_requests",
             "prompt_tokens",
             "candidate_tokens",
             "thinking_tokens",
             "total_tokens",
+            "usage_scope",
             "semantic_limit",
             "lexical_limit",
             "result_limit",
             "duplicate_count",
             "error_category",
         ):
-            if getattr(record, field, None) is not None:
-                payload[field] = getattr(record, field)
+            if getattr(record, field, None) is not None or (
+                getattr(record, "event", None) == "generation.provider_failed"
+                and field
+                in ("http_status", "provider_code", "error_reason", "turn_number", "retryable", "provider_request_id")
+            ):
+                payload[field] = getattr(record, field, None)
         return json.dumps(
             payload,
             separators=(",", ":"),

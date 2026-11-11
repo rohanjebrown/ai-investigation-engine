@@ -172,7 +172,22 @@
     result.hidden = false;
   }
 
-  function failureMessage(code, httpStatus) {
+  function failureMessage(code, httpStatus, details) {
+    if (code === "generation_daily_quota") {
+      const delay = details?.retry_after_seconds;
+      if (Number.isSafeInteger(delay) && delay >= 0 && delay <= 604800) {
+        return `The model's daily usage limit has been reached. The provider's retry hint is ${delay} seconds; the daily limit may last longer. Please try again later.`;
+      }
+      return "The model's daily usage limit has been reached. Please try again later.";
+    }
+    if (code === "generation_rate_limit" || code === "generation_quota_exceeded") {
+      const delay = details?.retry_after_seconds;
+      if (Number.isSafeInteger(delay) && delay >= 0 && delay <= 604800) {
+        return `The model has reached its usage limit. Please try again in at least ${delay} seconds.`;
+      }
+      if (code === "generation_rate_limit") return "The model has temporarily reached its usage limit. Please try again shortly, in about a minute.";
+      return "The model's usage limit has been reached. Please try again later.";
+    }
     if (code === "evidence_context_limit") return "The source excerpts could not fit this request. Try a more focused question.";
     if (httpStatus === 422) return "Check your question: enter non-whitespace text, up to 4,000 characters.";
     if (httpStatus === 504) return "The request took too long. Wait a moment before trying again.";
@@ -230,7 +245,7 @@
       let data;
       try { data = await response.json(); } catch { data = null; }
       if (!response.ok) {
-        error.textContent = failureMessage(data?.error?.code, response.status);
+        error.textContent = failureMessage(data?.error?.code, response.status, data?.error);
         error.hidden = false;
         status.textContent = "Request unsuccessful. You can try another question.";
       } else {

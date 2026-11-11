@@ -162,6 +162,24 @@ def summarize(rows):
             "generation_calls_with_usage": sum(
                 call.get("usage") is not None for row in subset for call in row["generation"]
             ),
+            "known_provider_total_tokens": sum(
+                call["usage"]["total_tokens"]
+                for row in subset
+                for call in row["generation"]
+                if call.get("usage") and call["usage"].get("total_tokens") is not None
+            )
+            if any(
+                call.get("usage") and call["usage"].get("total_tokens") is not None
+                for row in subset
+                for call in row["generation"]
+            )
+            else None,
+            "generation_calls_with_total_tokens": sum(
+                1
+                for row in subset
+                for call in row["generation"]
+                if call.get("usage") and call["usage"].get("total_tokens") is not None
+            ),
             "citation_structure": dict(Counter(str(row["citation_structure_valid"]) for row in subset)),
             "retrieval_actions": sum(row["retrieval_actions"] for row in subset),
             "repository_calls": sum(row["repository_calls"] for row in subset),

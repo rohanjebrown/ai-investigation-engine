@@ -46,6 +46,13 @@ LEGACY = ROOT / "data/samples/evaluation/suite.json"
 DEFAULT_CACHE = ROOT / ".cache/evaluation/query-embeddings.json"
 
 
+def evaluation_generation_model(modes, gemini_model, investigation_provider, investigation_model):
+    """Validate only models needed by the selected answer modes."""
+    if not gemini_model and ("quick_answer" in modes or investigation_provider == "gemini"):
+        raise ValueError("An explicit generation model is required")
+    return gemini_model if "quick_answer" in modes else investigation_model
+
+
 def software_manifest():
     versions = {"python": platform.python_version()}
     for name in ("sqlalchemy", "psycopg", "pgvector", "pyarrow", "google-genai", "tokenizers"):
@@ -196,6 +203,20 @@ async def execute_run(args):
     )
 
     chunking_id = args.chunking_id or settings.serving_chunking_configuration_id
+    investigation_provider = settings.investigation_model_provider
+    if investigation_provider == "gemma4":
+        from investigation_engine.infrastructure.generation.gemma4_investigation_model import (
+            GEMMA4_MODEL,
+            Gemma4InvestigationModel,
+        )
+
+        investigation_model_name = GEMMA4_MODEL
+        investigation_model_type = Gemma4InvestigationModel
+    else:
+        from investigation_engine.infrastructure.generation.gemini_investigation_model import GeminiInvestigationModel
+
+        investigation_model_name = args.generation_model or settings.gemini_generation_model
+        investigation_model_type = GeminiInvestigationModel
     if chunking_id is None:
         raise ValueError("A persisted --chunking-id or SERVING_CHUNKING_CONFIGURATION_ID is required")
     engine = create_async_engine(
@@ -255,13 +276,20 @@ async def execute_run(args):
                 "corpus": corpus,
                 "configuration": configuration.json(),
                 "embedding": asdict(embedding),
-                "generation_model": args.generation_model or settings.gemini_generation_model,
+                "generation_model": investigation_model_name,
+                "investigation_model_provider": investigation_provider,
+                "investigation_model": investigation_model_name,
                 "investigation_budgets": budgets,
                 "cache_sha256": cache_sha,
                 "cached_original_questions": sum(case["question"] in vectors for case in cases),
                 "provider_requests": {"generation": 0, "count_tokens": 0, "embed_content": 0, "voyage": 0},
                 "request_plan": investigation_request_plan(
-                    len(cases), modes, budgets, repetitions=configuration.repetitions, warmups=configuration.warmups
+                    len(cases),
+                    modes,
+                    budgets,
+                    repetitions=configuration.repetitions,
+                    warmups=configuration.warmups,
+                    generation_attempts=settings.gemma4_retry_max_attempts if investigation_provider == "gemma4" else 1,
                 ),
             }
             output.mkdir(parents=True, exist_ok=False)
@@ -325,17 +353,15 @@ async def execute_run(args):
             from investigation_engine.application.use_cases.answer_question import AnswerQuestion
             from investigation_engine.evaluation.answer_quality import AnsweringRun
             from investigation_engine.infrastructure.generation.gemini_answer_generator import GeminiAnswerGenerator
-            from investigation_engine.infrastructure.generation.gemini_investigation_model import (
-                GeminiInvestigationModel,
-            )
 
             budget = RequestBudget(configuration.max_generation_requests)
             from investigation_engine.evaluation.live_providers import PacedInvestigationModel, ProviderPacer
 
             generation_pacer = ProviderPacer(args.generation_rpm, args.generation_tpm)
             model = args.generation_model or settings.gemini_generation_model
-            if not model:
-                raise ValueError("An explicit generation model is required")
+            recorded_model = evaluation_generation_model(
+                configuration.modes, model, investigation_provider, investigation_model_name
+            )
             answer_budgets = {
                 "max_evidence": settings.rag_max_evidence,
                 "max_context_chars": settings.rag_max_context_chars,
@@ -353,7 +379,11 @@ async def execute_run(args):
                 )
             }
             generation_settings = {
-                "model": model,
+                "model": recorded_model,
+                "investigation_model_provider": investigation_provider,
+                "investigation_model": investigation_model_name
+                if set(configuration.modes) & set(INVESTIGATION_MODES)
+                else None,
                 "max_output_tokens": settings.generation_max_output_tokens,
                 "investigation_max_output_tokens": settings.investigation_max_output_tokens,
                 "timeout_seconds": settings.generation_timeout_seconds,
@@ -388,13 +418,39 @@ async def execute_run(args):
                         if mode == "investigation"
                         else mode.removeprefix("investigation_")
                     )
-                    client = GeminiInvestigationModel(
+                    retry_options = (
+                        {
+                            "retry_max_attempts": settings.gemma4_retry_max_attempts,
+                            "retry_total_timeout_seconds": settings.gemma4_retry_total_timeout_seconds,
+                        }
+                        if investigation_provider == "gemma4"
+                        else {}
+                    )
+                    client = investigation_model_type(
                         api_key=settings.gemini_api_key,
-                        model=model,
+                        model=investigation_model_name,
                         timeout_seconds=settings.generation_timeout_seconds,
                         max_output_tokens=settings.investigation_max_output_tokens,
+                        **retry_options,
+                    )
+                    generation_settings["investigation_adapter"] = (
+                        f"{type(client).__module__}.{type(client).__qualname__}"
                     )
                     clients.append(client)
+                    paced_model = PacedInvestigationModel(client, generation_pacer)
+                    if investigation_provider == "gemma4":
+                        generation_settings["investigation_retry_max_attempts"] = client.retry_max_attempts
+                        generation_settings["investigation_retry_total_timeout_seconds"] = (
+                            client.retry_total_timeout_seconds
+                        )
+                        client.retry_allowed = lambda: budget.used < budget.maximum
+
+                        async def reserve_retry(turn, paced=paced_model):
+                            budget.require(1)
+                            await generation_pacer.wait(paced.current_reservation)
+                            budget.consume()
+
+                        client.before_retry = reserve_retry
                     service = InvestigateQuestion(
                         ObservedInvestigationSearch(
                             LexicalSearch(searches[retrieval_mode])
@@ -402,9 +458,7 @@ async def execute_run(args):
                             else searches[retrieval_mode],
                             retrieval_mode,
                         ),
-                        ObservedInvestigationModel(
-                            ObservedGenerator(PacedInvestigationModel(client, generation_pacer), budget)
-                        ),
+                        ObservedInvestigationModel(ObservedGenerator(paced_model, budget)),
                         **investigation_budgets,
                     )
                 adapted = AnsweringRun(
@@ -414,7 +468,7 @@ async def execute_run(args):
                     retrieval_mode=configuration.answer_retrieval_mode if mode == "quick_answer" else retrieval_mode,
                     chunking=asdict(chunking),
                     embedding=asdict(embedding),
-                    generation_model=model,
+                    generation_model=model if mode == "quick_answer" else investigation_model_name,
                     answering_budgets=answer_budgets,
                     investigation_budgets=investigation_budgets,
                 )
@@ -464,7 +518,9 @@ async def execute_run(args):
                 "initial_cooldown_seconds": args.cooldown_seconds,
                 "generation_request_cap": configuration.max_generation_requests,
                 "embedding_rpc_cap_including_count_tokens": configuration.max_embedding_requests,
-                "automatic_retries": 0,
+                "automatic_retries": settings.gemma4_retry_max_attempts - 1
+                if investigation_provider == "gemma4" and set(configuration.modes) & set(INVESTIGATION_MODES)
+                else 0,
             },
             "answer_scorer": {
                 "version": ANSWER_SCORER,

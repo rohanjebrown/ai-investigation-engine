@@ -9,6 +9,7 @@ import re
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from http import HTTPStatus
+from time import perf_counter
 
 import httpx
 from google import genai
@@ -31,10 +32,14 @@ from investigation_engine.application.ports.generation_errors import (
 )
 from investigation_engine.application.ports.provider_diagnostics import (
     attach_diagnostic,
-    safe_diagnostic,
     status_category,
 )
 from investigation_engine.application.timing import log_event, stage_timing, timed
+from investigation_engine.infrastructure.generation.failure_logging import (
+    capture_generation_failure,
+    log_generation_failure,
+)
+from investigation_engine.infrastructure.generation.gemini_diagnostics import quota_details
 
 logger = logging.getLogger(__name__)
 MAX_RETRY_DELAY = 10.0
@@ -157,7 +162,9 @@ def _retry_details(error):
                 except TypeError, ValueError, OverflowError:
                     pass
     valid = [max(0.0, hint) for hint in hints if math.isfinite(hint)]
-    return daily, max(valid, default=0.0)
+    # Preserve conservative existing handling and cover all structured daily
+    # forms recognized by the user-facing classifier.
+    return daily or quota_details(error)["quota_scope"] == "daily", max(valid, default=0.0)
 
 
 class GeminiAnswerGenerator:
@@ -239,11 +246,17 @@ class GeminiAnswerGenerator:
         if len(payload) > 64000:
             raise ValueError("Generation context exceeds the character limit")
         schema = _response_schema(request)
+        retry_started = perf_counter()
         for attempt in range(self._attempts):
+            captured = []
             try:
                 try:
-                    response = await self._request(payload, schema=schema)
+                    with capture_generation_failure() as captured:
+                        response = await self._request(payload, schema=schema)
                 except GenerationResponseError:
+                    for item in captured:
+                        log_generation_failure(**item, attempt=attempt + 1, max_attempts=self._attempts)
+                    captured.clear()
                     logger.warning(
                         "Gemini generation invalid_response attempt=%d reason=sdk_decoding retry=false", attempt + 1
                     )
@@ -263,6 +276,18 @@ class GeminiAnswerGenerator:
                         thinking_tokens=result.usage.thinking_tokens,
                         attempts=attempt + 1,
                     )
+                    if attempt:
+                        try:
+                            log_event(
+                                "generation.retry_recovered",
+                                provider="gemini",
+                                model_id=self._model,
+                                attempts=attempt + 1,
+                                max_attempts=self._attempts,
+                                duration_ms=(perf_counter() - retry_started) * 1000,
+                            )
+                        except Exception:
+                            pass
                     return result
                 except GenerationResponseError as error:
                     candidates = getattr(response, "candidates", None)
@@ -304,25 +329,45 @@ class GeminiAnswerGenerator:
                 hint = getattr(error, "_retry_after", 0.0)
                 retry = error.retryable and attempt + 1 < self._attempts and hint <= MAX_RETRY_DELAY
                 delay = max(hint, random.uniform(0.0, min(0.5 * (2**attempt), MAX_RETRY_DELAY))) if retry else 0.0
-                diagnostic = safe_diagnostic(error) or {}
-                logger.warning(
-                    "Gemini generation provider_failure attempt=%d category=%s http_status=%s "
-                    "quota=%s retry=%s delay_seconds=%.3f",
-                    attempt + 1,
-                    diagnostic.get("category"),
-                    diagnostic.get("http_status"),
-                    "daily" if getattr(error, "_daily_quota", False) else "unknown_or_short_term",
-                    retry,
-                    delay,
-                )
+                for item in captured:
+                    log_generation_failure(
+                        **item,
+                        attempt=attempt + 1,
+                        max_attempts=self._attempts,
+                        will_retry=retry,
+                        retry_delay_seconds=delay if retry else None,
+                    )
+                captured.clear()
+                if retry:
+                    logger.debug("Gemini generation retry scheduled attempt=%d delay_seconds=%.3f", attempt + 1, delay)
                 if not retry:
+                    if error.retryable:
+                        try:
+                            log_event(
+                                "generation.retry_exhausted",
+                                level=logging.WARNING,
+                                succeeded=False,
+                                provider="gemini",
+                                model_id=self._model,
+                                attempts=attempt + 1,
+                                max_attempts=self._attempts,
+                                reason="attempt_limit" if attempt + 1 >= self._attempts else "retry_after_limit",
+                                duration_ms=(perf_counter() - retry_started) * 1000,
+                            )
+                        except Exception:
+                            pass
                     raise
                 with stage_timing("gemini.answer.retry_wait"):
                     await asyncio.sleep(delay)
+            except Exception:
+                for item in captured:
+                    log_generation_failure(**item, attempt=attempt + 1, max_attempts=self._attempts)
+                raise
         raise AssertionError("Unreachable retry boundary")
 
     async def _request(self, payload: str, *, schema: dict):
         status = None
+        started = perf_counter()
         try:
             self._provider_requests += 1
             options = {"temperature": self._temperature} if self._temperature is not None else {}
@@ -342,12 +387,15 @@ class GeminiAnswerGenerator:
                         ),
                     )
         except errors.APIError as error:
+            source_error = error
             code = error.code
             status, category = code, status_category(code)
             cause = RuntimeError(f"Generation API request failed (HTTP {code})")
             if code == HTTPStatus.TOO_MANY_REQUESTS:
                 daily, retry_after = _retry_details(error)
-                failure = GenerationRateLimitError("Generation rate or quota limit exceeded", retryable=not daily)
+                failure = GenerationRateLimitError(
+                    "Generation rate or quota limit exceeded", retryable=not daily, **quota_details(error)
+                )
                 failure._daily_quota, failure._retry_after = daily, retry_after
             else:
                 failure = GenerationProviderError(
@@ -355,21 +403,27 @@ class GeminiAnswerGenerator:
                     retryable=code in (408, 425, 500, 502, 503, 504),
                 )
                 _, failure._retry_after = _retry_details(error)
-        except TimeoutError, httpx.TimeoutException:
+        except (TimeoutError, httpx.TimeoutException) as error:
+            source_error = error
             category = "timeout"
             cause = RuntimeError("Generation request timed out")
             failure = GenerationTimeoutError("Generation request timed out", retryable=True)
-        except httpx.RequestError:
+        except httpx.RequestError as error:
+            source_error = error
             category = "transport"
             cause = RuntimeError("Generation transport request failed")
             failure = GenerationProviderError("Generation service could not be reached", retryable=True)
-        except ValueError, TypeError:
+        except (ValueError, TypeError) as error:
+            source_error = error
             category = "invalid_response"
             cause = RuntimeError("Generation response decoding failed")
             failure = GenerationResponseError("Generation returned an invalid response")
+        except Exception as error:
+            log_generation_failure(source_error=error, failure=None, model=self._model, started=started)
+            raise
         # Outside handlers: SDK errors may contain credentials or echoed context.
         # Cancellation is not caught and must propagate through lifespan cleanup.
-        raise attach_diagnostic(
+        failure = attach_diagnostic(
             failure,
             operation="generate_content",
             model_id=self._model,
@@ -377,7 +431,9 @@ class GeminiAnswerGenerator:
             category=category,
             retryable=getattr(failure, "retryable", False),
             request_count=self._provider_requests,
-        ) from cause
+        )
+        log_generation_failure(source_error=source_error, failure=failure, model=self._model, started=started)
+        raise failure from cause
 
     @staticmethod
     def _parse(response, *, allowed_ids: set[str], provider_requests: int = 1) -> GenerationResult:

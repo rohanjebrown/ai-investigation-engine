@@ -124,6 +124,21 @@ async def test_transient_failure_retries_with_same_request_and_bounded_attempts(
     )
 
 
+async def test_each_failed_quick_answer_provider_attempt_has_one_structured_event(sdk, caplog):
+    import logging
+
+    sdk.models.generate_content.side_effect = errors.APIError(500, {"error": {"status": "INTERNAL"}})
+    with caplog.at_level(logging.WARNING, logger="investigation_engine.application.timing"):
+        with pytest.raises(GenerationProviderError):
+            await sdk.provider.generate(sdk.request)
+    events = [r for r in caplog.records if getattr(r, "event", None) == "generation.provider_failed"]
+    assert len(events) == sdk.models.generate_content.await_count == 2
+    assert all(event.http_status == 500 and event.provider_code == "INTERNAL" for event in events)
+    assert [event.attempt for event in events] == [1, 2]
+    assert [event.will_retry for event in events] == [True, False]
+    assert all(event.max_attempts == 2 for event in events)
+
+
 @pytest.mark.parametrize(
     "code,kind,calls",
     [
@@ -312,7 +327,8 @@ async def test_provider_logging_and_retry_wait_cancellation_are_safe(sdk, caplog
     with pytest.raises(asyncio.CancelledError):
         await sdk.provider.generate(sdk.request)
     assert sdk.provider.provider_requests == 1
-    assert "category=availability" in caplog.text and "retry=True" in caplog.text
+    events = [r for r in caplog.records if getattr(r, "event", None) == "generation.provider_failed"]
+    assert len(events) == 1 and events[0].error_category == "availability" and events[0].retryable is True
     assert "private-provider-body" not in caplog.text
 
 

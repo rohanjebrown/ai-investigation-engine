@@ -17,6 +17,7 @@ from investigation_engine.application.investigations import (
     InvestigationStatus,
     SearchEvidenceCall,
 )
+from investigation_engine.application.ports.generation_errors import GenerationRateLimitError
 from investigation_engine.application.ports.text_tokenizer import TokenizerIdentity
 from investigation_engine.application.retrieval import Evidence
 from investigation_engine.application.use_cases.answer_question import AnswerQuestion
@@ -241,6 +242,18 @@ def test_live_guards_and_configuration_round_trip():
         EvaluationConfig(concurrency=2)
 
 
+def test_gemma_investigation_does_not_require_or_report_the_gemini_model():
+    from investigation_engine.evaluation.cli import evaluation_generation_model
+
+    modes = ("investigation_hybrid",)
+    assert evaluation_generation_model(modes, None, "gemma4", "gemma-4-26b-a4b-it") == "gemma-4-26b-a4b-it"
+    assert evaluation_generation_model(modes, "gemini-example", "gemma4", "gemma-4-26b-a4b-it") == "gemma-4-26b-a4b-it"
+    with pytest.raises(ValueError, match="explicit generation model"):
+        evaluation_generation_model(("quick_answer", *modes), None, "gemma4", "gemma-4-26b-a4b-it")
+    with pytest.raises(ValueError, match="explicit generation model"):
+        evaluation_generation_model(modes, None, "gemini", None)
+
+
 async def test_runner_warmups_error_denominators_redaction_and_comparison(tmp_path):
     good, raw = service()
     failing, _ = service(cache={})
@@ -294,6 +307,60 @@ async def test_timeout_and_exception_categories_are_sanitized(tmp_path):
         manifest=manifest(),
     )
     assert "PRIVATE_SENTINEL" not in (tmp_path / "error/retrieval_results.jsonl").read_text()
+
+
+async def test_interrupted_run_preserves_progress_and_unattempted_cases(tmp_path):
+    search, _ = service()
+    cases = [case(), {**case(), "id": "q2"}]
+    cfg = EvaluationConfig(modes=("semantic",), warmups=0, repetitions=1)
+
+    def cancel_after_first(_):
+        raise asyncio.CancelledError()
+
+    output = tmp_path / "interrupted"
+    with pytest.raises(asyncio.CancelledError):
+        await run_evaluation(
+            cases,
+            cfg,
+            {"semantic": {"service": search}},
+            output=output,
+            manifest=manifest(("q1", "q2")),
+            progress=cancel_after_first,
+        )
+    summary = json.loads((output / "summary.json").read_text())
+    assert summary["progress"]["reason"] == "CancelledError"
+    assert summary["progress"]["attempted_measured"] == 1
+    assert summary["progress"]["unattempted_measured"] == 1
+    assert summary["modes"]["semantic"]["attempts"] == 1
+    assert len(read_jsonl(output / "retrieval_results.jsonl")) == 1
+    assert "CancelledError" in (output / "report.md").read_text()
+
+
+async def test_rate_limit_stops_run_after_recording_failure(tmp_path):
+    fake = SimpleNamespace(execute=AsyncMock(side_effect=GenerationRateLimitError("quota")))
+    cases = [case(), {**case(), "id": "q2"}]
+    cfg = EvaluationConfig(modes=("semantic",), warmups=0, repetitions=1)
+    output = tmp_path / "rate-limit"
+    summary = await run_evaluation(
+        cases, cfg, {"semantic": {"service": fake}}, output=output, manifest=manifest(("q1", "q2"))
+    )
+    assert fake.execute.await_count == 1
+    assert summary["progress"]["reason"] == "rate_or_quota_limit"
+    assert summary["progress"]["failed_or_incomplete_measured"] == 1
+    assert summary["progress"]["unattempted_measured"] == 1
+    assert summary["modes"]["semantic"]["error_categories"] == {"rate_limit": 1}
+
+
+async def test_cancelled_in_flight_is_not_reported_as_unattempted(tmp_path):
+    fake = SimpleNamespace(execute=AsyncMock(side_effect=asyncio.CancelledError()))
+    cfg = EvaluationConfig(modes=("semantic",), warmups=0, repetitions=1)
+    output = tmp_path / "in-flight"
+    with pytest.raises(asyncio.CancelledError):
+        await run_evaluation([case()], cfg, {"semantic": {"service": fake}}, output=output, manifest=manifest())
+    progress = json.loads((output / "summary.json").read_text())["progress"]
+    assert progress["started_without_recorded_outcome"] == 1
+    assert progress["unattempted_measured"] == 0
+    assert progress["in_flight_attempt"]["question_id"] == "q1"
 
 
 @pytest.mark.parametrize("abstain", [False, True])

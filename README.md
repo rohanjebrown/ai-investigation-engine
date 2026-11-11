@@ -80,6 +80,12 @@ and port 5432. There is no automatic fallback between databases.
 
 Set `GEMINI_API_KEY`, an explicit available `GEMINI_GENERATION_MODEL`, and an
 existing `SERVING_CHUNKING_CONFIGURATION_ID` before starting the real API.
+`INVESTIGATION_MODEL_PROVIDER` selects the investigation-only provider: `gemini`
+keeps the existing Gemini configuration (default), while `gemma4` uses
+`gemma-4-26b-a4b-it` with Gemma's native tools-only configuration. Quick-answer
+generation remains on `GEMINI_GENERATION_MODEL`; both providers use the same
+Google GenAI API key. The Gemma text final format is validated before it is
+converted to the existing investigation response contract.
 Production was inspected using `gemini-3.5-flash-lite` on 29 October 2026; model
 availability and quota are account-dependent. This is not a change to defaults.
 Load the existing pinned tokenizer for indexing, or explicitly download and

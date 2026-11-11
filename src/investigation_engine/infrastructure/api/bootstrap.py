@@ -1,5 +1,5 @@
 """Own HTTP application resources; no settings/client/connection at import time."""
-
+import traceback
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 
@@ -21,6 +21,10 @@ from investigation_engine.application.use_cases.update_document import UpdateDoc
 from investigation_engine.infrastructure.embeddings.gemini_provider import GeminiEmbeddingProvider
 from investigation_engine.infrastructure.generation.gemini_answer_generator import GeminiAnswerGenerator
 from investigation_engine.infrastructure.generation.gemini_investigation_model import GeminiInvestigationModel
+from investigation_engine.infrastructure.generation.gemma4_investigation_model import (
+    GEMMA4_MODEL,
+    Gemma4InvestigationModel,
+)
 from investigation_engine.infrastructure.observability.tracing import instrument_database
 from investigation_engine.infrastructure.persistence.models import ChunkingConfigurationRow
 from investigation_engine.infrastructure.persistence.postgresql_chunk_plan_repository import (
@@ -89,6 +93,26 @@ def _reranker(config, resources):
     return reranker
 
 
+def _investigation_model(config):
+    """Select the investigation provider without changing Quick Answer generation."""
+    provider = getattr(config, "investigation_model_provider", "gemini")
+    options = {
+        "api_key": config.gemini_api_key,
+        "timeout_seconds": config.generation_timeout_seconds,
+        "max_output_tokens": getattr(config, "investigation_max_output_tokens", 1024),
+    }
+    if provider == "gemini":
+        return GeminiInvestigationModel(model=config.gemini_generation_model, **options)
+    if provider == "gemma4":
+        return Gemma4InvestigationModel(
+            model=GEMMA4_MODEL,
+            **options,
+            retry_max_attempts=getattr(config, "gemma4_retry_max_attempts", 5),
+            retry_total_timeout_seconds=getattr(config, "gemma4_retry_total_timeout_seconds", None),
+        )
+    raise ValueError("Unsupported investigation model provider")
+
+
 @asynccontextmanager
 async def application_service():
     """Compose HTTP use cases and provider resources during app lifespan."""
@@ -128,12 +152,7 @@ async def application_service():
             resources.push_async_callback(generation.aclose)
             investigation_model = None
             if getattr(settings, "investigation_enabled", False):
-                investigation_model = GeminiInvestigationModel(
-                    api_key=settings.gemini_api_key,
-                    model=settings.gemini_generation_model,
-                    timeout_seconds=settings.generation_timeout_seconds,
-                    max_output_tokens=getattr(settings, "investigation_max_output_tokens", 1024),
-                )
+                investigation_model = _investigation_model(settings)
                 resources.push_async_callback(investigation_model.aclose)
             async with sessions() as session:
                 row = await session.get(ChunkingConfigurationRow, settings.serving_chunking_configuration_id)
@@ -231,7 +250,8 @@ async def application_service():
                 ),
             )
             yield services
-    except Exception:
+    except Exception as e:
+        print(traceback.format_exc())
         raise RuntimeError(
             "Application lifecycle failed; verify settings, persisted profiles and local service availability"
         ) from None

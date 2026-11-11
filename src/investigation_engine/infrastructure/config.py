@@ -34,6 +34,9 @@ class Settings:
     embedding_retry_max_delay_seconds: float = 30.0
     embedding_request_timeout_seconds: float = 60.0
     gemini_generation_model: str | None = None
+    investigation_model_provider: str = "gemini"
+    gemma4_retry_max_attempts: int = 5
+    gemma4_retry_total_timeout_seconds: int | None = None
     serving_chunking_configuration_id: int | None = None
     generation_timeout_seconds: int = 30
     generation_max_attempts: int = 2
@@ -177,6 +180,13 @@ def _temperature_setting() -> float | None:
     return temperature
 
 
+def _investigation_model_provider() -> str:
+    raw = os.environ.get("INVESTIGATION_MODEL_PROVIDER", "gemini").strip().casefold()
+    if raw not in {"gemini", "gemma4"}:
+        raise ValueError("INVESTIGATION_MODEL_PROVIDER must be gemini or gemma4")
+    return raw
+
+
 def _load_settings() -> Settings:
     """Load local defaults, preserving existing process environment values."""
     load_dotenv(Path.cwd() / ".env", override=False, interpolate=False)
@@ -251,6 +261,9 @@ def _load_settings() -> Settings:
         embedding_retry_max_delay_seconds=_float_setting("EMBEDDING_RETRY_MAX_DELAY_SECONDS", 30.0, 0.0, 120.0),
         embedding_request_timeout_seconds=_float_setting("EMBEDDING_REQUEST_TIMEOUT_SECONDS", 60.0, 1.0, 180.0),
         gemini_generation_model=os.environ.get("GEMINI_GENERATION_MODEL") or None,
+        investigation_model_provider=_investigation_model_provider(),
+        gemma4_retry_max_attempts=_integer_setting("GEMMA4_RETRY_MAX_ATTEMPTS", 5, 1, 10),
+        gemma4_retry_total_timeout_seconds=_integer_setting("GEMMA4_RETRY_TOTAL_TIMEOUT_SECONDS", None, 1, 120),
         serving_chunking_configuration_id=_integer_setting("SERVING_CHUNKING_CONFIGURATION_ID", None, 1, 2147483647),
         generation_timeout_seconds=_integer_setting("GENERATION_TIMEOUT_SECONDS", 30, 1, 120),
         generation_max_attempts=_integer_setting("GENERATION_MAX_ATTEMPTS", 2, 1, 3),

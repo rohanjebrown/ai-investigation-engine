@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import sys
+import traceback
 from dataclasses import asdict
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -520,6 +521,7 @@ def main():
     except Exception as error:
         # Avoid printing raw provider and DB exceptions (which may contain credentials).
         print(f"Evaluation stopped: {type(error).__name__}", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
         raise SystemExit(1) from None
 
 

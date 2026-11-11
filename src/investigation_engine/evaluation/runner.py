@@ -1,6 +1,7 @@
 """Sequential reproducible runs using supplied, ordinary application services."""
 
 import asyncio
+import json
 from dataclasses import asdict, dataclass
 from time import perf_counter
 
@@ -26,6 +27,10 @@ from investigation_engine.evaluation.telemetry import RequestBudgetExceeded, cap
 
 RETRIEVAL_MODES = ("semantic", "lexical", "hybrid")
 ANSWER_MODES = ("quick_answer", *INVESTIGATION_MODES)
+
+
+class _StopOnRateLimit(Exception):
+    """Stop a run after preserving a provider quota or rate-limit failure."""
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -179,6 +184,37 @@ async def run_evaluation(
         append_jsonl(output / "questions.jsonl", case)
     rows = []
     interrupted = True
+    interruption_reason = "process_interrupted"
+    current_attempt = None
+
+    def checkpoint(reason):
+        measured = [row for row in rows if not row["warmup"]]
+        planned = len(cases) * len(configuration.modes) * configuration.repetitions
+        unresolved = int(current_attempt is not None and not current_attempt["warmup"])
+        summary = summarize(rows)
+        summary["progress"] = {
+            "status": "complete" if reason is None else "interrupted" if reason != "running" else "running",
+            "reason": reason,
+            "selected_questions": len(cases),
+            "planned_measured_attempts": planned,
+            "attempted_measured": len(measured),
+            "started_without_recorded_outcome": unresolved,
+            "completed_measured": sum(row["status"] not in ("failed", "incomplete") for row in measured),
+            "failed_or_incomplete_measured": sum(row["status"] in ("failed", "incomplete") for row in measured),
+            "unattempted_measured": planned - len(measured) - unresolved,
+            "in_flight_attempt": current_attempt,
+        }
+        write_json(output / "summary.json", summary)
+        (output / "report.md").write_text(
+            report_markdown(summary, manifest)
+            + "\n## Run progress\n\n```json\n"
+            + json.dumps(summary["progress"], indent=2)
+            + "\n```\n",
+            encoding="utf-8",
+        )
+        return summary
+
+    checkpoint("running")
     try:
         with capture_timings():
             for trial in range(configuration.warmups + configuration.repetitions):
@@ -187,6 +223,13 @@ async def run_evaluation(
                 for case in cases:
                     for mode in order:
                         job = jobs[mode]
+                        current_attempt = {
+                            "question_id": case["id"],
+                            "mode": mode,
+                            "repetition": trial - configuration.warmups + 1,
+                            "warmup": trial < configuration.warmups,
+                        }
+                        checkpoint("running")
                         started = perf_counter()
                         hits, response, result, error = (), None, None, None
                         status = "failed"
@@ -440,6 +483,8 @@ async def run_evaluation(
                                     ],
                                 },
                             )
+                        current_attempt = None
+                        checkpoint("running")
                         if progress:
                             progress(
                                 {
@@ -451,9 +496,17 @@ async def run_evaluation(
                                     "error": error,
                                 }
                             )
+                        if error and error["category"] == "rate_limit":
+                            raise _StopOnRateLimit
         interrupted = False
+    except _StopOnRateLimit:
+        interruption_reason = "rate_or_quota_limit"
+    except BaseException as error:
+        interruption_reason = type(error).__name__
+        raise
     finally:
         manifest["status"] = "interrupted" if interrupted else "finalizing"
+        manifest["interruption_reason"] = interruption_reason if interrupted else None
         manifest["generation_requests_observed"] = sum(row["generation_calls"] for row in rows)
         manifest["generation_provider_requests_known"] = sum(row["generation_provider_requests"] or 0 for row in rows)
         manifest["provider_request_count_complete"] = all(
@@ -476,12 +529,14 @@ async def run_evaluation(
                 "misses": query_provider.misses,
             }
         write_json(output / "manifest.json", manifest)
-        summary = summarize(rows)
-        write_json(output / "summary.json", summary)
+        summary = checkpoint(interruption_reason if interrupted else None)
         analysis = benchmark_analysis(output)
         write_json(output / "analysis.json", analysis)
         (output / "report.md").write_text(
             report_markdown(summary, manifest)
+            + "\n## Run progress\n\n```json\n"
+            + json.dumps(summary["progress"], indent=2)
+            + "\n```\n"
             + (analysis_markdown(analysis) if set(configuration.modes) & set(RETRIEVAL_MODES) else ""),
             encoding="utf-8",
         )

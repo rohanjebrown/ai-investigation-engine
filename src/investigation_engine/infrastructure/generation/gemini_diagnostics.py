@@ -1,5 +1,8 @@
 """Classify SDK failures without retaining provider messages or response bodies."""
 
+import math
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from http import HTTPStatus
 
 
@@ -25,3 +28,54 @@ def error_details(error):
     else:
         reason = "provider_rejection"
     return {"provider_code": code, "error_reason": reason}
+
+
+def quota_details(error):
+    """Extract only structured, bounded quota labels and retry hints."""
+    details = getattr(error, "details", None)
+    envelope = details.get("error", details) if isinstance(details, dict) else {}
+    entries = envelope.get("details", []) if isinstance(envelope, dict) else []
+    scopes, metrics, hints = set(), set(), []
+    for entry in entries if isinstance(entries, list) else []:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("@type") == "type.googleapis.com/google.rpc.QuotaFailure":
+            violations = entry.get("violations", [])
+            for violation in violations if isinstance(violations, list) else []:
+                if not isinstance(violation, dict):
+                    continue
+                parts = [violation.get(key, "") for key in ("quotaId", "quotaMetric", "quotaUnit")]
+                label = " ".join(part.casefold() for part in parts if isinstance(part, str))
+                if "perday" in label or "/d/" in label or "/day" in label:
+                    scopes.add("daily")
+                if "perminute" in label or "/min/" in label or "/minute" in label:
+                    scopes.add("minute")
+                if "token" in label:
+                    metrics.add("tokens")
+                elif "request" in label:
+                    metrics.add("requests")
+        if entry.get("@type") == "type.googleapis.com/google.rpc.RetryInfo":
+            value = entry.get("retryDelay")
+            if isinstance(value, str) and value.endswith("s"):
+                try:
+                    hints.append(float(value[:-1]))
+                except ValueError:
+                    pass
+    headers = getattr(getattr(error, "response", None), "headers", None)
+    raw = headers.get("Retry-After") if headers is not None else None
+    if isinstance(raw, str):
+        try:
+            hints.append(float(raw))
+        except ValueError:
+            try:
+                date = parsedate_to_datetime(raw)
+                if date.tzinfo is not None:
+                    hints.append(max(0.0, (date - datetime.now(UTC)).total_seconds()))
+            except TypeError, ValueError, OverflowError:
+                pass
+    valid = [value for value in hints if math.isfinite(value) and 0 <= value <= 604800]
+    return {
+        "quota_scope": "daily" if "daily" in scopes else "minute" if "minute" in scopes else "unknown",
+        "quota_metric": next(iter(metrics)) if len(metrics) == 1 else None,
+        "retry_after_seconds": max(valid) if valid else None,
+    }

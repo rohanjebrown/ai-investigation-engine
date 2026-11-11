@@ -73,6 +73,18 @@ def test_process_environment_wins_over_dotenv(load_settings, dotenv_file, monkey
     assert load_settings().db_name == "process-wins"
 
 
+def test_gemma_retry_settings_are_explicit_and_bounded(load_settings, dotenv_file, monkeypatch):
+    defaults = load_settings()
+    assert defaults.gemma4_retry_max_attempts == 5 and defaults.gemma4_retry_total_timeout_seconds is None
+    monkeypatch.setenv("GEMMA4_RETRY_MAX_ATTEMPTS", "3")
+    monkeypatch.setenv("GEMMA4_RETRY_TOTAL_TIMEOUT_SECONDS", "12")
+    configured = load_settings()
+    assert configured.gemma4_retry_max_attempts == 3 and configured.gemma4_retry_total_timeout_seconds == 12
+    monkeypatch.setenv("GEMMA4_RETRY_MAX_ATTEMPTS", "6")
+    with pytest.raises(ValueError, match="GEMMA4_RETRY_MAX_ATTEMPTS"):
+        load_settings()
+
+
 def test_cloud_run_uses_managed_socket_without_tcp_authority(load_settings, dotenv_file, monkeypatch):
     monkeypatch.setenv("K_SERVICE", "existing-service")
     monkeypatch.setenv("DB_CONNECTION_MODE", "cloudsql_socket")
@@ -133,6 +145,7 @@ def test_url_rejects_the_local_postgres_port(load_settings, dotenv_file, monkeyp
 def test_generation_defaults_and_explicit_typed_environment(load_settings, dotenv_file, monkeypatch):
     settings = load_settings()
     assert settings.gemini_generation_model is None and settings.serving_chunking_configuration_id is None
+    assert settings.investigation_model_provider == "gemini"
     assert settings.generation_max_attempts == 2 and settings.rag_max_evidence == 5
     assert settings.generation_temperature is None
     monkeypatch.setenv("GENERATION_TEMPERATURE", "0.2")
@@ -143,6 +156,18 @@ def test_generation_defaults_and_explicit_typed_environment(load_settings, doten
     assert selected.gemini_generation_model == "explicit-test-model" and selected.serving_chunking_configuration_id == 7
     assert selected.rag_max_context_chars == 16000
     assert selected.generation_temperature == 0.2
+
+
+@pytest.mark.parametrize("value,expected", [("gemini", "gemini"), ("GEMMA4", "gemma4")])
+def test_investigation_model_provider_is_selectable(load_settings, dotenv_file, monkeypatch, value, expected):
+    monkeypatch.setenv("INVESTIGATION_MODEL_PROVIDER", value)
+    assert load_settings().investigation_model_provider == expected
+
+
+def test_unknown_investigation_model_provider_is_rejected(load_settings, dotenv_file, monkeypatch):
+    monkeypatch.setenv("INVESTIGATION_MODEL_PROVIDER", "local")
+    with pytest.raises(ValueError, match="INVESTIGATION_MODEL_PROVIDER"):
+        load_settings()
 
 
 def test_embedding_batch_settings_are_typed_and_bounded(load_settings, dotenv_file, monkeypatch):

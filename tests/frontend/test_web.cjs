@@ -89,6 +89,23 @@ function reply(data, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => data };
 }
 
+test("investigation usage limits distinguish per-minute, daily, unknown and provider failures", async () => {
+  for (const [details, status, expected, forbidden] of [
+    [{ code: "generation_rate_limit", retry_after_seconds: 17 }, 429, /17 seconds/, /daily/],
+    [{ code: "generation_rate_limit" }, 429, /about a minute/, /daily/],
+    [{ code: "generation_daily_quota", retry_after_seconds: 60 }, 429, /retry hint is 60 seconds; the daily limit may last longer/, /about a minute/],
+    [{ code: "generation_daily_quota" }, 429, /daily usage limit/, /minute/],
+    [{ code: "generation_quota_exceeded" }, 429, /usage limit.*later/, /minute/],
+    [{ code: "generation_unavailable" }, 503, /temporarily unavailable/, /usage limit/],
+  ]) {
+    const ui = setup(async () => reply({ error: details }, status));
+    ui.get("question-mode").value = "investigation";
+    await ui.submit("q");
+    assert.match(ui.get("request-error").textContent, expected);
+    assert.doesNotMatch(ui.get("request-error").textContent, forbidden);
+  }
+});
+
 test("submits exact question only to the same-origin endpoint and renders multiple mapped citations", async () => {
   const ui = setup(async () => reply(answer([citation("E2"), citation("E1")])));
   await ui.submit("  Which source? 😀\n");

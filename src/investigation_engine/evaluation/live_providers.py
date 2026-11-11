@@ -3,6 +3,7 @@
 import asyncio
 import json
 from collections import deque
+from contextvars import ContextVar
 from time import monotonic
 
 from investigation_engine.evaluation.telemetry import RequestBudget
@@ -72,12 +73,13 @@ class PacedInvestigationModel:
 
     def __init__(self, provider, pacer):
         self.provider, self.pacer = provider, pacer
+        self._current_reservation = ContextVar("investigation_pacer_reservation", default=None)
 
     @property
     def provider_requests(self):
         return self.provider.provider_requests
 
-    async def next_action(self, turn):
+    def reservation(self, turn):
         from investigation_engine.infrastructure.generation.gemini_investigation_model import (
             FINAL_SCHEMA,
             SYSTEM_INSTRUCTION,
@@ -91,5 +93,20 @@ class PacedInvestigationModel:
         reservation = sum(len(item.model_dump_json(exclude_none=True).encode("utf-8")) for item in contents)
         reservation += len(json.dumps([SYSTEM_INSTRUCTION, TOOL_DECLARATION, FINAL_SCHEMA]).encode("utf-8"))
         reservation += self.provider.max_output_tokens + 2048
+        return reservation
+
+    async def next_action(self, turn):
+        reservation = self.reservation(turn)
         await self.pacer.wait(reservation)
-        return await self.provider.next_action(turn)
+        token = self._current_reservation.set(reservation)
+        try:
+            return await self.provider.next_action(turn)
+        finally:
+            self._current_reservation.reset(token)
+
+    @property
+    def current_reservation(self):
+        value = self._current_reservation.get()
+        if value is None:
+            raise RuntimeError("No paced investigation request is active")
+        return value

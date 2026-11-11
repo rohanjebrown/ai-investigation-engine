@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "purpose": "Post-hoc human review of complete-evidence fixture entailment. This file is never included in Gemini requests.",
+  "cases": {
+    "2wiki:464cfa460bd911eba7f7acde48001122": {
+      "complete_condition_status": "insufficient",
+      "review": "The evidence links Thomas Jefferson (Film) to Ken Burns and mentions a Brooklyn Bridge award nomination. It does not establish Ken Burns's birthplace as Brooklyn."
+    },
+    "simple:464cfa460bd911eba7f7acde48001122": {
+      "complete_condition_status": "insufficient",
+      "review": "The only passage is about Burns's documentaries and a Brooklyn Bridge award nomination. It does not establish Ken Burns's birthplace as Brooklyn."
+    },
+    "2wiki:6ebe05740bde11eba7f7acde48001122": {
+      "complete_condition_status": "insufficient",
+      "review": "The passages link Anastasia to Stefan Nemanja and say that he restored Hilandar Monastery. They do not establish that he died at Hilandar."
+    },
+    "2wiki:2207e9060bda11eba7f7acde48001122": {
+      "complete_condition_status": "insufficient",
+      "review": "The film passage names director Eric Mueller; the nationality passage describes Eric C. Mueller, a former rower. The local evidence does not establish that they are the same person."
+    }
+  }
+}

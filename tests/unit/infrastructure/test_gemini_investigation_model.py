@@ -158,7 +158,7 @@ async def test_numeric_latency_diagnostics_do_not_log_question_or_response(provi
             )
         ),
         usage=types.GenerateContentResponseUsageMetadata(
-            prompt_token_count=123, candidates_token_count=15, thoughts_token_count=8
+            prompt_token_count=123, candidates_token_count=15, thoughts_token_count=8, total_token_count=147
         ),
     )
     await provider.provider.next_action(InvestigationTurn(question="private-question-marker", exchanges=()))
@@ -172,10 +172,33 @@ async def test_numeric_latency_diagnostics_do_not_log_question_or_response(provi
     } <= stages
     usage = next(record for record in caplog.records if getattr(record, "event", None) == "gemini.investigation.usage")
     assert (usage.prompt_tokens, usage.candidate_tokens, usage.thinking_tokens) == (123, 15, 8)
+    assert usage.total_tokens == 147
     assert all(
         word not in caplog.text
         for word in ("private-question-marker", "private-response-marker", "never-print-this-key")
     )
+
+
+async def test_malformed_response_still_records_available_usage_once(provider, caplog):
+    caplog.set_level("INFO", logger="investigation_engine.application.timing")
+    provider.models.generate_content.return_value = _response(
+        types.Part(text="private malformed output"),
+        usage=types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=12, candidates_token_count=3, thoughts_token_count=4, total_token_count=20
+        ),
+    )
+    with pytest.raises(GenerationResponseError):
+        await provider.provider.next_action(InvestigationTurn(question="private question", exchanges=()))
+    events = [r for r in caplog.records if getattr(r, "event", None) == "gemini.investigation.usage"]
+    assert len(events) == 1 and (events[0].turn_number, events[0].total_tokens) == (1, 20)
+    assert "private malformed output" not in caplog.text
+
+
+def test_invalid_optional_total_is_unknown_without_rejecting_valid_counts():
+    usage = module._usage(
+        SimpleNamespace(prompt_token_count=3, candidates_token_count=2, thoughts_token_count=1, total_token_count=-1)
+    )
+    assert usage.prompt_tokens == 3 and usage.total_tokens is None
 
 
 @pytest.mark.parametrize("search_count", [1, 2, 3])

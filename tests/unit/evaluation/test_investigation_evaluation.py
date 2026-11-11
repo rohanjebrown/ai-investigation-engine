@@ -490,6 +490,9 @@ def test_worst_case_request_plan_counts_each_configuration_and_count_tokens():
     smoke = investigation_request_plan(1, ["semantic", "lexical", "hybrid"], budgets)
     assert smoke["maximum_generation_rpcs"] == 18
     assert smoke["maximum_embedding_rpcs_including_count_tokens"] == 20
+    bounded = {**budgets, "max_turns": 2}
+    assert investigation_request_plan(1, ["hybrid"], bounded)["maximum_generation_rpcs"] == 2
+    assert investigation_request_plan(1, ["hybrid"], bounded, generation_attempts=5)["maximum_generation_rpcs"] == 6
 
 
 async def test_paced_model_forwards_original_turn_and_never_exports_native_history():

@@ -7,6 +7,7 @@ from investigation_engine.application.investigations import (
     InvestigationStatus,
     SearchDisposition,
     SearchEvidenceCall,
+    TokenUsage,
 )
 from investigation_engine.application.ports.generation_errors import GenerationResponseError
 from investigation_engine.application.retrieval import Evidence
@@ -457,6 +458,94 @@ async def test_investigation_events_report_limit_and_evidence_without_question_t
         value not in caplog.text
         for value in ("private-source", "private-document", "private-query", "private-question")
     )
+
+
+async def test_provider_totals_are_reported_per_turn_and_summed_for_the_investigation(caplog):
+    import logging
+
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(
+                query="lookup",
+                call_id="1",
+                usage=TokenUsage(prompt_tokens=20, candidate_tokens=3, thinking_tokens=4, total_tokens=29),
+            ),
+            InvestigationDecision(
+                status=InvestigationStatus.INSUFFICIENT_EVIDENCE,
+                answer=None,
+                citations=(),
+                usage=TokenUsage(prompt_tokens=30, candidate_tokens=2, thinking_tokens=3, total_tokens=37),
+            ),
+        ]
+    )
+    with caplog.at_level(logging.INFO, logger="investigation_engine.application.timing"):
+        result = await InvestigateQuestion(QuerySearch({}), model).execute("Q", owner_id=None)
+    turns = [r for r in caplog.records if getattr(r, "event", None) == "investigation.turn_completed"]
+    completed = next(r for r in caplog.records if getattr(r, "event", None) == "investigation.completed")
+    assert [r.total_tokens for r in turns] == [29, 37]
+    assert completed.total_tokens == result.usage.total_tokens == 66
+    assert (result.usage.prompt_tokens, result.usage.candidate_tokens, result.usage.thinking_tokens) == (50, 5, 7)
+    assert len({r.request_id for r in [*turns, completed]}) == 1
+
+
+async def test_missing_provider_total_is_not_inferred_from_other_token_counts():
+    model = ScriptedModel(
+        [
+            SearchEvidenceCall(query="lookup", call_id="1", usage=TokenUsage(prompt_tokens=20, total_tokens=21)),
+            InvestigationDecision(
+                status=InvestigationStatus.INSUFFICIENT_EVIDENCE,
+                answer=None,
+                citations=(),
+                usage=TokenUsage(prompt_tokens=30, candidate_tokens=2),
+            ),
+        ]
+    )
+    result = await InvestigateQuestion(QuerySearch({}), model).execute("Q", owner_id=None)
+    assert result.usage.prompt_tokens == 50
+    assert result.usage.total_tokens is None
+
+
+async def test_investigation_failure_reports_completed_work_without_payload(registration, caplog):
+    import logging
+
+    hit = make_hit(registration, source_id="private-source", body="private-document")
+
+    def fail(_turn):
+        raise RuntimeError("private-error")
+
+    model = ScriptedModel([SearchEvidenceCall(query="private-query", call_id="1"), fail])
+    with caplog.at_level(logging.WARNING, logger="investigation_engine.application.timing"):
+        with pytest.raises(RuntimeError, match="private-error"):
+            await InvestigateQuestion(QuerySearch({"private-query": (hit,)}), model).execute(
+                "private-question", owner_id=None
+            )
+    events = [r for r in caplog.records if getattr(r, "event", None) == "investigation.failed"]
+    assert len(events) == 1
+    assert events[0].completed_turns == 1 and events[0].completed_searches == 1
+    assert events[0].generation_requests == 2
+    assert all(value not in caplog.text for value in ("private-query", "private-question", "private-error"))
+
+
+async def test_failure_summary_logging_does_not_replace_original_error(monkeypatch):
+    from investigation_engine.application import investigations
+
+    original = RuntimeError("original failure")
+
+    class FailingModel:
+        async def next_action(self, turn):
+            raise original
+
+    real_log_event = investigations.log_event
+
+    def failing_sink(event, **fields):
+        if event == "investigation.failed":
+            raise RuntimeError("logging failure")
+        return real_log_event(event, **fields)
+
+    monkeypatch.setattr(investigations, "log_event", failing_sink)
+    with pytest.raises(RuntimeError) as caught:
+        await InvestigateQuestion(QuerySearch({}), FailingModel()).execute("Question?", owner_id=None)
+    assert caught.value is original
 
 
 @pytest.mark.parametrize("extra_hits", ["oversized", "mixed"])

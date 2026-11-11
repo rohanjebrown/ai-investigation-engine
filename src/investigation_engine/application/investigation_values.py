@@ -33,6 +33,7 @@ class TokenUsage:
     prompt_tokens: int = 0
     candidate_tokens: int = 0
     thinking_tokens: int = 0
+    total_tokens: int | None = None
 
     def __post_init__(self) -> None:
         if any(
@@ -45,6 +46,8 @@ class TokenUsage:
             )
         ):
             raise GenerationResponseError("Invalid provider token usage")
+        if self.total_tokens is not None and (type(self.total_tokens) is not int or self.total_tokens < 0):
+            raise GenerationResponseError("Invalid provider total token usage")
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

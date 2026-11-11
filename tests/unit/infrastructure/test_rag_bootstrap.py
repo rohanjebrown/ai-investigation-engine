@@ -139,6 +139,42 @@ async def test_disabled_reranker_does_not_construct_http_provider(resources, mon
     factory.assert_not_called()
 
 
+def test_investigation_provider_selection_preserves_gemini_and_supports_gemma4(monkeypatch):
+    gemini, gemma4 = object(), object()
+    gemini_factory = Mock(return_value=gemini)
+    gemma_factory = Mock(return_value=gemma4)
+    monkeypatch.setattr(bootstrap, "GeminiInvestigationModel", gemini_factory)
+    monkeypatch.setattr(bootstrap, "Gemma4InvestigationModel", gemma_factory)
+    config = SimpleNamespace(
+        gemini_api_key="synthetic-key",
+        gemini_generation_model="gemini-test-model",
+        generation_timeout_seconds=40,
+        investigation_max_output_tokens=800,
+        investigation_model_provider="gemma4",
+    )
+
+    assert bootstrap._investigation_model(config) is gemma4
+    gemma_factory.assert_called_once_with(
+        api_key="synthetic-key",
+        model="gemma-4-26b-a4b-it",
+        timeout_seconds=40,
+        max_output_tokens=800,
+        retry_max_attempts=5,
+        retry_total_timeout_seconds=None,
+    )
+    gemini_factory.assert_not_called()
+
+    config.investigation_model_provider = "gemini"
+    assert bootstrap._investigation_model(config) is gemini
+    gemini_factory.assert_called_once_with(
+        api_key="synthetic-key",
+        model="gemini-test-model",
+        timeout_seconds=40,
+        max_output_tokens=800,
+    )
+    gemma_factory.assert_called_once()
+
+
 @pytest.mark.parametrize("service_name", ["question_service", "application_service"])
 async def test_enabled_reranker_is_wired_and_closed_for_both_lifespans(resources, monkeypatch, service_name):
     provider = SimpleNamespace(aclose=AsyncMock(), rerank=AsyncMock())

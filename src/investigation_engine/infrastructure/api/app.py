@@ -3,10 +3,12 @@
 import asyncio
 import hmac
 import logging
+import math
 from contextlib import asynccontextmanager
 from dataclasses import asdict, is_dataclass
 from http import HTTPStatus
 from pathlib import Path
+from time import monotonic
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -33,6 +35,7 @@ from investigation_engine.application.ports.embedding_errors import (
 from investigation_engine.application.ports.generation_errors import (
     EvidenceContextLimitError,
     GenerationProviderError,
+    GenerationRateLimitError,
     GenerationResponseError,
     GenerationTimeoutError,
 )
@@ -63,6 +66,28 @@ DEFAULT_DOCUMENT_PAGE_SIZE = 50
 QUESTION_REQUEST_TIMEOUT_SECONDS = 90
 INDEX_REQUEST_TIMEOUT_SECONDS = 90
 DEFAULT_INVESTIGATION_TIMEOUT_SECONDS = 120
+
+
+def _generation_rate_limit_response(error: GenerationRateLimitError) -> JSONResponse:
+    scope = error.quota_scope
+    if scope == "daily":
+        code = "generation_daily_quota"
+        message = "The model's daily usage limit has been reached. Please try again later."
+    elif scope == "minute":
+        code = "generation_rate_limit"
+        message = "The model has temporarily reached its usage limit. Please try again shortly."
+    else:
+        code = "generation_quota_exceeded"
+        message = "The model's usage limit has been reached. Please try again later."
+    details = {"code": code, "message": message, "quota_scope": scope}
+    if error.quota_metric is not None:
+        details["quota_metric"] = error.quota_metric
+    headers = {}
+    if error.retry_after_deadline is not None:
+        delay = max(0, math.ceil(error.retry_after_deadline - monotonic()))
+        details["retry_after_seconds"] = delay
+        headers["Retry-After"] = str(delay)
+    return JSONResponse(status_code=429, content={"error": details}, headers=headers)
 
 
 class QuestionRequest(BaseModel):
@@ -105,7 +130,7 @@ class InvestigationResponse(BaseModel):
     embedding_requests: int
     message: str | None
     model_version: str | None
-    usage: dict[str, int]
+    usage: dict[str, int | None]
 
 
 def _authorized_actor(request: Request) -> DocumentActor:
@@ -307,6 +332,8 @@ def create_app(*, service_factory=application_service) -> FastAPI:
             status, code = 504, "request_timeout"
         except EmbeddingRateLimitError, EmbeddingProviderError, RepositoryError:
             status, code = 503, "retrieval_unavailable"
+        except GenerationRateLimitError as error:
+            return _generation_rate_limit_response(error)
         except GenerationProviderError:
             status, code = 503, "generation_unavailable"
         except (GenerationResponseError, EmbeddingResponseError, EmbeddingInputError) as error:
@@ -360,6 +387,8 @@ def create_app(*, service_factory=application_service) -> FastAPI:
             status, code = 504, "investigation_timeout"
         except EmbeddingRateLimitError, EmbeddingProviderError, RepositoryError:
             status, code = 503, "retrieval_unavailable"
+        except GenerationRateLimitError as error:
+            return _generation_rate_limit_response(error)
         except GenerationProviderError:
             status, code = 503, "generation_unavailable"
         except GenerationResponseError, EmbeddingResponseError, EmbeddingInputError:

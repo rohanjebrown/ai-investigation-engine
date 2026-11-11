@@ -10,8 +10,9 @@ from investigation_engine.evaluation.telemetry import _current
 INVESTIGATION_MODES = ("investigation", "investigation_semantic", "investigation_lexical", "investigation_hybrid")
 
 
-def investigation_request_plan(questions, retrieval_modes, budgets, *, repetitions=1, warmups=0):
+def investigation_request_plan(questions, retrieval_modes, budgets, *, repetitions=1, warmups=0, generation_attempts=1):
     turns = min(budgets["max_turns"], budgets["max_generation_requests"])
+    generation_rpcs = min(budgets["max_turns"] * generation_attempts, budgets["max_generation_requests"])
     searches = min(turns, budgets["max_search_calls"], budgets["max_embedding_requests"])
     attempts = questions * (repetitions + warmups)
     misses = attempts * searches * sum(mode != "lexical" for mode in retrieval_modes)
@@ -19,12 +20,12 @@ def investigation_request_plan(questions, retrieval_modes, budgets, *, repetitio
         "questions_per_configuration": questions,
         "retrieval_configurations": list(retrieval_modes),
         "attempts_including_warmups": attempts * len(retrieval_modes),
-        "maximum_generation_rpcs": attempts * len(retrieval_modes) * turns,
+        "maximum_generation_rpcs": attempts * len(retrieval_modes) * generation_rpcs,
         "maximum_dynamic_query_cache_misses": misses,
         "maximum_embedding_count_tokens_rpcs": misses,
         "maximum_embedding_embed_content_rpcs": misses,
         "maximum_embedding_rpcs_including_count_tokens": 2 * misses,
-        "assumptions": "Worst case: no dynamic query cache reuse, no retries, one generation RPC per turn and two embedding RPCs per miss; lexical searches require no query embedding. Existing original-query coverage does not guarantee any dynamic cache hits.",
+        "assumptions": f"Worst case: {generation_attempts} generation attempts per turn, bounded by the per-investigation request cap and before the run-wide cap; no dynamic cache reuse and two embedding RPCs per miss. Lexical searches require no query embedding.",
     }
 
 
